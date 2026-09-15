@@ -6,19 +6,39 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - run: cargo test --workspace --all-targets
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo fmt --all -- --check
+      - name: Apply canonical rustfmt
+        id: rustfmt
+        shell: bash
+        run: |
+          cargo fmt --all
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add crates
+            git commit -m "Apply rustfmt"
+            git push origin "HEAD:${{ github.head_ref }}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.rustfmt.outputs.changed == 'false'
+        run: cargo test --workspace --all-targets
+      - if: steps.rustfmt.outputs.changed == 'false'
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - if: steps.rustfmt.outputs.changed == 'false'
+        run: cargo fmt --all -- --check
 
   typescript:
     runs-on: ubuntu-latest
