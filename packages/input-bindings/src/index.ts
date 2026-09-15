@@ -15,6 +15,43 @@ export interface KeyStroke {
   modifiers?: Modifiers;
 }
 
+export interface MouseButtonStroke {
+  device: "mouseButton";
+  button: number;
+  modifiers?: Modifiers;
+}
+
+export interface WheelStroke {
+  device: "wheel";
+  direction: "up" | "down" | "left" | "right";
+  modifiers?: Modifiers;
+}
+
+export interface GamepadButtonStroke {
+  device: "gamepadButton";
+  button: number;
+  threshold: number;
+  gamepad?: number;
+}
+
+export interface GamepadAxisStroke {
+  device: "gamepadAxis";
+  axis: number;
+  direction: "positive" | "negative";
+  threshold: number;
+  deadzone: number;
+  gamepad?: number;
+}
+
+export type InputStroke =
+  | KeyStroke
+  | MouseButtonStroke
+  | WheelStroke
+  | GamepadButtonStroke
+  | GamepadAxisStroke;
+
+export type InputDeviceClass = "keyboard" | "mouse" | "gamepad";
+
 export type WhenExpr =
   | { op: "always" }
   | { op: "context"; id: string }
@@ -25,7 +62,7 @@ export type WhenExpr =
 export interface Binding {
   id: string;
   action: string;
-  sequence: KeyStroke[];
+  sequence: InputStroke[];
   when?: WhenExpr;
   priority?: number;
 }
@@ -84,6 +121,44 @@ export interface ProfileApplication {
 const MAX_EXHAUSTIVE_CONTEXTS = 16;
 const ALWAYS: WhenExpr = { op: "always" };
 
+export function isKeyStroke(stroke: InputStroke): stroke is KeyStroke {
+  return "key" in stroke;
+}
+
+export function inputDeviceClass(stroke: InputStroke): InputDeviceClass {
+  if (isKeyStroke(stroke)) return "keyboard";
+  if (stroke.device === "mouseButton" || stroke.device === "wheel") return "mouse";
+  return "gamepad";
+}
+
+export function inputStrokeIdentity(stroke: InputStroke): string {
+  if (isKeyStroke(stroke)) {
+    return [
+      "keyboard",
+      stroke.key.kind,
+      stroke.key.value,
+      modifierIdentity(stroke.modifiers),
+    ].join(":");
+  }
+  switch (stroke.device) {
+    case "mouseButton":
+      return ["mouseButton", stroke.button, modifierIdentity(stroke.modifiers)].join(":");
+    case "wheel":
+      return ["wheel", stroke.direction, modifierIdentity(stroke.modifiers)].join(":");
+    case "gamepadButton":
+      return ["gamepadButton", stroke.gamepad ?? "any", stroke.button, stroke.threshold].join(":");
+    case "gamepadAxis":
+      return [
+        "gamepadAxis",
+        stroke.gamepad ?? "any",
+        stroke.axis,
+        stroke.direction,
+        stroke.threshold,
+        stroke.deadzone,
+      ].join(":");
+  }
+}
+
 export function evaluateWhen(
   expression: WhenExpr | undefined,
   activeContexts: ReadonlySet<string>,
@@ -123,7 +198,7 @@ export function whenSpecificity(expression: WhenExpr | undefined): number {
 
 export function resolve(
   bindings: readonly Binding[],
-  sequence: readonly KeyStroke[],
+  sequence: readonly InputStroke[],
   activeContexts: ReadonlySet<string>,
 ): Resolution {
   if (sequence.length === 0) {
@@ -137,7 +212,7 @@ export function resolve(
     if (!evaluateWhen(binding.when, activeContexts) || sequence.length > binding.sequence.length) {
       continue;
     }
-    if (!sequence.every((stroke, index) => strokeEquals(stroke, binding.sequence[index]))) {
+    if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
       continue;
     }
     if (sequence.length === binding.sequence.length) {
@@ -232,22 +307,14 @@ export function applyProfile(
     switch (patch.op) {
       case "add":
         if (bindings.has(patch.binding.id)) {
-          diagnostics.push({
-            patchIndex,
-            kind: "addCollision",
-            bindingId: patch.binding.id,
-          });
+          diagnostics.push({ patchIndex, kind: "addCollision", bindingId: patch.binding.id });
         } else {
           bindings.set(patch.binding.id, structuredClone(patch.binding));
         }
         break;
       case "remove":
         if (!bindings.delete(patch.bindingId)) {
-          diagnostics.push({
-            patchIndex,
-            kind: "missingBinding",
-            bindingId: patch.bindingId,
-          });
+          diagnostics.push({ patchIndex, kind: "missingBinding", bindingId: patch.bindingId });
         }
         break;
       case "replace":
@@ -258,11 +325,7 @@ export function applyProfile(
             bindingId: patch.bindingId,
           });
         } else if (!bindings.has(patch.bindingId)) {
-          diagnostics.push({
-            patchIndex,
-            kind: "missingBinding",
-            bindingId: patch.bindingId,
-          });
+          diagnostics.push({ patchIndex, kind: "missingBinding", bindingId: patch.bindingId });
         } else {
           bindings.set(patch.bindingId, structuredClone(patch.binding));
         }
@@ -276,16 +339,73 @@ export function applyProfile(
   };
 }
 
-export function strokeEquals(left: KeyStroke, right: KeyStroke): boolean {
+export function inputStrokeEquals(left: InputStroke, right: InputStroke): boolean {
+  if (isKeyStroke(left) || isKeyStroke(right)) {
+    return isKeyStroke(left) && isKeyStroke(right) && keyStrokeEquals(left, right);
+  }
+  if (left.device !== right.device) return false;
+  switch (left.device) {
+    case "mouseButton":
+      return (
+        right.device === "mouseButton" &&
+        left.button === right.button &&
+        modifiersEqual(left.modifiers, right.modifiers)
+      );
+    case "wheel":
+      return (
+        right.device === "wheel" &&
+        left.direction === right.direction &&
+        modifiersEqual(left.modifiers, right.modifiers)
+      );
+    case "gamepadButton":
+      return (
+        right.device === "gamepadButton" &&
+        left.button === right.button &&
+        left.threshold === right.threshold &&
+        left.gamepad === right.gamepad
+      );
+    case "gamepadAxis":
+      return (
+        right.device === "gamepadAxis" &&
+        left.axis === right.axis &&
+        left.direction === right.direction &&
+        left.threshold === right.threshold &&
+        left.deadzone === right.deadzone &&
+        left.gamepad === right.gamepad
+      );
+  }
+}
+
+export function strokeEquals(left: InputStroke, right: InputStroke): boolean {
+  return inputStrokeEquals(left, right);
+}
+
+function keyStrokeEquals(left: KeyStroke, right: KeyStroke): boolean {
   return (
     left.key.kind === right.key.kind &&
     left.key.value === right.key.value &&
-    Boolean(left.modifiers?.ctrl) === Boolean(right.modifiers?.ctrl) &&
-    Boolean(left.modifiers?.alt) === Boolean(right.modifiers?.alt) &&
-    Boolean(left.modifiers?.shift) === Boolean(right.modifiers?.shift) &&
-    Boolean(left.modifiers?.meta) === Boolean(right.modifiers?.meta) &&
-    Boolean(left.modifiers?.altGraph) === Boolean(right.modifiers?.altGraph)
+    modifiersEqual(left.modifiers, right.modifiers)
   );
+}
+
+function modifiersEqual(left: Modifiers | undefined, right: Modifiers | undefined): boolean {
+  return (
+    Boolean(left?.ctrl) === Boolean(right?.ctrl) &&
+    Boolean(left?.alt) === Boolean(right?.alt) &&
+    Boolean(left?.shift) === Boolean(right?.shift) &&
+    Boolean(left?.meta) === Boolean(right?.meta) &&
+    Boolean(left?.altGraph) === Boolean(right?.altGraph)
+  );
+}
+
+function modifierIdentity(modifiers: Modifiers | undefined): string {
+  return [
+    Boolean(modifiers?.ctrl) ? "C" : "-",
+    Boolean(modifiers?.alt) ? "A" : "-",
+    Boolean(modifiers?.shift) ? "S" : "-",
+    Boolean(modifiers?.meta) ? "M" : "-",
+    Boolean(modifiers?.altGraph) ? "G" : "-",
+  ].join("");
 }
 
 type Rank = readonly [priority: number, specificity: number];
@@ -305,19 +425,19 @@ function compareRankDescending(left: Rank, right: Rank): number {
 type SequenceRelation = "separate" | "exact" | "prefix";
 
 function sequenceRelation(
-  left: readonly KeyStroke[],
-  right: readonly KeyStroke[],
+  left: readonly InputStroke[],
+  right: readonly InputStroke[],
 ): SequenceRelation {
   if (
     left.length === right.length &&
-    left.every((stroke, index) => strokeEquals(stroke, right[index]))
+    left.every((stroke, index) => inputStrokeEquals(stroke, right[index]))
   ) {
     return "exact";
   }
 
   const commonLength = Math.min(left.length, right.length);
   const commonPrefix = Array.from({ length: commonLength }, (_, index) => index).every((index) =>
-    strokeEquals(left[index], right[index]),
+    inputStrokeEquals(left[index], right[index]),
   );
   return commonPrefix ? "prefix" : "separate";
 }
