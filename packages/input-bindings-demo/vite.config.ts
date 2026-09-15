@@ -16,6 +16,7 @@ export default defineConfig({
       input: {
         main: resolve(root, "index.html"),
         conflicts: resolve(root, "conflicts.html"),
+        runtime: resolve(root, "runtime.html"),
       },
     },
   },

@@ -46,11 +46,23 @@ Acceptance: a consumer can load an action catalog plus defaults and receive a co
 
 Acceptance: the Pages build can edit a realistic action catalog, expose every shared conflict-fixture class interactively, persist local profile changes across refresh, and reset exactly to consumer defaults.
 
-## 4. Runtime controller
+## 4. Runtime controller — implemented
 
-Provide reusable chord timeout, cancellation, repeat policy, key-up/key-down handling, focus/visibility reset, optional event consumption, and explain-why-this-fired diagnostics. Timing stays outside the pure resolver so conformance semantics remain deterministic.
+- Reusable `packages/input-bindings-runtime` controller consumes the validated registry/profile model and dispatches semantic action lifecycle events.
+- Chord state and timeout policy remain outside the pure resolver; scheduling is injectable and deterministic tests use a fake scheduler rather than wall-clock sleeps.
+- Exact bindings that are also chord prefixes dispatch on timeout, while completed longer chords win before the timeout.
+- Chord cancellation is explicit, and a mismatching continuation can be retried as a fresh shortcut instead of losing unrelated input.
+- Key-down, repeat, and key-up are first-class; per-action repeat policy suppresses or allows repeat events.
+- Active presses are tracked so key-up produces releases, and controller resets synthesize releases for held actions before clearing state.
+- Configuration updates, window blur, document hiding, and adapter detach can reset pending/active state so gameplay movement cannot remain stuck.
+- Event consumption is configurable as `never`, `matched`, or `dispatched`; pending chord leaders can therefore reserve browser input without pretending an action already fired.
+- Every handled input returns a structured decision with sequence, contexts, resolver result, dispatches, binding ids, timeout/chord/direct cause, ambiguity, suppression, and cancellation evidence.
+- Runtime configuration fails closed when registry/profile validation fails.
+- `packages/input-bindings-web` exposes one-call browser attachment with keyboard normalization, optional text-entry filtering, preventDefault/stopPropagation, blur reset, visibility reset, and cleanup.
+- The browser adapter remembers the normalized key-down stroke through repeat/key-up so release remains correct if focus, layout mode, modifiers, event target, or default-prevention state changes while a key is held.
+- GitHub Pages includes a runtime lab for direct shortcuts, prefix timeout, multi-stroke chords, held repeat input, release, cancellation, consumption, and blur/tab reset behavior.
 
-Acceptance: browser consumers can attach one controller and dispatch semantic actions without implementing chord state themselves.
+Acceptance: a browser consumer can attach one controller and dispatch semantic actions without implementing chord/timer/repeat/release state itself, and the runtime plus browser adapter are covered by deterministic tests and the production Pages build.
 
 ## 5. Additional device bindings
 
@@ -78,4 +90,4 @@ Acceptance: all three use the same semantics while owning only actions, defaults
 
 ## 9. Hardening and publication
 
-Add property/fuzz tests for determinism and profile idempotence, representative benchmarks, stable serialization compatibility tests, WASM only if measured need justifies it, package/crate naming and licensing decisions before public release, and version/release automation. Performance work should add benchmarks rather than brittle wall-clock CI thresholds.
+Add property/fuzz tests for determinism and profile idempotence, representative benchmarks, stable serialization compatibility tests, WASM only if measured need justifies it, package/crate naming and licensing decisions before public release, lockfile/install reproducibility, and version/release automation. Performance work should add benchmarks rather than brittle wall-clock CI thresholds.

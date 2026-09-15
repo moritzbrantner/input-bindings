@@ -1,4 +1,5 @@
 import type { KeyStroke, Modifiers } from "@moritzbrantner/input-bindings";
+import type { InputRuntimeController, RuntimeDecision } from "@moritzbrantner/input-bindings-runtime";
 
 export interface KeyboardEventLike {
   key: string;
@@ -18,6 +19,36 @@ export interface KeyboardAdapterOptions {
   ignoreComposing?: boolean;
   ignoreModifierOnly?: boolean;
   respectDefaultPrevented?: boolean;
+}
+
+export interface RuntimeKeyboardEventLike extends KeyboardEventLike {
+  repeat?: boolean;
+  target?: unknown;
+  preventDefault?: () => void;
+  stopPropagation?: () => void;
+}
+
+export interface RuntimeEventTargetLike {
+  addEventListener(type: string, listener: (event: any) => void): void;
+  removeEventListener(type: string, listener: (event: any) => void): void;
+}
+
+export interface VisibilityEventTargetLike extends RuntimeEventTargetLike {
+  hidden?: boolean;
+  visibilityState?: string;
+}
+
+export interface BrowserRuntimeAdapterOptions {
+  keyTarget?: RuntimeEventTargetLike;
+  focusTarget?: RuntimeEventTargetLike;
+  visibilityTarget?: VisibilityEventTargetLike;
+  mode?: "logical" | "physical" | (() => "logical" | "physical");
+  keyboardOptions?: Omit<KeyboardAdapterOptions, "mode">;
+  ignoreTextEntry?: boolean;
+  stopPropagation?: boolean;
+  resetOnBlur?: boolean;
+  resetOnHidden?: boolean;
+  resetOnDetach?: boolean;
 }
 
 const MODIFIER_ONLY_KEYS = new Set(["Alt", "AltGraph", "Control", "Meta", "Shift"]);
@@ -103,4 +134,112 @@ export function isTextEntryTarget(target: unknown): boolean {
   }
   const role = candidate.role ?? candidate.getAttribute?.("role");
   return role === "textbox" || role === "searchbox" || role === "combobox";
+}
+
+export function attachKeyboardRuntime(
+  controller: InputRuntimeController,
+  options: BrowserRuntimeAdapterOptions = {},
+): () => void {
+  const globals = globalThis as unknown as {
+    window?: RuntimeEventTargetLike;
+    document?: VisibilityEventTargetLike;
+  };
+  const keyTarget = options.keyTarget ?? globals.window;
+  if (!keyTarget) {
+    throw new Error("attachKeyboardRuntime requires a keyTarget outside a browser environment");
+  }
+  const focusTarget = options.focusTarget ?? globals.window;
+  const visibilityTarget = options.visibilityTarget ?? globals.document;
+  const ignoreTextEntry = options.ignoreTextEntry ?? false;
+  const resetOnBlur = options.resetOnBlur ?? true;
+  const resetOnHidden = options.resetOnHidden ?? true;
+  const resetOnDetach = options.resetOnDetach ?? true;
+  const pressedStrokes = new Map<string, KeyStroke>();
+
+  const applyConsumption = (event: RuntimeKeyboardEventLike, decision: RuntimeDecision) => {
+    if (!decision.consumed) return;
+    event.preventDefault?.();
+    if (options.stopPropagation) {
+      event.stopPropagation?.();
+    }
+  };
+
+  const currentMode = () =>
+    typeof options.mode === "function" ? options.mode() : (options.mode ?? "logical");
+
+  const normalize = (
+    event: RuntimeKeyboardEventLike,
+    overrides: Partial<KeyboardAdapterOptions> = {},
+  ) =>
+    keyboardEventToStroke(event, {
+      ...options.keyboardOptions,
+      mode: currentMode(),
+      ...overrides,
+    });
+
+  const eventIdentity = (event: RuntimeKeyboardEventLike) => event.code || event.key;
+
+  const onKeyDown = (rawEvent: any) => {
+    const event = rawEvent as RuntimeKeyboardEventLike;
+    if (ignoreTextEntry && isTextEntryTarget(event.target)) return;
+
+    const identity = eventIdentity(event);
+    const existingStroke = pressedStrokes.get(identity);
+    const stroke = existingStroke ?? normalize(event);
+    if (!stroke) return;
+    if (!existingStroke) {
+      pressedStrokes.set(identity, structuredClone(stroke));
+    }
+
+    const decision = controller.handleKeyDown(stroke, { repeat: Boolean(event.repeat) });
+    applyConsumption(event, decision);
+  };
+
+  const onKeyUp = (rawEvent: any) => {
+    const event = rawEvent as RuntimeKeyboardEventLike;
+    const identity = eventIdentity(event);
+    const storedStroke = pressedStrokes.get(identity);
+    pressedStrokes.delete(identity);
+    const stroke =
+      storedStroke ??
+      normalize(event, {
+        ignoreComposing: false,
+        respectDefaultPrevented: false,
+      });
+    if (!stroke) return;
+    const decision = controller.handleKeyUp(stroke);
+    applyConsumption(event, decision);
+  };
+
+  const reset = (reason: string) => {
+    pressedStrokes.clear();
+    controller.reset(reason);
+  };
+
+  const onBlur = () => {
+    if (resetOnBlur) reset("blur");
+  };
+
+  const onVisibilityChange = () => {
+    if (
+      resetOnHidden &&
+      (visibilityTarget?.hidden === true || visibilityTarget?.visibilityState === "hidden")
+    ) {
+      reset("hidden");
+    }
+  };
+
+  keyTarget.addEventListener("keydown", onKeyDown);
+  keyTarget.addEventListener("keyup", onKeyUp);
+  focusTarget?.addEventListener("blur", onBlur);
+  visibilityTarget?.addEventListener("visibilitychange", onVisibilityChange);
+
+  return () => {
+    keyTarget.removeEventListener("keydown", onKeyDown);
+    keyTarget.removeEventListener("keyup", onKeyUp);
+    focusTarget?.removeEventListener("blur", onBlur);
+    visibilityTarget?.removeEventListener("visibilitychange", onVisibilityChange);
+    pressedStrokes.clear();
+    if (resetOnDetach) controller.reset("detached");
+  };
 }
