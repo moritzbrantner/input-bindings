@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Binding, BindingPatch, Conflict, KeyMatch, Profile, ProfileDiagnosticKind, analyze_conflicts,
-    apply_profile,
+    Binding, BindingPatch, Conflict, DeviceStroke, InputStroke, KeyMatch, Profile,
+    ProfileDiagnosticKind, analyze_conflicts, apply_profile,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -70,6 +70,12 @@ pub enum ValidationDiagnosticKind {
     EmptySequence,
     InvalidLogicalKey,
     InvalidPhysicalKey,
+    InvalidMouseButton,
+    InvalidGamepadButton,
+    InvalidGamepadAxis,
+    InvalidGamepadIndex,
+    InvalidThreshold,
+    InvalidDeadzone,
     ProfileAddCollision,
     ProfileMissingBinding,
     ProfileReplacementIdMismatch,
@@ -113,6 +119,10 @@ pub fn validate_registry(
         .iter()
         .map(|action| action.id.clone())
         .collect::<BTreeSet<_>>();
+    let action_by_id = actions
+        .iter()
+        .map(|action| (action.id.clone(), action))
+        .collect::<BTreeMap<_, _>>();
     let mut diagnostics = Vec::new();
 
     let mut action_counts = BTreeMap::<String, usize>::new();
@@ -170,16 +180,6 @@ pub fn validate_registry(
             ));
         }
 
-        if !defaults.is_empty() && !action.allowed_devices.contains(&DeviceClass::Keyboard) {
-            diagnostics.push(diagnostic(
-                ValidationDiagnosticKind::DefaultDeviceNotAllowed,
-                Some(action.id.clone()),
-                None,
-                None,
-                None,
-            ));
-        }
-
         for binding in &defaults {
             if binding.action != action.id {
                 diagnostics.push(diagnostic(
@@ -190,7 +190,13 @@ pub fn validate_registry(
                     None,
                 ));
             }
-            validate_binding(binding, &known_actions, None, &mut diagnostics);
+            validate_binding(
+                binding,
+                &known_actions,
+                &action_by_id,
+                None,
+                &mut diagnostics,
+            );
         }
     }
 
@@ -236,6 +242,7 @@ pub fn validate_registry(
                     validate_binding(
                         binding,
                         &known_actions,
+                        &action_by_id,
                         Some(patch_index),
                         &mut profile_diagnostics,
                     );
@@ -265,6 +272,7 @@ pub fn validate_registry(
 fn validate_binding(
     binding: &Binding,
     known_actions: &BTreeSet<String>,
+    action_by_id: &BTreeMap<String, &ActionDefinition>,
     patch_index: Option<usize>,
     diagnostics: &mut Vec<ValidationDiagnostic>,
 ) {
@@ -298,18 +306,24 @@ fn validate_binding(
         ));
     }
 
-    for (stroke_index, stroke) in binding.sequence.iter().enumerate() {
-        let invalid_kind = match &stroke.key {
-            KeyMatch::Logical { value } if !valid_logical_key(value) => {
-                Some(ValidationDiagnosticKind::InvalidLogicalKey)
-            }
-            KeyMatch::Physical { value } if !valid_physical_key(value) => {
-                Some(ValidationDiagnosticKind::InvalidPhysicalKey)
-            }
-            _ => None,
-        };
+    let allowed = action_by_id
+        .get(&binding.action)
+        .map(|action| action.allowed_devices.as_slice())
+        .unwrap_or_default();
 
-        if let Some(kind) = invalid_kind {
+    for (stroke_index, stroke) in binding.sequence.iter().enumerate() {
+        let device = stroke_device_class(stroke);
+        if !allowed.contains(&device) {
+            diagnostics.push(diagnostic(
+                ValidationDiagnosticKind::DefaultDeviceNotAllowed,
+                Some(binding.action.clone()),
+                Some(binding.id.clone()),
+                patch_index,
+                Some(stroke_index),
+            ));
+        }
+
+        if let Some(kind) = invalid_stroke_kind(stroke) {
             diagnostics.push(diagnostic(
                 kind,
                 Some(binding.action.clone()),
@@ -321,14 +335,78 @@ fn validate_binding(
     }
 }
 
+fn stroke_device_class(stroke: &InputStroke) -> DeviceClass {
+    match stroke {
+        InputStroke::Keyboard(_) => DeviceClass::Keyboard,
+        InputStroke::Device(DeviceStroke::MouseButton { .. } | DeviceStroke::Wheel { .. }) => {
+            DeviceClass::Mouse
+        }
+        InputStroke::Device(
+            DeviceStroke::GamepadButton { .. } | DeviceStroke::GamepadAxis { .. },
+        ) => DeviceClass::Gamepad,
+    }
+}
+
+fn invalid_stroke_kind(stroke: &InputStroke) -> Option<ValidationDiagnosticKind> {
+    match stroke {
+        InputStroke::Keyboard(stroke) => match &stroke.key {
+            KeyMatch::Logical { value } if !valid_logical_key(value) => {
+                Some(ValidationDiagnosticKind::InvalidLogicalKey)
+            }
+            KeyMatch::Physical { value } if !valid_physical_key(value) => {
+                Some(ValidationDiagnosticKind::InvalidPhysicalKey)
+            }
+            _ => None,
+        },
+        InputStroke::Device(DeviceStroke::MouseButton { button, .. }) => {
+            (*button > 31).then_some(ValidationDiagnosticKind::InvalidMouseButton)
+        }
+        InputStroke::Device(DeviceStroke::Wheel { .. }) => None,
+        InputStroke::Device(DeviceStroke::GamepadButton {
+            button,
+            threshold,
+            gamepad,
+        }) => {
+            if gamepad.is_some_and(|value| value > 15) {
+                Some(ValidationDiagnosticKind::InvalidGamepadIndex)
+            } else if *button > 255 {
+                Some(ValidationDiagnosticKind::InvalidGamepadButton)
+            } else if !(1..=100).contains(threshold) {
+                Some(ValidationDiagnosticKind::InvalidThreshold)
+            } else {
+                None
+            }
+        }
+        InputStroke::Device(DeviceStroke::GamepadAxis {
+            axis,
+            threshold,
+            deadzone,
+            gamepad,
+            ..
+        }) => {
+            if gamepad.is_some_and(|value| value > 15) {
+                Some(ValidationDiagnosticKind::InvalidGamepadIndex)
+            } else if *axis > 31 {
+                Some(ValidationDiagnosticKind::InvalidGamepadAxis)
+            } else if !(1..=100).contains(threshold) {
+                Some(ValidationDiagnosticKind::InvalidThreshold)
+            } else if *deadzone >= *threshold || *deadzone > 99 {
+                Some(ValidationDiagnosticKind::InvalidDeadzone)
+            } else {
+                None
+            }
+        }
+    }
+}
+
 fn binding_is_resolvable(binding: &Binding, known_actions: &BTreeSet<String>) -> bool {
     !binding.id.is_empty()
         && known_actions.contains(&binding.action)
         && !binding.sequence.is_empty()
-        && binding.sequence.iter().all(|stroke| match &stroke.key {
-            KeyMatch::Logical { value } => valid_logical_key(value),
-            KeyMatch::Physical { value } => valid_physical_key(value),
-        })
+        && binding
+            .sequence
+            .iter()
+            .all(|stroke| invalid_stroke_kind(stroke).is_none())
 }
 
 fn valid_logical_key(value: &str) -> bool {
