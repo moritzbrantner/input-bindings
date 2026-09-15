@@ -13,6 +13,7 @@ const germanishLayout = new Map([
   ["KeyY", "z"],
   ["KeyZ", "y"],
   ["KeyA", "a"],
+  ["Space", " "],
 ]);
 
 test("logical strokes use the browser layout map while physical strokes stay positional", () => {
@@ -25,9 +26,10 @@ test("logical strokes use the browser layout map while physical strokes stay pos
     "KeyZ",
   );
   assert.equal(keyboardLabelForCode("KeyY", germanishLayout), "Z");
+  assert.equal(keyboardLabelForCode("Space", germanishLayout), "Space");
 });
 
-test("sequence and binding lookup expose occupied keyboard positions", () => {
+test("sequence and binding lookup expose primary and modifier positions", () => {
   const bindings: Binding[] = [
     {
       id: "logical.z",
@@ -41,7 +43,12 @@ test("sequence and binding lookup expose occupied keyboard positions", () => {
     },
   ];
 
-  assert.deepEqual(codesForSequence(bindings[0].sequence, germanishLayout), ["KeyY"]);
+  assert.deepEqual(codesForSequence(bindings[0].sequence, germanishLayout), [
+    "ControlLeft",
+    "ControlRight",
+    "KeyY",
+  ]);
   assert.deepEqual(bindingIdsForCode(bindings, "KeyY", germanishLayout), ["logical.z"]);
+  assert.deepEqual(bindingIdsForCode(bindings, "ControlLeft", germanishLayout), ["logical.z"]);
   assert.deepEqual(bindingIdsForCode(bindings, "Space", germanishLayout), ["physical.space"]);
 });
