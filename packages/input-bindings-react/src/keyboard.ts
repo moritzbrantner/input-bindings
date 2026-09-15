@@ -99,15 +99,17 @@ const PUNCTUATION_CODES: Readonly<Record<string, string>> = {
   "/": "Slash",
 };
 
+const LAYOUT_LABEL_CODE = /^(?:Key[A-Z]|Digit[0-9]|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/u;
+
 export function keyboardLabelForCode(
   code: string,
   layoutLabels?: ReadonlyMap<string, string>,
 ): string {
+  const fallback = KEYBOARD_ROWS.flat().find((key) => key.code === code)?.label ?? code;
+  if (!LAYOUT_LABEL_CODE.test(code)) return fallback;
   const layoutLabel = layoutLabels?.get(code);
-  if (layoutLabel) {
-    return layoutLabel.length === 1 ? layoutLabel.toLocaleUpperCase() : layoutLabel;
-  }
-  return KEYBOARD_ROWS.flat().find((key) => key.code === code)?.label ?? code;
+  if (!layoutLabel || layoutLabel.trim().length === 0) return fallback;
+  return layoutLabel.length === 1 ? layoutLabel.toLocaleUpperCase() : layoutLabel;
 }
 
 export function codeForStroke(
@@ -135,13 +137,26 @@ export function codeForStroke(
   return PUNCTUATION_CODES[value];
 }
 
+export function codesForStroke(
+  stroke: KeyStroke,
+  layoutLabels?: ReadonlyMap<string, string>,
+): string[] {
+  const codes: string[] = [];
+  if (stroke.modifiers?.ctrl) codes.push("ControlLeft", "ControlRight");
+  if (stroke.modifiers?.shift) codes.push("ShiftLeft", "ShiftRight");
+  if (stroke.modifiers?.alt) codes.push("AltLeft", "AltRight");
+  if (stroke.modifiers?.meta) codes.push("MetaLeft", "MetaRight");
+  if (stroke.modifiers?.altGraph) codes.push("AltRight");
+  const primary = codeForStroke(stroke, layoutLabels);
+  if (primary) codes.push(primary);
+  return [...new Set(codes)];
+}
+
 export function codesForSequence(
   sequence: readonly KeyStroke[],
   layoutLabels?: ReadonlyMap<string, string>,
 ): string[] {
-  return sequence
-    .map((stroke) => codeForStroke(stroke, layoutLabels))
-    .filter((code): code is string => Boolean(code));
+  return [...new Set(sequence.flatMap((stroke) => codesForStroke(stroke, layoutLabels)))];
 }
 
 export function bindingUsesCode(
@@ -149,7 +164,7 @@ export function bindingUsesCode(
   code: string,
   layoutLabels?: ReadonlyMap<string, string>,
 ): boolean {
-  return binding.sequence.some((stroke) => codeForStroke(stroke, layoutLabels) === code);
+  return binding.sequence.some((stroke) => codesForStroke(stroke, layoutLabels).includes(code));
 }
 
 export function bindingIdsForCode(
