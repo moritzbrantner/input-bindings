@@ -64,11 +64,23 @@ Acceptance: the Pages build can edit a realistic action catalog, expose every sh
 
 Acceptance: a browser consumer can attach one controller and dispatch semantic actions without implementing chord/timer/repeat/release state itself, and the runtime plus browser adapter are covered by deterministic tests and the production Pages build.
 
-## 5. Additional device bindings
+## 5. Additional device bindings — implemented
 
-Extend normalized triggers to mouse buttons, wheel directions, gamepad buttons, gamepad axes with thresholds/deadzones, and pointer gestures only where a concrete consumer justifies them. Keep touch UI actions separate from raw gestures unless a reusable abstraction proves useful.
+- Normalized input sequences now support mouse buttons, wheel directions, gamepad buttons, and signed gamepad axes while preserving the existing keyboard JSON representation.
+- Rust and TypeScript resolve the same shared device fixture, including keyboard and gamepad bindings that map to the same semantic action.
+- Device validation is per stroke and respects each action's declared allowed device classes.
+- Gamepad button/axis indices and deterministic integer-percentage thresholds/deadzones are validated fail-closed.
+- The runtime controller is device-agnostic and accepts normalized input-down/input-up transitions while keeping the keyboard API as a compatibility wrapper.
+- Browser mouse attachment translates button lifecycle and wheel pulses through the same runtime controller.
+- Browser gamepad attachment derives the controls it needs to poll from effective bindings, emits only state transitions, and applies axis threshold/deadzone hysteresis.
+- Runtime release identity is based on the held control rather than modifier state, so releasing modifiers before a key/button cannot strand an active action.
+- The React display/keyboard overview can describe non-keyboard bindings while keeping the keyboard recorder itself keyboard-specific.
+- GitHub Pages has real navigation/help hotkeys dispatched by `input-bindings-runtime` across every demo page.
+- A device lab demonstrates one action handler reached by Space, mouse click, and gamepad A, plus shared keyboard/gamepad movement and wheel actions.
+- Pages also publishes a stable self-contained ESM browser bundle as a temporary dogfood bridge for other Pages repositories before npm publication.
+- Raw pointer/touch gesture abstraction remains deferred until a concrete consumer demonstrates reusable semantics beyond mouse buttons/wheel.
 
-Acceptance: keyboard and gamepad can bind the same semantic game action without changing its command handler.
+Acceptance: keyboard, mouse, and gamepad bindings can drive the same semantic runtime action without changing its handler; cross-language fixtures, adapter transition tests, and the production Pages build validate the behavior.
 
 ## 6. Presets, persistence, and schema evolution
 
