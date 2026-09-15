@@ -154,6 +154,7 @@ export function attachKeyboardRuntime(
   const resetOnBlur = options.resetOnBlur ?? true;
   const resetOnHidden = options.resetOnHidden ?? true;
   const resetOnDetach = options.resetOnDetach ?? true;
+  const pressedStrokes = new Map<string, KeyStroke>();
 
   const applyConsumption = (event: RuntimeKeyboardEventLike, decision: RuntimeDecision) => {
     if (!decision.consumed) return;
@@ -163,32 +164,60 @@ export function attachKeyboardRuntime(
     }
   };
 
-  const normalize = (event: RuntimeKeyboardEventLike) =>
+  const currentMode = () =>
+    typeof options.mode === "function" ? options.mode() : (options.mode ?? "logical");
+
+  const normalize = (
+    event: RuntimeKeyboardEventLike,
+    overrides: Partial<KeyboardAdapterOptions> = {},
+  ) =>
     keyboardEventToStroke(event, {
       ...options.keyboardOptions,
-      mode: typeof options.mode === "function" ? options.mode() : (options.mode ?? "logical"),
+      mode: currentMode(),
+      ...overrides,
     });
+
+  const eventIdentity = (event: RuntimeKeyboardEventLike) => event.code || event.key;
 
   const onKeyDown = (rawEvent: any) => {
     const event = rawEvent as RuntimeKeyboardEventLike;
     if (ignoreTextEntry && isTextEntryTarget(event.target)) return;
-    const stroke = normalize(event);
+
+    const identity = eventIdentity(event);
+    const existingStroke = pressedStrokes.get(identity);
+    const stroke = existingStroke ?? normalize(event);
     if (!stroke) return;
+    if (!existingStroke) {
+      pressedStrokes.set(identity, structuredClone(stroke));
+    }
+
     const decision = controller.handleKeyDown(stroke, { repeat: Boolean(event.repeat) });
     applyConsumption(event, decision);
   };
 
   const onKeyUp = (rawEvent: any) => {
     const event = rawEvent as RuntimeKeyboardEventLike;
-    if (ignoreTextEntry && isTextEntryTarget(event.target)) return;
-    const stroke = normalize(event);
+    const identity = eventIdentity(event);
+    const storedStroke = pressedStrokes.get(identity);
+    pressedStrokes.delete(identity);
+    const stroke =
+      storedStroke ??
+      normalize(event, {
+        ignoreComposing: false,
+        respectDefaultPrevented: false,
+      });
     if (!stroke) return;
     const decision = controller.handleKeyUp(stroke);
     applyConsumption(event, decision);
   };
 
+  const reset = (reason: string) => {
+    pressedStrokes.clear();
+    controller.reset(reason);
+  };
+
   const onBlur = () => {
-    if (resetOnBlur) controller.reset("blur");
+    if (resetOnBlur) reset("blur");
   };
 
   const onVisibilityChange = () => {
@@ -196,7 +225,7 @@ export function attachKeyboardRuntime(
       resetOnHidden &&
       (visibilityTarget?.hidden === true || visibilityTarget?.visibilityState === "hidden")
     ) {
-      controller.reset("hidden");
+      reset("hidden");
     }
   };
 
@@ -210,6 +239,7 @@ export function attachKeyboardRuntime(
     keyTarget.removeEventListener("keyup", onKeyUp);
     focusTarget?.removeEventListener("blur", onBlur);
     visibilityTarget?.removeEventListener("visibilitychange", onVisibilityChange);
+    pressedStrokes.clear();
     if (resetOnDetach) controller.reset("detached");
   };
 }
