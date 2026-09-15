@@ -1,0 +1,12 @@
+{
+  "name": "@moritzbrantner/input-bindings-runtime",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@moritzbrantner/input-bindings": "0.1.0"
+  }
+}

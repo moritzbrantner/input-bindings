@@ -9,6 +9,8 @@
   "dependencies": {
     "@moritzbrantner/input-bindings": "0.1.0",
     "@moritzbrantner/input-bindings-react": "0.1.0",
+    "@moritzbrantner/input-bindings-runtime": "0.1.0",
+    "@moritzbrantner/input-bindings-web": "0.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
