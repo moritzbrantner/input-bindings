@@ -32,6 +32,58 @@ pub struct KeyStroke {
     pub modifiers: Modifiers,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum WheelDirection {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AxisDirection {
+    Positive,
+    Negative,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(tag = "device", rename_all = "camelCase")]
+pub enum DeviceStroke {
+    MouseButton {
+        button: u16,
+        #[serde(default)]
+        modifiers: Modifiers,
+    },
+    Wheel {
+        direction: WheelDirection,
+        #[serde(default)]
+        modifiers: Modifiers,
+    },
+    GamepadButton {
+        button: u16,
+        threshold: u8,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        gamepad: Option<u8>,
+    },
+    GamepadAxis {
+        axis: u8,
+        direction: AxisDirection,
+        threshold: u8,
+        deadzone: u8,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        gamepad: Option<u8>,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum InputStroke {
+    Keyboard(KeyStroke),
+    Device(DeviceStroke),
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "camelCase")]
 pub enum WhenExpr {
@@ -93,7 +145,7 @@ impl WhenExpr {
 pub struct Binding {
     pub id: String,
     pub action: String,
-    pub sequence: Vec<KeyStroke>,
+    pub sequence: Vec<InputStroke>,
     #[serde(default)]
     pub when: WhenExpr,
     #[serde(default)]
