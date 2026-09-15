@@ -6,6 +6,9 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
   base: "/input-bindings/",
+  esbuild: {
+    jsx: "automatic",
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,
