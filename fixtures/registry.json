@@ -1,0 +1,196 @@
+{
+  "cases": [
+    {
+      "name": "valid registry with user delta",
+      "registry": {
+        "actions": [
+          {
+            "id": "editor.save",
+            "title": "Save",
+            "categoryPath": ["Editor", "File"],
+            "repeatPolicy": "never",
+            "allowedDevices": ["keyboard"],
+            "defaults": [
+              {
+                "id": "save.default",
+                "action": "editor.save",
+                "sequence": [
+                  {
+                    "key": {"kind": "logical", "value": "s"},
+                    "modifiers": {"ctrl": true, "alt": false, "shift": false, "meta": false, "altGraph": false}
+                  }
+                ],
+                "when": {"op": "always"},
+                "priority": 0
+              }
+            ],
+            "provenance": {"source": "fixture", "version": "1"}
+          }
+        ]
+      },
+      "profile": {
+        "id": "user",
+        "patches": [
+          {
+            "op": "replace",
+            "bindingId": "save.default",
+            "binding": {
+              "id": "save.default",
+              "action": "editor.save",
+              "sequence": [
+                {
+                  "key": {"kind": "logical", "value": "s"},
+                  "modifiers": {"ctrl": true, "alt": false, "shift": true, "meta": false, "altGraph": false}
+                }
+              ],
+              "when": {"op": "always"},
+              "priority": 0
+            }
+          }
+        ]
+      },
+      "expected": {
+        "valid": true,
+        "effectiveBindings": [
+          {
+            "id": "save.default",
+            "action": "editor.save",
+            "sequence": [
+              {
+                "key": {"kind": "logical", "value": "s"},
+                "modifiers": {"ctrl": true, "alt": false, "shift": true, "meta": false, "altGraph": false}
+              }
+            ],
+            "when": {"op": "always"},
+            "priority": 0
+          }
+        ],
+        "diagnostics": [],
+        "conflicts": []
+      }
+    },
+    {
+      "name": "invalid defaults and stale profile are fail closed",
+      "registry": {
+        "actions": [
+          {
+            "id": "editor.save",
+            "title": "Save",
+            "categoryPath": ["Editor"],
+            "repeatPolicy": "never",
+            "allowedDevices": ["mouse"],
+            "defaults": [
+              {
+                "id": "broken",
+                "action": "missing.action",
+                "sequence": [],
+                "when": {"op": "always"},
+                "priority": 0
+              }
+            ],
+            "provenance": {"source": "fixture"}
+          }
+        ]
+      },
+      "profile": {
+        "id": "broken",
+        "patches": [{"op": "remove", "bindingId": "missing"}]
+      },
+      "expected": {
+        "valid": false,
+        "effectiveBindings": [
+          {
+            "id": "broken",
+            "action": "missing.action",
+            "sequence": [],
+            "when": {"op": "always"},
+            "priority": 0
+          }
+        ],
+        "diagnostics": [
+          {"kind": "defaultDeviceNotAllowed", "actionId": "editor.save"},
+          {"kind": "defaultActionMismatch", "actionId": "editor.save", "bindingId": "broken"},
+          {"kind": "unknownAction", "actionId": "missing.action", "bindingId": "broken"},
+          {"kind": "emptySequence", "actionId": "missing.action", "bindingId": "broken"},
+          {"kind": "profileMissingBinding", "bindingId": "missing", "patchIndex": 0}
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "name": "duplicate ids and impossible keys are reported",
+      "registry": {
+        "actions": [
+          {
+            "id": "editor.same",
+            "title": "A",
+            "categoryPath": [],
+            "repeatPolicy": "never",
+            "allowedDevices": ["keyboard"],
+            "defaults": [
+              {
+                "id": "dup",
+                "action": "editor.same",
+                "sequence": [
+                  {
+                    "key": {"kind": "physical", "value": "Key-A"},
+                    "modifiers": {"ctrl": false, "alt": false, "shift": false, "meta": false, "altGraph": false}
+                  }
+                ],
+                "when": {"op": "always"},
+                "priority": 0
+              }
+            ],
+            "provenance": {"source": "fixture"}
+          },
+          {
+            "id": "editor.same",
+            "title": "B",
+            "categoryPath": [],
+            "repeatPolicy": "never",
+            "allowedDevices": ["keyboard"],
+            "defaults": [
+              {
+                "id": "dup",
+                "action": "editor.same",
+                "sequence": [
+                  {
+                    "key": {"kind": "logical", "value": "Unidentified"},
+                    "modifiers": {"ctrl": false, "alt": false, "shift": false, "meta": false, "altGraph": false}
+                  }
+                ],
+                "when": {"op": "always"},
+                "priority": 0
+              }
+            ],
+            "provenance": {"source": "fixture"}
+          }
+        ]
+      },
+      "expected": {
+        "valid": false,
+        "effectiveBindings": [
+          {
+            "id": "dup",
+            "action": "editor.same",
+            "sequence": [
+              {
+                "key": {"kind": "physical", "value": "Key-A"},
+                "modifiers": {"ctrl": false, "alt": false, "shift": false, "meta": false, "altGraph": false}
+              }
+            ],
+            "when": {"op": "always"},
+            "priority": 0
+          }
+        ],
+        "diagnostics": [
+          {"kind": "duplicateActionId", "actionId": "editor.same"},
+          {"kind": "duplicateBindingId", "bindingId": "dup"},
+          {"kind": "invalidPhysicalKey", "actionId": "editor.same", "bindingId": "dup", "strokeIndex": 0},
+          {"kind": "invalidLogicalKey", "actionId": "editor.same", "bindingId": "dup", "strokeIndex": 0}
+        ],
+        "conflicts": []
+      }
+    }
+  ]
+}
