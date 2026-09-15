@@ -1,11 +1,13 @@
-import type {
-  ActionDefinition,
-  ActionRegistry,
-  Binding,
-  BindingPatch,
-  KeyStroke,
-  Profile,
-  WhenExpr,
+import {
+  inputStrokeEquals,
+  isKeyStroke,
+  type ActionDefinition,
+  type ActionRegistry,
+  type Binding,
+  type BindingPatch,
+  type InputStroke,
+  type Profile,
+  type WhenExpr,
 } from "@moritzbrantner/input-bindings";
 
 export function flattenDefaults(registry: ActionRegistry): Binding[] {
@@ -40,9 +42,7 @@ export function profileFromBindings(
   for (const [bindingId, binding] of [...effective.entries()].sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
-    if (!defaults.has(bindingId)) {
-      patches.push({ op: "add", binding });
-    }
+    if (!defaults.has(bindingId)) patches.push({ op: "add", binding });
   }
 
   return { id: profileId, patches };
@@ -60,9 +60,7 @@ export function actionIsChanged(
   const effective = effectiveBindings
     .filter((binding) => binding.action === action.id)
     .sort((a, b) => a.id.localeCompare(b.id));
-  if (defaults.length !== effective.length) {
-    return true;
-  }
+  if (defaults.length !== effective.length) return true;
   return defaults.some((binding, index) => !bindingEquals(binding, effective[index]));
 }
 
@@ -77,27 +75,38 @@ export function nextBindingId(actionId: string, bindings: readonly Binding[]): s
   return `${prefix}${next}`;
 }
 
-export function formatStroke(stroke: KeyStroke): string {
-  const modifiers = stroke.modifiers ?? {};
-  const parts = [
-    modifiers.ctrl ? "Ctrl" : null,
-    modifiers.alt ? "Alt" : null,
-    modifiers.shift ? "Shift" : null,
-    modifiers.meta ? "Meta" : null,
-    modifiers.altGraph ? "AltGr" : null,
-  ].filter((part): part is string => Boolean(part));
-  const key = stroke.key.kind === "physical" ? `[${stroke.key.value}]` : stroke.key.value;
-  return [...parts, key].join("+");
+export function formatStroke(stroke: InputStroke): string {
+  if (isKeyStroke(stroke)) {
+    const modifiers = stroke.modifiers ?? {};
+    const parts = [
+      modifiers.ctrl ? "Ctrl" : null,
+      modifiers.alt ? "Alt" : null,
+      modifiers.shift ? "Shift" : null,
+      modifiers.meta ? "Meta" : null,
+      modifiers.altGraph ? "AltGr" : null,
+    ].filter((part): part is string => Boolean(part));
+    const key = stroke.key.kind === "physical" ? `[${stroke.key.value}]` : stroke.key.value;
+    return [...parts, key].join("+");
+  }
+
+  switch (stroke.device) {
+    case "mouseButton":
+      return `${formatModifiers(stroke.modifiers)}${mouseButtonLabel(stroke.button)}`;
+    case "wheel":
+      return `${formatModifiers(stroke.modifiers)}Wheel ${capitalize(stroke.direction)}`;
+    case "gamepadButton":
+      return `${gamepadLabel(stroke.gamepad)} Button ${stroke.button} ≥ ${stroke.threshold}%`;
+    case "gamepadAxis":
+      return `${gamepadLabel(stroke.gamepad)} Axis ${stroke.axis} ${stroke.direction === "positive" ? "+" : "−"} ≥ ${stroke.threshold}% (deadzone ${stroke.deadzone}%)`;
+  }
 }
 
-export function formatSequence(sequence: readonly KeyStroke[]): string {
+export function formatSequence(sequence: readonly InputStroke[]): string {
   return sequence.map(formatStroke).join(" then ");
 }
 
 export function describeWhen(expression: WhenExpr | undefined): string {
-  if (!expression || expression.op === "always") {
-    return "Always";
-  }
+  if (!expression || expression.op === "always") return "Always";
   switch (expression.op) {
     case "context":
       return expression.id;
@@ -111,9 +120,7 @@ export function describeWhen(expression: WhenExpr | undefined): string {
 }
 
 export function contextsForWhen(expression: WhenExpr | undefined): string[] {
-  if (!expression || expression.op === "always") {
-    return [];
-  }
+  if (!expression || expression.op === "always") return [];
   switch (expression.op) {
     case "context":
       return [expression.id];
@@ -126,12 +133,12 @@ export function contextsForWhen(expression: WhenExpr | undefined): string[] {
 }
 
 export function sequenceStartsWith(
-  sequence: readonly KeyStroke[],
-  prefix: readonly KeyStroke[],
+  sequence: readonly InputStroke[],
+  prefix: readonly InputStroke[],
 ): boolean {
   return (
     prefix.length <= sequence.length &&
-    prefix.every((stroke, index) => strokeEquals(stroke, sequence[index]))
+    prefix.every((stroke, index) => inputStrokeEquals(stroke, sequence[index]))
   );
 }
 
@@ -139,29 +146,57 @@ function canonicalBinding(binding: Binding) {
   return {
     id: binding.id,
     action: binding.action,
-    sequence: binding.sequence.map((stroke) => ({
-      key: stroke.key,
-      modifiers: {
-        ctrl: Boolean(stroke.modifiers?.ctrl),
-        alt: Boolean(stroke.modifiers?.alt),
-        shift: Boolean(stroke.modifiers?.shift),
-        meta: Boolean(stroke.modifiers?.meta),
-        altGraph: Boolean(stroke.modifiers?.altGraph),
-      },
-    })),
+    sequence: binding.sequence.map((stroke) => {
+      if (!isKeyStroke(stroke)) return structuredClone(stroke);
+      return {
+        key: stroke.key,
+        modifiers: {
+          ctrl: Boolean(stroke.modifiers?.ctrl),
+          alt: Boolean(stroke.modifiers?.alt),
+          shift: Boolean(stroke.modifiers?.shift),
+          meta: Boolean(stroke.modifiers?.meta),
+          altGraph: Boolean(stroke.modifiers?.altGraph),
+        },
+      };
+    }),
     when: binding.when ?? { op: "always" },
     priority: binding.priority ?? 0,
   };
 }
 
-function strokeEquals(left: KeyStroke, right: KeyStroke): boolean {
-  return (
-    left.key.kind === right.key.kind &&
-    left.key.value === right.key.value &&
-    Boolean(left.modifiers?.ctrl) === Boolean(right.modifiers?.ctrl) &&
-    Boolean(left.modifiers?.alt) === Boolean(right.modifiers?.alt) &&
-    Boolean(left.modifiers?.shift) === Boolean(right.modifiers?.shift) &&
-    Boolean(left.modifiers?.meta) === Boolean(right.modifiers?.meta) &&
-    Boolean(left.modifiers?.altGraph) === Boolean(right.modifiers?.altGraph)
-  );
+function formatModifiers(modifiers: Binding["sequence"][number] extends { modifiers?: infer M } ? M : never): string {
+  const value = (modifiers ?? {}) as {
+    ctrl?: boolean;
+    alt?: boolean;
+    shift?: boolean;
+    meta?: boolean;
+    altGraph?: boolean;
+  };
+  return [
+    value.ctrl ? "Ctrl" : null,
+    value.alt ? "Alt" : null,
+    value.shift ? "Shift" : null,
+    value.meta ? "Meta" : null,
+    value.altGraph ? "AltGr" : null,
+  ]
+    .filter(Boolean)
+    .map((part) => `${part}+`)
+    .join("");
+}
+
+function mouseButtonLabel(button: number): string {
+  if (button === 0) return "Mouse Left";
+  if (button === 1) return "Mouse Middle";
+  if (button === 2) return "Mouse Right";
+  if (button === 3) return "Mouse Back";
+  if (button === 4) return "Mouse Forward";
+  return `Mouse Button ${button}`;
+}
+
+function gamepadLabel(index: number | undefined): string {
+  return index === undefined ? "Gamepad" : `Gamepad ${index + 1}`;
+}
+
+function capitalize(value: string): string {
+  return `${value.slice(0, 1).toLocaleUpperCase()}${value.slice(1)}`;
 }
