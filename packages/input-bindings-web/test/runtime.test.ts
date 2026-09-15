@@ -119,6 +119,38 @@ test("browser adapter normalizes key events, dispatches actions, and consumes ma
   detach();
 });
 
+test("key-up keeps the original normalized stroke across mode, target, and default-prevention changes", () => {
+  const keyTarget = new FakeTarget();
+  const dispatches: RuntimeDispatch[] = [];
+  let mode: "logical" | "physical" = "logical";
+  const controller = new InputRuntimeController({
+    registry,
+    getActiveContexts: () => new Set(),
+    onDispatch: (dispatch) => dispatches.push(dispatch),
+  });
+  const detach = attachKeyboardRuntime(controller, {
+    keyTarget,
+    mode: () => mode,
+    ignoreTextEntry: true,
+    resetOnDetach: false,
+  });
+
+  keyTarget.emit("keydown", keyboardEvent());
+  mode = "physical";
+  keyTarget.emit(
+    "keyup",
+    keyboardEvent({
+      ctrlKey: false,
+      defaultPrevented: true,
+      target: { tagName: "INPUT" },
+    }),
+  );
+
+  assert.deepEqual(dispatches.map((entry) => entry.phase), ["press", "release"]);
+  assert.equal(dispatches[1].bindingId, "save.default");
+  detach();
+});
+
 test("blur and hidden visibility reset active actions so held controls cannot stick", () => {
   const keyTarget = new FakeTarget();
   const focusTarget = new FakeTarget();
