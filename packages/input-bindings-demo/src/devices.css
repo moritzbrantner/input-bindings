@@ -1,0 +1,30 @@
+.device-surface {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 2rem;
+  border: 2px dashed #8c959f;
+  border-radius: 10px;
+  text-align: center;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.device-surface:focus-visible {
+  outline: 3px solid #0969da;
+  outline-offset: 3px;
+}
+
+.device-surface span {
+  color: #59636e;
+}
+
+@media (prefers-color-scheme: dark) {
+  .device-surface {
+    border-color: #6e7681;
+  }
+
+  .device-surface span {
+    color: #9198a1;
+  }
+}
