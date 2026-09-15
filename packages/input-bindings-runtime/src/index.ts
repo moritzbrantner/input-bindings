@@ -1,8 +1,10 @@
 import {
+  inputStrokeIdentity,
   resolve,
   validateRegistry,
   type ActionRegistry,
   type Binding,
+  type InputStroke,
   type KeyStroke,
   type Profile,
   type RegistryValidationReport,
@@ -48,7 +50,7 @@ export interface RuntimeDispatch {
   phase: RuntimeActionPhase;
   repeat: boolean;
   reason: RuntimeDispatchReason;
-  sequence: KeyStroke[];
+  sequence: InputStroke[];
   activeContexts: string[];
 }
 
@@ -56,13 +58,13 @@ export interface RuntimeExplanation {
   reason: RuntimeDecisionReason;
   bindingIds?: string[];
   continuationBindingIds?: string[];
-  cancelledSequence?: KeyStroke[];
+  cancelledSequence?: InputStroke[];
   resetReason?: string;
 }
 
 export interface RuntimeDecision {
   kind: RuntimeDecisionKind;
-  sequence: KeyStroke[];
+  sequence: InputStroke[];
   activeContexts: string[];
   resolution?: Resolution;
   dispatches: RuntimeDispatch[];
@@ -82,14 +84,16 @@ export interface RuntimeControllerOptions {
   onDecision?: (decision: RuntimeDecision) => void;
 }
 
-export interface KeyDownOptions {
+export interface InputDownOptions {
   repeat?: boolean;
 }
+
+export type KeyDownOptions = InputDownOptions;
 
 interface ActiveActivation {
   action: string;
   bindingId: string;
-  sequence: KeyStroke[];
+  sequence: InputStroke[];
   triggerKey: string;
   activeContexts: string[];
 }
@@ -114,10 +118,10 @@ export class InputRuntimeController {
   private readonly scheduler: RuntimeScheduler;
   private readonly onDispatch?: (dispatch: RuntimeDispatch) => void;
   private readonly onDecision?: (decision: RuntimeDecision) => void;
-  private pending: KeyStroke[] = [];
+  private pending: InputStroke[] = [];
   private timer: unknown;
   private readonly active = new Map<string, ActiveActivation[]>();
-  private readonly pressedKeys = new Set<string>();
+  private readonly pressedInputs = new Set<string>();
 
   constructor(options: RuntimeControllerOptions) {
     this.registry = structuredClone(options.registry);
@@ -136,7 +140,11 @@ export class InputRuntimeController {
     return structuredClone(this.report);
   }
 
-  get pendingSequence(): KeyStroke[] {
+  get effectiveBindings(): Binding[] {
+    return structuredClone(this.report.effectiveBindings);
+  }
+
+  get pendingSequence(): InputStroke[] {
     return structuredClone(this.pending);
   }
 
@@ -153,9 +161,13 @@ export class InputRuntimeController {
   }
 
   handleKeyDown(stroke: KeyStroke, options: KeyDownOptions = {}): RuntimeDecision {
+    return this.handleInputDown(stroke, options);
+  }
+
+  handleInputDown(stroke: InputStroke, options: InputDownOptions = {}): RuntimeDecision {
     const repeat = options.repeat ?? false;
-    const triggerKey = keyIdentity(stroke);
-    this.pressedKeys.add(triggerKey);
+    const triggerKey = inputStrokeIdentity(stroke);
+    this.pressedInputs.add(triggerKey);
     const contexts = this.contexts();
 
     if (!this.report.valid) {
@@ -206,13 +218,17 @@ export class InputRuntimeController {
       );
     }
 
-    return this.finishKeyDown(sequence, stroke, repeat, contexts, resolution);
+    return this.finishInputDown(sequence, stroke, repeat, contexts, resolution);
   }
 
   handleKeyUp(stroke: KeyStroke): RuntimeDecision {
+    return this.handleInputUp(stroke);
+  }
+
+  handleInputUp(stroke: InputStroke): RuntimeDecision {
     const contexts = this.contexts();
-    const triggerKey = keyIdentity(stroke);
-    this.pressedKeys.delete(triggerKey);
+    const triggerKey = inputStrokeIdentity(stroke);
+    this.pressedInputs.delete(triggerKey);
 
     if (!this.report.valid) {
       return this.emit(
@@ -283,7 +299,7 @@ export class InputRuntimeController {
     const contexts = this.contexts();
     const sequence = structuredClone(this.pending);
     this.clearPending();
-    this.pressedKeys.clear();
+    this.pressedInputs.clear();
 
     const dispatches = [...this.active.values()]
       .flat()
@@ -312,23 +328,23 @@ export class InputRuntimeController {
   }
 
   private processFreshStroke(
-    stroke: KeyStroke,
+    stroke: InputStroke,
     repeat: boolean,
     contexts: string[],
-    cancelledSequence: KeyStroke[],
+    cancelledSequence: InputStroke[],
   ): RuntimeDecision {
     const sequence = [structuredClone(stroke)];
     const resolution = resolve(this.report.effectiveBindings, sequence, new Set(contexts));
-    return this.finishKeyDown(sequence, stroke, repeat, contexts, resolution, cancelledSequence);
+    return this.finishInputDown(sequence, stroke, repeat, contexts, resolution, cancelledSequence);
   }
 
-  private finishKeyDown(
-    sequence: KeyStroke[],
-    triggerStroke: KeyStroke,
+  private finishInputDown(
+    sequence: InputStroke[],
+    triggerStroke: InputStroke,
     repeat: boolean,
     contexts: string[],
     resolution: Resolution,
-    cancelledSequence?: KeyStroke[],
+    cancelledSequence?: InputStroke[],
   ): RuntimeDecision {
     if (resolution.kind === "none") {
       this.clearPending();
@@ -418,9 +434,7 @@ export class InputRuntimeController {
       sequence: structuredClone(sequence),
       activeContexts: contexts,
     };
-    if (!repeat) {
-      this.activate(dispatch, triggerStroke);
-    }
+    if (!repeat) this.activate(dispatch, triggerStroke);
 
     return this.emit(
       this.decision(
@@ -440,9 +454,7 @@ export class InputRuntimeController {
   }
 
   private scheduleTimeout(): void {
-    if (this.timer !== undefined) {
-      this.scheduler.clearTimeout(this.timer);
-    }
+    if (this.timer !== undefined) this.scheduler.clearTimeout(this.timer);
     this.timer = this.scheduler.setTimeout(() => {
       this.timer = undefined;
       this.flushPendingTimeout();
@@ -450,9 +462,7 @@ export class InputRuntimeController {
   }
 
   private flushPendingTimeout(): void {
-    if (this.pending.length === 0 || !this.report.valid) {
-      return;
-    }
+    if (this.pending.length === 0 || !this.report.valid) return;
 
     const sequence = structuredClone(this.pending);
     this.pending = [];
@@ -473,7 +483,7 @@ export class InputRuntimeController {
         activeContexts: contexts,
       };
       const finalStroke = sequence.at(-1);
-      if (finalStroke && this.pressedKeys.has(keyIdentity(finalStroke))) {
+      if (finalStroke && this.pressedInputs.has(inputStrokeIdentity(finalStroke))) {
         this.activate(dispatch, finalStroke);
       }
       this.emit(
@@ -518,8 +528,8 @@ export class InputRuntimeController {
     );
   }
 
-  private activate(dispatch: RuntimeDispatch, triggerStroke: KeyStroke): void {
-    const triggerKey = keyIdentity(triggerStroke);
+  private activate(dispatch: RuntimeDispatch, triggerStroke: InputStroke): void {
+    const triggerKey = inputStrokeIdentity(triggerStroke);
     const existing = this.active.get(triggerKey) ?? [];
     if (!existing.some((activation) => activation.bindingId === dispatch.bindingId)) {
       existing.push({
@@ -558,7 +568,7 @@ export class InputRuntimeController {
 
   private decision(
     kind: RuntimeDecisionKind,
-    sequence: KeyStroke[],
+    sequence: InputStroke[],
     activeContexts: string[],
     dispatches: RuntimeDispatch[],
     consumed: boolean,
@@ -577,14 +587,8 @@ export class InputRuntimeController {
   }
 
   private emit(decision: RuntimeDecision): RuntimeDecision {
-    for (const dispatch of decision.dispatches) {
-      this.onDispatch?.(structuredClone(dispatch));
-    }
+    for (const dispatch of decision.dispatches) this.onDispatch?.(structuredClone(dispatch));
     this.onDecision?.(structuredClone(decision));
     return decision;
   }
-}
-
-function keyIdentity(stroke: KeyStroke): string {
-  return `${stroke.key.kind}:${stroke.key.value}`;
 }
