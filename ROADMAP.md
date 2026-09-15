@@ -28,13 +28,23 @@ Acceptance: the same fixture produces the same semantic answer in Rust and TypeS
 
 Acceptance: a consumer can load an action catalog plus defaults and receive a complete deterministic diagnostic report before accepting the configuration. Rust and TypeScript validate the same shared fixtures to the same result.
 
-## 3. Reusable React keybinding editor + GitHub Pages demo
+## 3. Reusable React keybinding editor + GitHub Pages demo — implemented
 
-Build the configuration surface once in `packages/input-bindings-react` and dogfood it on GitHub Pages. It should support search by action or pressed shortcut; filtering by category, context, device, changed/default, and conflict type; press-to-record shortcuts/chords; multiple bindings; add/replace/disable/reset; conflict explanations with overlapping contexts; provenance; logical/physical mode; keyboard-only operation; accessible focus behavior; and import/export preview.
+- Reusable `packages/input-bindings-react` editor over the shared registry/profile model.
+- Search by action metadata or shortcut text plus press-to-record shortcut filtering.
+- Filters for category, context, device, changed/default state, and conflict type.
+- Keyboard/chord recorder with logical and physical key modes.
+- Multiple bindings per action with add, edit, disable, per-action reset, and full reset.
+- Deterministic conversion of edits back into profile deltas rather than copied defaults.
+- Conflict explanations include conflict class, counterpart action, and overlap witness contexts when available.
+- Provenance and repeat/device metadata remain visible to users.
+- Import/export preview rejects structurally invalid profile state before applying it.
+- Keyboard-accessible controls, focusable recorder, responsive layout, and no decorative KPI cards.
+- GitHub Pages realistic catalog spans editor/timeline, tables, and gameplay actions and persists the profile in local storage.
+- A second Pages conflict lab is generated directly from `fixtures/conflicts.json`, keeping duplicate, ambiguity, override, and chord-prefix examples tied to conformance fixtures.
+- Pull-request validation builds the production Pages artifact before deployment.
 
-Avoid decorative KPI cards; prioritize the searchable binding table/editor itself.
-
-Acceptance: the Pages demo can edit a realistic action catalog, reproduce all shared conflict fixtures interactively, refresh without losing persisted local configuration, and reset exactly to defaults.
+Acceptance: the Pages build can edit a realistic action catalog, expose every shared conflict-fixture class interactively, persist local profile changes across refresh, and reset exactly to consumer defaults.
 
 ## 4. Runtime controller
 
