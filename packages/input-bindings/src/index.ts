@@ -133,18 +133,13 @@ export function inputDeviceClass(stroke: InputStroke): InputDeviceClass {
 
 export function inputStrokeIdentity(stroke: InputStroke): string {
   if (isKeyStroke(stroke)) {
-    return [
-      "keyboard",
-      stroke.key.kind,
-      stroke.key.value,
-      modifierIdentity(stroke.modifiers),
-    ].join(":");
+    return ["keyboard", stroke.key.kind, stroke.key.value].join(":");
   }
   switch (stroke.device) {
     case "mouseButton":
-      return ["mouseButton", stroke.button, modifierIdentity(stroke.modifiers)].join(":");
+      return ["mouseButton", stroke.button].join(":");
     case "wheel":
-      return ["wheel", stroke.direction, modifierIdentity(stroke.modifiers)].join(":");
+      return ["wheel", stroke.direction].join(":");
     case "gamepadButton":
       return ["gamepadButton", stroke.gamepad ?? "any", stroke.button, stroke.threshold].join(":");
     case "gamepadAxis":
@@ -201,9 +196,7 @@ export function resolve(
   sequence: readonly InputStroke[],
   activeContexts: ReadonlySet<string>,
 ): Resolution {
-  if (sequence.length === 0) {
-    return { kind: "none" };
-  }
+  if (sequence.length === 0) return { kind: "none" };
 
   const exact: Binding[] = [];
   const continuations: Binding[] = [];
@@ -215,11 +208,8 @@ export function resolve(
     if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
       continue;
     }
-    if (sequence.length === binding.sequence.length) {
-      exact.push(binding);
-    } else {
-      continuations.push(binding);
-    }
+    if (sequence.length === binding.sequence.length) exact.push(binding);
+    else continuations.push(binding);
   }
 
   if (continuations.length > 0) {
@@ -230,9 +220,7 @@ export function resolve(
     };
   }
 
-  if (exact.length === 0) {
-    return { kind: "none" };
-  }
+  if (exact.length === 0) return { kind: "none" };
 
   const topRank = exact.map(bindingRank).sort(compareRankDescending)[0];
   const top = exact
@@ -255,14 +243,10 @@ export function analyzeConflicts(bindings: readonly Binding[]): Conflict[] {
     for (let rightIndex = leftIndex + 1; rightIndex < bindings.length; rightIndex += 1) {
       const right = bindings[rightIndex];
       const relation = sequenceRelation(left.sequence, right.sequence);
-      if (relation === "separate") {
-        continue;
-      }
+      if (relation === "separate") continue;
 
       const overlap = contextOverlap(left.when, right.when);
-      if (overlap.kind === "disjoint") {
-        continue;
-      }
+      if (overlap.kind === "disjoint") continue;
 
       let kind: ConflictKind;
       if (overlap.kind === "unknown") {
@@ -398,16 +382,6 @@ function modifiersEqual(left: Modifiers | undefined, right: Modifiers | undefine
   );
 }
 
-function modifierIdentity(modifiers: Modifiers | undefined): string {
-  return [
-    Boolean(modifiers?.ctrl) ? "C" : "-",
-    Boolean(modifiers?.alt) ? "A" : "-",
-    Boolean(modifiers?.shift) ? "S" : "-",
-    Boolean(modifiers?.meta) ? "M" : "-",
-    Boolean(modifiers?.altGraph) ? "G" : "-",
-  ].join("");
-}
-
 type Rank = readonly [priority: number, specificity: number];
 
 function bindingRank(binding: Binding): Rank {
@@ -457,9 +431,7 @@ function contextOverlap(left: WhenExpr | undefined, right: WhenExpr | undefined)
   for (let mask = 0; mask < assignmentCount; mask += 1) {
     const active = new Set<string>();
     contexts.forEach((context, index) => {
-      if ((mask & 2 ** index) !== 0) {
-        active.add(context);
-      }
+      if ((mask & 2 ** index) !== 0) active.add(context);
     });
     if (evaluateWhen(left, active) && evaluateWhen(right, active)) {
       return { kind: "overlap", witnessContexts: [...active].sort() };
