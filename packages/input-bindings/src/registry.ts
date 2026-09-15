@@ -175,7 +175,7 @@ function validateBinding(
       kind: "emptyBindingId",
       actionId: binding.action,
       bindingId: binding.id,
-      patchIndex,
+      ...(patchIndex === undefined ? {} : { patchIndex }),
     });
   }
 
@@ -184,7 +184,7 @@ function validateBinding(
       kind: "unknownAction",
       actionId: binding.action,
       bindingId: binding.id,
-      patchIndex,
+      ...(patchIndex === undefined ? {} : { patchIndex }),
     });
   }
 
@@ -193,7 +193,7 @@ function validateBinding(
       kind: "emptySequence",
       actionId: binding.action,
       bindingId: binding.id,
-      patchIndex,
+      ...(patchIndex === undefined ? {} : { patchIndex }),
     });
   }
 
@@ -203,7 +203,7 @@ function validateBinding(
         kind: "invalidLogicalKey",
         actionId: binding.action,
         bindingId: binding.id,
-        patchIndex,
+        ...(patchIndex === undefined ? {} : { patchIndex }),
         strokeIndex,
       });
     }
@@ -212,7 +212,7 @@ function validateBinding(
         kind: "invalidPhysicalKey",
         actionId: binding.action,
         bindingId: binding.id,
-        patchIndex,
+        ...(patchIndex === undefined ? {} : { patchIndex }),
         strokeIndex,
       });
     }
