@@ -8,7 +8,7 @@ import {
   resolve,
   type Binding,
   type Conflict,
-  type KeyStroke,
+  type InputStroke,
   type Profile,
   type ProfileApplication,
   type Resolution,
@@ -17,12 +17,12 @@ import {
 const fixture = (name: string) =>
   JSON.parse(readFileSync(new URL(`../../../fixtures/${name}`, import.meta.url), "utf8"));
 
-test("resolution matches shared fixture", () => {
-  const data = fixture("resolution.json") as {
+function assertResolutionFixture(name: string): void {
+  const data = fixture(name) as {
     bindings: Binding[];
     cases: Array<{
       name: string;
-      sequence: KeyStroke[];
+      sequence: InputStroke[];
       activeContexts: string[];
       expected: Resolution;
     }>;
@@ -35,6 +35,14 @@ test("resolution matches shared fixture", () => {
       entry.name,
     );
   }
+}
+
+test("resolution matches shared fixture", () => {
+  assertResolutionFixture("resolution.json");
+});
+
+test("device resolution matches shared fixture", () => {
+  assertResolutionFixture("devices.json");
 });
 
 test("conflicts match shared fixture", () => {
