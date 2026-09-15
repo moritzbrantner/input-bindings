@@ -108,7 +108,6 @@
           }
         ],
         "diagnostics": [
-          {"kind": "defaultDeviceNotAllowed", "actionId": "editor.save"},
           {"kind": "defaultActionMismatch", "actionId": "editor.save", "bindingId": "broken"},
           {"kind": "unknownAction", "actionId": "missing.action", "bindingId": "broken"},
           {"kind": "emptySequence", "actionId": "missing.action", "bindingId": "broken"},
