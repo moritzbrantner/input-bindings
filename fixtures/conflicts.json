@@ -1,0 +1,20 @@
+{
+  "bindings": [
+    {"id":"global.open","action":"app.open","sequence":[{"key":{"kind":"logical","value":"o"},"modifiers":{"ctrl":true}}]},
+    {"id":"editor.open","action":"editor.open","sequence":[{"key":{"kind":"logical","value":"o"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.rename-a","action":"editor.renameA","sequence":[{"key":{"kind":"logical","value":"F2"}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.rename-b","action":"editor.renameB","sequence":[{"key":{"kind":"logical","value":"F2"}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.comment-prefix","action":"editor.commentMenu","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.comment-line","action":"editor.commentLine","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}},{"key":{"kind":"logical","value":"c"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"save.primary","action":"app.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}]},
+    {"id":"save.duplicate","action":"app.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}]},
+    {"id":"game.space","action":"game.fire","sequence":[{"key":{"kind":"logical","value":"Space"}}],"when":{"op":"all","exprs":[{"op":"context","id":"game"},{"op":"not","expr":{"op":"context","id":"editor"}}]}},
+    {"id":"editor.space","action":"editor.insertSpace","sequence":[{"key":{"kind":"logical","value":"Space"}}],"when":{"op":"context","id":"editor"}}
+  ],
+  "expected": [
+    {"leftBindingId":"global.open","rightBindingId":"editor.open","kind":"overrideExact","witnessContexts":["editor"]},
+    {"leftBindingId":"editor.rename-a","rightBindingId":"editor.rename-b","kind":"ambiguousExact","witnessContexts":["editor"]},
+    {"leftBindingId":"editor.comment-prefix","rightBindingId":"editor.comment-line","kind":"chordPrefix","witnessContexts":["editor"]},
+    {"leftBindingId":"save.primary","rightBindingId":"save.duplicate","kind":"duplicate"}
+  ]
+}

@@ -1,0 +1,7 @@
+[workspace]
+members = ["crates/input-bindings-core"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"

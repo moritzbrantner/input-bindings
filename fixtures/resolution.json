@@ -1,0 +1,17 @@
+{
+  "bindings": [
+    {"id":"global.save","action":"app.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}]},
+    {"id":"editor.save","action":"editor.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.comment-single","action":"editor.commentMenu","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.comment-line","action":"editor.commentLine","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}},{"key":{"kind":"logical","value":"c"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.palette-a","action":"editor.paletteA","sequence":[{"key":{"kind":"logical","value":"p"},"modifiers":{"ctrl":true,"shift":true}}],"when":{"op":"context","id":"editor"}},
+    {"id":"editor.palette-b","action":"editor.paletteB","sequence":[{"key":{"kind":"logical","value":"p"},"modifiers":{"ctrl":true,"shift":true}}],"when":{"op":"context","id":"editor"}}
+  ],
+  "cases": [
+    {"name":"global binding outside editor","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}],"activeContexts":[],"expected":{"kind":"resolved","bindingId":"global.save","action":"app.save"}},
+    {"name":"more specific context wins","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}],"activeContexts":["editor"],"expected":{"kind":"resolved","bindingId":"editor.save","action":"editor.save"}},
+    {"name":"chord prefix stays pending","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}}],"activeContexts":["editor"],"expected":{"kind":"pending","exactBindingIds":["editor.comment-single"],"continuationBindingIds":["editor.comment-line"]}},
+    {"name":"complete chord resolves","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}},{"key":{"kind":"logical","value":"c"},"modifiers":{"ctrl":true}}],"activeContexts":["editor"],"expected":{"kind":"resolved","bindingId":"editor.comment-line","action":"editor.commentLine"}},
+    {"name":"equal rank different actions are ambiguous","sequence":[{"key":{"kind":"logical","value":"p"},"modifiers":{"ctrl":true,"shift":true}}],"activeContexts":["editor"],"expected":{"kind":"ambiguous","bindingIds":["editor.palette-a","editor.palette-b"]}}
+  ]
+}
