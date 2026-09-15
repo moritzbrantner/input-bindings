@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/public.ts",
+    "./core": "./src/index.ts",
+    "./registry": "./src/registry.ts"
   },
-  "types": "./src/index.ts"
+  "types": "./src/public.ts"
 }
