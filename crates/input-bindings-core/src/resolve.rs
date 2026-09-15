@@ -58,7 +58,10 @@ pub fn resolve(
     }
 
     if !continuations.is_empty() {
-        let mut exact_binding_ids = exact.iter().map(|binding| binding.id.clone()).collect::<Vec<_>>();
+        let mut exact_binding_ids = exact
+            .iter()
+            .map(|binding| binding.id.clone())
+            .collect::<Vec<_>>();
         exact_binding_ids.sort();
         let mut continuation_binding_ids = continuations
             .iter()

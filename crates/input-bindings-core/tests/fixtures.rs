@@ -1,6 +1,9 @@
 use std::{collections::BTreeSet, fs, path::PathBuf};
 
-use input_bindings_core::{analyze_conflicts, apply_profile, resolve, Binding, Conflict, KeyStroke, Profile, ProfileApplication};
+use input_bindings_core::{
+    analyze_conflicts, apply_profile, resolve, Binding, Conflict, KeyStroke, Profile,
+    ProfileApplication,
+};
 use serde::Deserialize;
 use serde_json::Value;
 

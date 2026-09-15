@@ -37,18 +37,10 @@ pub struct KeyStroke {
 pub enum WhenExpr {
     #[default]
     Always,
-    Context {
-        id: String,
-    },
-    Not {
-        expr: Box<WhenExpr>,
-    },
-    All {
-        exprs: Vec<WhenExpr>,
-    },
-    Any {
-        exprs: Vec<WhenExpr>,
-    },
+    Context { id: String },
+    Not { expr: Box<WhenExpr> },
+    All { exprs: Vec<WhenExpr> },
+    Any { exprs: Vec<WhenExpr> },
 }
 
 impl WhenExpr {
