@@ -1,0 +1,76 @@
+{
+  "bindings": [
+    {
+      "id": "jump.keyboard",
+      "action": "game.jump",
+      "sequence": [
+        {"key":{"kind":"physical","value":"Space"}}
+      ],
+      "when": {"op":"context","id":"gameplay"}
+    },
+    {
+      "id": "jump.gamepad",
+      "action": "game.jump",
+      "sequence": [
+        {"device":"gamepadButton","button":0,"threshold":50,"gamepad":0}
+      ],
+      "when": {"op":"context","id":"gameplay"}
+    },
+    {
+      "id": "zoom.mouse",
+      "action": "camera.zoomIn",
+      "sequence": [
+        {"device":"wheel","direction":"up"}
+      ],
+      "when": {"op":"context","id":"viewport"}
+    },
+    {
+      "id": "select.mouse",
+      "action": "viewport.select",
+      "sequence": [
+        {"device":"mouseButton","button":0}
+      ],
+      "when": {"op":"context","id":"viewport"}
+    },
+    {
+      "id": "move.axis",
+      "action": "game.moveRight",
+      "sequence": [
+        {"device":"gamepadAxis","axis":0,"direction":"positive","threshold":60,"deadzone":20,"gamepad":0}
+      ],
+      "when": {"op":"context","id":"gameplay"}
+    }
+  ],
+  "cases": [
+    {
+      "name": "keyboard and gamepad share semantic action",
+      "sequence": [{"key":{"kind":"physical","value":"Space"}}],
+      "activeContexts": ["gameplay"],
+      "expected": {"kind":"resolved","bindingId":"jump.keyboard","action":"game.jump"}
+    },
+    {
+      "name": "gamepad button resolves same semantic action",
+      "sequence": [{"device":"gamepadButton","button":0,"threshold":50,"gamepad":0}],
+      "activeContexts": ["gameplay"],
+      "expected": {"kind":"resolved","bindingId":"jump.gamepad","action":"game.jump"}
+    },
+    {
+      "name": "wheel resolves mouse action",
+      "sequence": [{"device":"wheel","direction":"up"}],
+      "activeContexts": ["viewport"],
+      "expected": {"kind":"resolved","bindingId":"zoom.mouse","action":"camera.zoomIn"}
+    },
+    {
+      "name": "mouse button resolves selection",
+      "sequence": [{"device":"mouseButton","button":0}],
+      "activeContexts": ["viewport"],
+      "expected": {"kind":"resolved","bindingId":"select.mouse","action":"viewport.select"}
+    },
+    {
+      "name": "gamepad axis threshold binding resolves",
+      "sequence": [{"device":"gamepadAxis","axis":0,"direction":"positive","threshold":60,"deadzone":20,"gamepad":0}],
+      "activeContexts": ["gameplay"],
+      "expected": {"kind":"resolved","bindingId":"move.axis","action":"game.moveRight"}
+    }
+  ]
+}

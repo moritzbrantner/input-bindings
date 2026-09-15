@@ -1,7 +1,7 @@
 use std::{collections::BTreeSet, fs, path::PathBuf};
 
 use input_bindings_core::{
-    Binding, Conflict, KeyStroke, Profile, ProfileApplication, analyze_conflicts, apply_profile,
+    Binding, Conflict, InputStroke, Profile, ProfileApplication, analyze_conflicts, apply_profile,
     resolve,
 };
 use serde::Deserialize;
@@ -28,15 +28,14 @@ struct ResolutionFixture {
 #[serde(rename_all = "camelCase")]
 struct ResolutionCase {
     name: String,
-    sequence: Vec<KeyStroke>,
+    sequence: Vec<InputStroke>,
     active_contexts: Vec<String>,
     expected: Value,
 }
 
-#[test]
-fn resolution_matches_shared_fixture() {
+fn assert_resolution_fixture(name: &str) {
     let fixture: ResolutionFixture =
-        serde_json::from_str(&read_fixture("resolution.json")).expect("valid resolution fixture");
+        serde_json::from_str(&read_fixture(name)).expect("valid resolution fixture");
 
     for case in fixture.cases {
         let active_contexts = case.active_contexts.into_iter().collect::<BTreeSet<_>>();
@@ -44,6 +43,16 @@ fn resolution_matches_shared_fixture() {
         let actual = serde_json::to_value(actual).expect("resolution should serialize");
         assert_eq!(actual, case.expected, "case: {}", case.name);
     }
+}
+
+#[test]
+fn resolution_matches_shared_fixture() {
+    assert_resolution_fixture("resolution.json");
+}
+
+#[test]
+fn device_resolution_matches_shared_fixture() {
+    assert_resolution_fixture("devices.json");
 }
 
 #[derive(Deserialize)]

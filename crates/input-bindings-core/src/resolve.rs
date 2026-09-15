@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, HashSet};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Binding, KeyStroke};
+use crate::{Binding, InputStroke};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
@@ -27,7 +27,7 @@ pub enum Resolution {
 
 pub fn resolve(
     bindings: &[Binding],
-    sequence: &[KeyStroke],
+    sequence: &[InputStroke],
     active_contexts: &BTreeSet<String>,
 ) -> Resolution {
     if sequence.is_empty() {

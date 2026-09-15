@@ -1,5 +1,6 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 
+const distDirectory = new URL("../dist/", import.meta.url);
 const assetsDirectory = new URL("../dist/assets/", import.meta.url);
 const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
 
@@ -10,11 +11,18 @@ if (files.length === 0) {
 const failures = [];
 for (const file of files) {
   const source = await readFile(new URL(file, assetsDirectory), "utf8");
-  if (/\bReact\.(?:createElement|Fragment)\b/u.test(source)) {
-    failures.push(`${file}: contains classic JSX output that requires an unbound React global`);
-  }
-  if (/\bfrom\s*["']react(?:\/(?:jsx-runtime|jsx-dev-runtime))?["']/u.test(source)) {
-    failures.push(`${file}: contains a bare React import that browsers cannot resolve on GitHub Pages`);
+  verifyBrowserSource(source, `assets/${file}`, failures);
+}
+
+const browserBundleUrl = new URL("input-bindings-browser.js", distDirectory);
+const browserBundleStat = await stat(browserBundleUrl).catch(() => null);
+if (!browserBundleStat?.isFile()) {
+  failures.push("input-bindings-browser.js: stable browser dogfood bundle is missing");
+} else {
+  const source = await readFile(browserBundleUrl, "utf8");
+  verifyBrowserSource(source, "input-bindings-browser.js", failures);
+  if (/from\s*["']@moritzbrantner\//u.test(source)) {
+    failures.push("input-bindings-browser.js: contains an unresolved workspace package import");
   }
 }
 
@@ -22,4 +30,15 @@ if (failures.length > 0) {
   throw new Error(`Invalid Pages bundle:\n${failures.join("\n")}`);
 }
 
-console.log(`Verified ${files.length} Pages JavaScript assets use a browser-resolvable React runtime.`);
+console.log(
+  `Verified ${files.length} Pages JavaScript assets and the stable input-bindings browser bundle.`,
+);
+
+function verifyBrowserSource(source, label, failures) {
+  if (/\bReact\.(?:createElement|Fragment)\b/u.test(source)) {
+    failures.push(`${label}: contains classic JSX output that requires an unbound React global`);
+  }
+  if (/\bfrom\s*["']react(?:\/(?:jsx-runtime|jsx-dev-runtime))?["']/u.test(source)) {
+    failures.push(`${label}: contains a bare React import that browsers cannot resolve on GitHub Pages`);
+  }
+}

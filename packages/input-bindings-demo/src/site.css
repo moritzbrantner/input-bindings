@@ -54,6 +54,79 @@ body {
   color: #59636e;
 }
 
+.site-shortcut-hint {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.45rem;
+  background: Canvas;
+  color: CanvasText;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgb(31 35 40 / 14%);
+}
+
+.site-shortcut-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 48%);
+}
+
+.site-shortcut-dialog {
+  width: min(32rem, 100%);
+  padding: 1.25rem;
+  border-radius: 0.65rem;
+  background: Canvas;
+  color: CanvasText;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 28%);
+}
+
+.site-shortcut-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-shortcut-dialog h2,
+.site-shortcut-dialog p {
+  margin-top: 0;
+}
+
+.site-shortcut-dialog dl {
+  margin-bottom: 0;
+}
+
+.site-shortcut-dialog dl > div {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid #d8dee4;
+}
+
+.site-shortcut-dialog dt,
+.site-shortcut-dialog dd {
+  margin: 0;
+}
+
+.site-shortcut-dialog kbd {
+  padding: 0.12rem 0.35rem;
+  border: 1px solid #afb8c1;
+  border-bottom-width: 2px;
+  border-radius: 0.3rem;
+  font: inherit;
+  font-size: 0.85em;
+}
+
 @media (max-width: 720px) {
   .site-header {
     display: grid;
@@ -68,5 +141,10 @@ body {
   .site-header p,
   .site-note {
     color: #9198a1;
+  }
+
+  .site-shortcut-hint,
+  .site-shortcut-dialog dl > div {
+    border-color: #3d444d;
   }
 }

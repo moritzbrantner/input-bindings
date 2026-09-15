@@ -5,7 +5,10 @@ mod registry;
 mod resolve;
 
 pub use conflict::{Conflict, ConflictKind, ContextOverlap, analyze_conflicts};
-pub use model::{Binding, KeyMatch, KeyStroke, Modifiers, WhenExpr};
+pub use model::{
+    AxisDirection, Binding, DeviceStroke, InputStroke, KeyMatch, KeyStroke, Modifiers,
+    WheelDirection, WhenExpr,
+};
 pub use profile::{
     BindingPatch, Profile, ProfileApplication, ProfileDiagnostic, ProfileDiagnosticKind,
     apply_profile,
