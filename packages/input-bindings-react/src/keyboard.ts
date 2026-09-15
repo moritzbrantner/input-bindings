@@ -1,4 +1,9 @@
-import type { Binding, KeyStroke } from "@moritzbrantner/input-bindings";
+import {
+  isKeyStroke,
+  type Binding,
+  type InputStroke,
+  type KeyStroke,
+} from "@moritzbrantner/input-bindings";
 
 export interface KeyboardKeyDefinition {
   code: string;
@@ -116,9 +121,7 @@ export function codeForStroke(
   stroke: KeyStroke,
   layoutLabels?: ReadonlyMap<string, string>,
 ): string | undefined {
-  if (stroke.key.kind === "physical") {
-    return stroke.key.value;
-  }
+  if (stroke.key.kind === "physical") return stroke.key.value;
 
   const value = stroke.key.value;
   const special = SPECIAL_LOGICAL_CODES[value];
@@ -153,10 +156,16 @@ export function codesForStroke(
 }
 
 export function codesForSequence(
-  sequence: readonly KeyStroke[],
+  sequence: readonly InputStroke[],
   layoutLabels?: ReadonlyMap<string, string>,
 ): string[] {
-  return [...new Set(sequence.flatMap((stroke) => codesForStroke(stroke, layoutLabels)))];
+  return [
+    ...new Set(
+      sequence
+        .filter(isKeyStroke)
+        .flatMap((stroke) => codesForStroke(stroke, layoutLabels)),
+    ),
+  ];
 }
 
 export function bindingUsesCode(
@@ -164,7 +173,9 @@ export function bindingUsesCode(
   code: string,
   layoutLabels?: ReadonlyMap<string, string>,
 ): boolean {
-  return binding.sequence.some((stroke) => codesForStroke(stroke, layoutLabels).includes(code));
+  return binding.sequence.some(
+    (stroke) => isKeyStroke(stroke) && codesForStroke(stroke, layoutLabels).includes(code),
+  );
 }
 
 export function bindingIdsForCode(
