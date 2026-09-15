@@ -1,8 +1,8 @@
 use std::{collections::BTreeSet, fs, path::PathBuf};
 
 use input_bindings_core::{
-    analyze_conflicts, apply_profile, resolve, Binding, Conflict, KeyStroke, Profile,
-    ProfileApplication,
+    Binding, Conflict, KeyStroke, Profile, ProfileApplication, analyze_conflicts, apply_profile,
+    resolve,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -70,5 +70,8 @@ struct ProfileFixture {
 fn profiles_match_shared_fixture() {
     let fixture: ProfileFixture =
         serde_json::from_str(&read_fixture("profiles.json")).expect("valid profile fixture");
-    assert_eq!(apply_profile(&fixture.base, &fixture.profile), fixture.expected);
+    assert_eq!(
+        apply_profile(&fixture.base, &fixture.profile),
+        fixture.expected
+    );
 }
