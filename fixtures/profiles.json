@@ -1,0 +1,26 @@
+{
+  "base": [
+    {"id":"app.open","action":"app.open","sequence":[{"key":{"kind":"logical","value":"o"},"modifiers":{"ctrl":true}}]},
+    {"id":"app.save","action":"app.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true}}]}
+  ],
+  "profile": {
+    "id":"custom",
+    "patches":[
+      {"op":"replace","bindingId":"app.save","binding":{"id":"app.save","action":"app.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true,"shift":true}}]}},
+      {"op":"remove","bindingId":"app.open"},
+      {"op":"remove","bindingId":"missing"},
+      {"op":"add","binding":{"id":"user.command","action":"user.command","sequence":[{"key":{"kind":"logical","value":"u"},"modifiers":{"ctrl":true}}]}},
+      {"op":"add","binding":{"id":"user.command","action":"user.command.other","sequence":[{"key":{"kind":"logical","value":"v"},"modifiers":{"ctrl":true}}]}}
+    ]
+  },
+  "expected": {
+    "bindings":[
+      {"id":"app.save","action":"app.save","sequence":[{"key":{"kind":"logical","value":"s"},"modifiers":{"ctrl":true,"shift":true}}]},
+      {"id":"user.command","action":"user.command","sequence":[{"key":{"kind":"logical","value":"u"},"modifiers":{"ctrl":true}}]}
+    ],
+    "diagnostics":[
+      {"patchIndex":2,"kind":"missingBinding","bindingId":"missing"},
+      {"patchIndex":4,"kind":"addCollision","bindingId":"user.command"}
+    ]
+  }
+}

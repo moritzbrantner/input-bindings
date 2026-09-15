@@ -1,0 +1,14 @@
+{
+  "name": "input-bindings-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test:ts": "node --experimental-strip-types --test packages/input-bindings/test/*.test.ts packages/input-bindings-web/test/*.test.ts"
+  },
+  "engines": {
+    "node": ">=22.6"
+  }
+}
