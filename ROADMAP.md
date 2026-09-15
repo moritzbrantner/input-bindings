@@ -17,11 +17,16 @@ The goal is one reusable input-binding system for editors, games, websites, and 
 
 Acceptance: the same fixture produces the same semantic answer in Rust and TypeScript.
 
-## 2. Binding registry and validation
+## 2. Binding registry and validation — implemented
 
-Add a first-class action registry containing stable action id, consumer-supplied display metadata, category/path, repetition policy, allowed device classes, defaults, and provenance. Add validation for empty sequences, duplicate ids, invalid profile references, impossible key values, and action ids missing from a supplied registry.
+- First-class action registry with stable action id and consumer-supplied display metadata.
+- Category paths, repetition policy, allowed device classes, defaults, and provenance.
+- Deterministic validation reports shared by Rust and TypeScript.
+- Fail-closed diagnostics for duplicate action/binding ids, empty sequences, stale profile references, unknown actions, impossible key values, action/default mismatches, and incompatible default device classes.
+- Effective profile-applied bindings plus conflict analysis in one report.
+- Invalid bindings are excluded from conflict analysis so malformed data cannot create misleading overlap results.
 
-Acceptance: a consumer can load an action catalog plus defaults and receive a complete deterministic diagnostic report before accepting the configuration.
+Acceptance: a consumer can load an action catalog plus defaults and receive a complete deterministic diagnostic report before accepting the configuration. Rust and TypeScript validate the same shared fixtures to the same result.
 
 ## 3. Reusable React keybinding editor + GitHub Pages demo
 
