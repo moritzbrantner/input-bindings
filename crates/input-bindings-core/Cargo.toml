@@ -2,6 +2,13 @@
 name = "input-bindings-core"
 version.workspace = true
 edition.workspace = true
+description = "Deterministic input binding resolution, conflicts, profiles, and persistence"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/moritzbrantner/input-bindings"
+homepage = "https://github.com/moritzbrantner/input-bindings"
+readme = "README.md"
+keywords = ["input", "bindings", "shortcuts", "game-input", "hotkeys"]
+include = ["src/**", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

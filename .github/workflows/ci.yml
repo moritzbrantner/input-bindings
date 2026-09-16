@@ -19,6 +19,7 @@ jobs:
       - run: cargo test --locked --workspace --all-targets
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo fmt --all -- --check
+      - run: cargo package --locked -p input-bindings-core
 
   typescript:
     runs-on: ubuntu-latest
