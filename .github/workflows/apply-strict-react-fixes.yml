@@ -1,0 +1,74 @@
+name: Apply strict React package fixes
+
+on:
+  push:
+    branches:
+      - hardening/npm-package-builds
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply focused TypeScript fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("packages/input-bindings-react/src/index.tsx")
+          text = path.read_text()
+
+          replacements = [
+              (
+                  '  analyzeConflicts,\n  validateRegistry,',
+                  '  analyzeConflicts,\n  isKeyStroke,\n  validateRegistry,',
+              ),
+              (
+                  '  const editingBinding = editing?.bindingId ? bindingById.get(editing.bindingId) : undefined;\n  const selectedAction = selectedActionId ? actionById.get(selectedActionId) : undefined;',
+                  '  const editingBinding = editing?.bindingId ? bindingById.get(editing.bindingId) : undefined;\n  const editingSequence = editingBinding?.sequence.filter(isKeyStroke) ?? [];\n  const selectedAction = selectedActionId ? actionById.get(selectedActionId) : undefined;',
+              ),
+              (
+                  '          initialSequence={editingBinding?.sequence ?? []}',
+                  '          initialSequence={editingSequence}',
+              ),
+              (
+                  '                      onEdit={() => setEditing({ actionId: action.id, bindingId: binding.id })}',
+                  '                      onEdit={binding.sequence.every(isKeyStroke) ? () => setEditing({ actionId: action.id, bindingId: binding.id }) : undefined}',
+              ),
+              (
+                  '  onEdit: () => void;\n  onRemove: () => void;',
+                  '  onEdit?: () => void;\n  onRemove: () => void;',
+              ),
+              (
+                  '        <button type="button" onClick={onEdit}>Edit</button>',
+                  '        <button type="button" disabled={!onEdit} title={onEdit ? undefined : "Keyboard recorder does not edit this device binding."} onClick={onEdit}>Edit</button>',
+              ),
+              (
+                  '  const [sequence, setSequence] = useState<KeyStroke[]>(() => structuredClone(initialSequence));',
+                  '  const [sequence, setSequence] = useState<KeyStroke[]>(() => initialSequence.map((stroke) => structuredClone(stroke)));',
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count == 0:
+                  continue
+              if count != 1:
+                  raise SystemExit(f"expected one match, got {count}: {old[:80]!r}")
+              text = text.replace(old, new)
+
+          path.write_text(text)
+          PY
+      - name: Commit focused fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/input-bindings-react/src/index.tsx
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Fix strict React package typing"
+          git push origin HEAD:${GITHUB_REF_NAME}
