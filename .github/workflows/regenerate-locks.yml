@@ -1,0 +1,31 @@
+name: Regenerate workspace lockfiles
+
+on:
+  push:
+    branches:
+      - hardening/reproducible-installs
+
+permissions:
+  contents: write
+
+jobs:
+  locks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install --package-lock-only --ignore-scripts
+      - run: cargo generate-lockfile
+      - name: Commit generated lockfiles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json Cargo.lock
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Regenerate workspace lockfiles"
+          git push origin HEAD:${GITHUB_REF_NAME}
