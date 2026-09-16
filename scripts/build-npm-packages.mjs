@@ -1,5 +1,5 @@
-import { copyFileSync, existsSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
-import { extname, join, resolve } from "node:path";
+import { copyFileSync, existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
