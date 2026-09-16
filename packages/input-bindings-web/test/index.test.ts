@@ -24,8 +24,13 @@ test("logical mode follows the produced character", () => {
 });
 
 test("logical key normalization is locale invariant", () => {
-  assert.equal("I".toLocaleLowerCase("tr"), "ı");
-  assert.equal(normalizeLogicalKey("I"), "i");
+  const originalToLocaleLowerCase = String.prototype.toLocaleLowerCase;
+  String.prototype.toLocaleLowerCase = () => "ı";
+  try {
+    assert.equal(normalizeLogicalKey("I"), "i");
+  } finally {
+    String.prototype.toLocaleLowerCase = originalToLocaleLowerCase;
+  }
 });
 
 test("physical mode follows the key position", () => {
