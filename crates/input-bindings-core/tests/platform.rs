@@ -40,18 +40,19 @@ fn platform_conflict_diagnostics_match_shared_fixture() {
     .expect("platform conflict fixture should deserialize");
 
     for entry in fixture.cases {
-        let actual = analyze_platform_conflicts(&entry.bindings, &fixture.catalog, &entry.environment)
-            .iter()
-            .map(|diagnostic| ExpectedDiagnostic {
-                binding_id: diagnostic.binding_id.clone(),
-                kind: serde_json::to_value(&diagnostic.kind)
-                    .expect("kind should serialize")
-                    .as_str()
-                    .expect("kind should be a string")
-                    .to_owned(),
-                rule_id: diagnostic.rule_id.clone(),
-            })
-            .collect::<Vec<_>>();
+        let actual =
+            analyze_platform_conflicts(&entry.bindings, &fixture.catalog, &entry.environment)
+                .iter()
+                .map(|diagnostic| ExpectedDiagnostic {
+                    binding_id: diagnostic.binding_id.clone(),
+                    kind: serde_json::to_value(&diagnostic.kind)
+                        .expect("kind should serialize")
+                        .as_str()
+                        .expect("kind should be a string")
+                        .to_owned(),
+                    rule_id: diagnostic.rule_id.clone(),
+                })
+                .collect::<Vec<_>>();
         assert_eq!(actual, entry.expected, "case: {}", entry.name);
     }
 }
