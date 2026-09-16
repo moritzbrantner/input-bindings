@@ -1,0 +1,102 @@
+{
+  "profileId": "compat.v1",
+  "schemaVersion": 1,
+  "patches": [
+    {
+      "bindingId": "search.default",
+      "op": "remove",
+      "actionId": "editor.search"
+    },
+    {
+      "op": "add",
+      "binding": {
+        "sequence": [
+          {
+            "threshold": 128,
+            "gamepad": 0,
+            "direction": "positive",
+            "device": "gamepadAxis",
+            "deadzone": 20,
+            "axis": 0
+          }
+        ],
+        "priority": 0,
+        "when": {
+          "op": "always"
+        },
+        "action": "navigation.move",
+        "id": "move.gamepad"
+      },
+      "actionId": "navigation.move"
+    },
+    {
+      "bindingId": "save.default",
+      "binding": {
+        "when": {
+          "op": "all",
+          "exprs": [
+            {
+              "op": "context",
+              "id": "editing"
+            },
+            {
+              "op": "not",
+              "expr": {
+                "op": "context",
+                "id": "modal"
+              }
+            }
+          ]
+        },
+        "sequence": [
+          {
+            "modifiers": {
+              "shift": false,
+              "meta": true,
+              "ctrl": false,
+              "altGraph": false,
+              "alt": false
+            },
+            "key": {
+              "value": "s",
+              "kind": "logical"
+            }
+          }
+        ],
+        "priority": 4,
+        "id": "save.default",
+        "action": "editor.save"
+      },
+      "actionId": "editor.save",
+      "op": "replace"
+    },
+    {
+      "binding": {
+        "when": {
+          "op": "context",
+          "id": "canvas"
+        },
+        "priority": 1,
+        "sequence": [
+          {
+            "modifiers": {
+              "shift": false,
+              "meta": false,
+              "ctrl": false,
+              "altGraph": false,
+              "alt": false
+            },
+            "device": "mouseButton",
+            "button": 0
+          }
+        ],
+        "id": "pointer.primary",
+        "action": "editor.pointer"
+      },
+      "op": "add",
+      "actionId": "editor.pointer"
+    }
+  ],
+  "registryVersion": 7,
+  "presetId": "desktop"
+}

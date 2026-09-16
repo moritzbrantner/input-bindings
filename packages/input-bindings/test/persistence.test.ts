@@ -37,6 +37,15 @@ const fixture = JSON.parse(
   cases: FixtureCase[];
 };
 
+const serializationInput = JSON.parse(
+  readFileSync(new URL("../../../fixtures/serialization-v1.input.json", import.meta.url), "utf8"),
+) as PortableConfigurationV1;
+const serializationExpectedText = readFileSync(
+  new URL("../../../fixtures/serialization-v1.expected.json", import.meta.url),
+  "utf8",
+).trimEnd();
+const serializationExpected = JSON.parse(serializationExpectedText) as PortableConfigurationV1;
+
 test("portable persistence fixture matches migration, presets, stale diagnostics, and provenance", () => {
   for (const entry of fixture.cases) {
     const report = resolvePortableConfiguration(entry.configuration, {
@@ -121,4 +130,9 @@ test("portable export is deterministic and round-trips a profile", () => {
     serializePortableConfiguration(shuffled),
     serializePortableConfiguration(canonicalizePortableConfiguration(exported.configuration)),
   );
+});
+
+test("v1 portable serialization stays byte-compatible with the shared fixture", () => {
+  assert.deepEqual(canonicalizePortableConfiguration(serializationInput), serializationExpected);
+  assert.equal(serializePortableConfiguration(serializationInput), serializationExpectedText);
 });

@@ -3,12 +3,21 @@ use std::{fs, path::PathBuf};
 use input_bindings_core::{
     ActionRegistry, ConfigurationDiagnosticKind, EffectiveBindingLayer, MigrationStep,
     PortableBindingPatch, PortableConfigurationV1, PresetDefinition,
-    resolve_portable_configuration,
+    canonicalize_portable_configuration, resolve_portable_configuration,
 };
 use serde::Deserialize;
+use serde_json::Value;
 
 fn fixture_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/persistence.json")
+}
+
+fn serialization_input_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/serialization-v1.input.json")
+}
+
+fn serialization_expected_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/serialization-v1.expected.json")
 }
 
 #[derive(Deserialize)]
@@ -128,6 +137,28 @@ fn portable_persistence_fixture_matches_migration_presets_and_provenance() {
             case.name
         );
     }
+}
+
+#[test]
+fn v1_portable_serialization_stays_byte_compatible_with_shared_fixture() {
+    let input: PortableConfigurationV1 = serde_json::from_str(
+        &fs::read_to_string(serialization_input_path())
+            .expect("serialization input fixture should be readable"),
+    )
+    .expect("serialization input fixture should deserialize");
+    let expected_text = fs::read_to_string(serialization_expected_path())
+        .expect("serialization expected fixture should be readable");
+    let expected_value: Value =
+        serde_json::from_str(&expected_text).expect("serialization expected fixture should parse");
+
+    let canonical = canonicalize_portable_configuration(&input);
+    let canonical_value =
+        serde_json::to_value(&canonical).expect("canonical configuration should serialize");
+    assert_eq!(canonical_value, expected_value);
+
+    let stable_text =
+        serde_json::to_string_pretty(&canonical_value).expect("canonical value should serialize");
+    assert_eq!(stable_text, expected_text.trim_end());
 }
 
 fn diagnostic_kind_name(kind: &ConfigurationDiagnosticKind) -> String {
