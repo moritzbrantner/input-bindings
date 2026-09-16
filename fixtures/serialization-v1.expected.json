@@ -1,0 +1,102 @@
+{
+  "patches": [
+    {
+      "actionId": "editor.pointer",
+      "binding": {
+        "action": "editor.pointer",
+        "id": "pointer.primary",
+        "priority": 1,
+        "sequence": [
+          {
+            "button": 0,
+            "device": "mouseButton",
+            "modifiers": {
+              "alt": false,
+              "altGraph": false,
+              "ctrl": false,
+              "meta": false,
+              "shift": false
+            }
+          }
+        ],
+        "when": {
+          "id": "canvas",
+          "op": "context"
+        }
+      },
+      "op": "add"
+    },
+    {
+      "actionId": "editor.save",
+      "binding": {
+        "action": "editor.save",
+        "id": "save.default",
+        "priority": 4,
+        "sequence": [
+          {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            },
+            "modifiers": {
+              "alt": false,
+              "altGraph": false,
+              "ctrl": false,
+              "meta": true,
+              "shift": false
+            }
+          }
+        ],
+        "when": {
+          "exprs": [
+            {
+              "id": "editing",
+              "op": "context"
+            },
+            {
+              "expr": {
+                "id": "modal",
+                "op": "context"
+              },
+              "op": "not"
+            }
+          ],
+          "op": "all"
+        }
+      },
+      "bindingId": "save.default",
+      "op": "replace"
+    },
+    {
+      "actionId": "editor.search",
+      "bindingId": "search.default",
+      "op": "remove"
+    },
+    {
+      "actionId": "navigation.move",
+      "binding": {
+        "action": "navigation.move",
+        "id": "move.gamepad",
+        "priority": 0,
+        "sequence": [
+          {
+            "axis": 0,
+            "deadzone": 20,
+            "device": "gamepadAxis",
+            "direction": "positive",
+            "gamepad": 0,
+            "threshold": 128
+          }
+        ],
+        "when": {
+          "op": "always"
+        }
+      },
+      "op": "add"
+    }
+  ],
+  "presetId": "desktop",
+  "profileId": "compat.v1",
+  "registryVersion": 7,
+  "schemaVersion": 1
+}
