@@ -19,6 +19,7 @@ export default defineConfig({
         runtime: resolve(root, "runtime.html"),
         devices: resolve(root, "devices.html"),
         persistence: resolve(root, "persistence.html"),
+        platform: resolve(root, "platform.html"),
       },
     },
   },

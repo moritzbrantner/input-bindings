@@ -1,0 +1,164 @@
+{
+  "catalog": [
+    {
+      "id": "fixture.chrome.ctrl-t",
+      "title": "Browser opens a new tab",
+      "kind": "browserShortcut",
+      "severity": "warning",
+      "sequence": [
+        {
+          "key": { "kind": "logical", "value": "t" },
+          "modifiers": { "ctrl": true }
+        }
+      ],
+      "platforms": ["windows", "linux"],
+      "browsers": ["chromium"],
+      "source": {
+        "id": "fixture.browser",
+        "title": "Fixture browser source",
+        "url": "https://example.invalid/browser",
+        "verifiedOn": "2026-09-16"
+      }
+    },
+    {
+      "id": "fixture.windows.alt-f4",
+      "title": "Operating system closes the active app",
+      "kind": "osShortcut",
+      "severity": "warning",
+      "sequence": [
+        {
+          "key": { "kind": "logical", "value": "F4" },
+          "modifiers": { "alt": true }
+        }
+      ],
+      "platforms": ["windows"],
+      "source": {
+        "id": "fixture.os",
+        "title": "Fixture OS source",
+        "url": "https://example.invalid/os",
+        "verifiedOn": "2026-09-16"
+      }
+    },
+    {
+      "id": "fixture.mac.meta-q",
+      "title": "Operating system quits the app",
+      "kind": "osShortcut",
+      "severity": "warning",
+      "sequence": [
+        {
+          "key": { "kind": "logical", "value": "q" },
+          "modifiers": { "meta": true }
+        }
+      ],
+      "platforms": ["macos"],
+      "source": {
+        "id": "fixture.mac",
+        "title": "Fixture macOS source",
+        "url": "https://example.invalid/macos",
+        "verifiedOn": "2026-09-16"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "windows chromium combines catalog and synthesized advisories",
+      "environment": {
+        "platform": "windows",
+        "browser": "chromium",
+        "layoutMapAvailable": false
+      },
+      "bindings": [
+        {
+          "id": "altgr",
+          "action": "editor.altgr",
+          "sequence": [
+            {
+              "key": { "kind": "logical", "value": "q" },
+              "modifiers": { "ctrl": true, "alt": true }
+            }
+          ],
+          "when": { "op": "context", "id": "editorFocused" }
+        },
+        {
+          "id": "browser",
+          "action": "app.tab",
+          "sequence": [
+            {
+              "key": { "kind": "logical", "value": "t" },
+              "modifiers": { "ctrl": true }
+            }
+          ]
+        },
+        {
+          "id": "ime",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": { "kind": "logical", "value": "j" }
+            }
+          ]
+        },
+        {
+          "id": "layout",
+          "action": "game.left",
+          "sequence": [
+            {
+              "key": { "kind": "physical", "value": "KeyA" }
+            }
+          ],
+          "when": { "op": "context", "id": "gameplay" }
+        },
+        {
+          "id": "os",
+          "action": "app.close",
+          "sequence": [
+            {
+              "key": { "kind": "logical", "value": "F4" },
+              "modifiers": { "alt": true }
+            }
+          ]
+        }
+      ],
+      "expected": [
+        { "bindingId": "altgr", "kind": "altGraphSensitive" },
+        { "bindingId": "browser", "kind": "browserShortcut", "ruleId": "fixture.chrome.ctrl-t" },
+        { "bindingId": "ime", "kind": "imeSensitive" },
+        { "bindingId": "layout", "kind": "layoutSensitive" },
+        { "bindingId": "os", "kind": "osShortcut", "ruleId": "fixture.windows.alt-f4" }
+      ]
+    },
+    {
+      "name": "macOS applies only matching system rule",
+      "environment": {
+        "platform": "macos",
+        "browser": "safari",
+        "layoutMapAvailable": true
+      },
+      "bindings": [
+        {
+          "id": "quit",
+          "action": "app.quit",
+          "sequence": [
+            {
+              "key": { "kind": "logical", "value": "q" },
+              "modifiers": { "meta": true }
+            }
+          ]
+        },
+        {
+          "id": "physical",
+          "action": "game.move",
+          "sequence": [
+            {
+              "key": { "kind": "physical", "value": "KeyW" }
+            }
+          ],
+          "when": { "op": "context", "id": "gameplay" }
+        }
+      ],
+      "expected": [
+        { "bindingId": "quit", "kind": "osShortcut", "ruleId": "fixture.mac.meta-q" }
+      ]
+    }
+  ]
+}
