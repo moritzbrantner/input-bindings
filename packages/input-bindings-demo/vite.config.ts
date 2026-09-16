@@ -18,6 +18,7 @@ export default defineConfig({
         conflicts: resolve(root, "conflicts.html"),
         runtime: resolve(root, "runtime.html"),
         devices: resolve(root, "devices.html"),
+        persistence: resolve(root, "persistence.html"),
       },
     },
   },
