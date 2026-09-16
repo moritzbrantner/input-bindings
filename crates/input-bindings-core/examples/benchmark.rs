@@ -144,7 +144,10 @@ fn generate_bindings(count: usize, seed: u32, kind: ScenarioKind) -> Vec<Binding
                 index
             };
             let sequence = if matches!(kind, ScenarioKind::ResolveChordPrefix) {
-                vec![stroke(key_index, 0, &mut rng), stroke(key_index, 1, &mut rng)]
+                vec![
+                    stroke(key_index, 0, &mut rng),
+                    stroke(key_index, 1, &mut rng),
+                ]
             } else {
                 vec![stroke(key_index, 0, &mut rng)]
             };
@@ -208,18 +211,17 @@ fn mix(checksum: u32, value: u32) -> u32 {
 }
 
 fn text_fingerprint(value: &str) -> u32 {
-    value
-        .bytes()
-        .fold(2_166_136_261, |checksum, byte| mix(checksum, u32::from(byte)))
+    value.bytes().fold(2_166_136_261, |checksum, byte| {
+        mix(checksum, u32::from(byte))
+    })
 }
 
 fn resolution_fingerprint(resolution: &Resolution) -> u32 {
     match resolution {
         Resolution::None => 1,
-        Resolution::Resolved {
-            binding_id,
-            action,
-        } => mix(text_fingerprint(binding_id), text_fingerprint(action)),
+        Resolution::Resolved { binding_id, action } => {
+            mix(text_fingerprint(binding_id), text_fingerprint(action))
+        }
         Resolution::Ambiguous { binding_ids } => binding_ids
             .iter()
             .fold(3, |checksum, id| mix(checksum, text_fingerprint(id))),
@@ -251,7 +253,8 @@ fn benchmark_resolve(scenario: &Scenario) -> serde_json::Value {
     let started = Instant::now();
 
     for iteration in 0..scenario.iterations {
-        let binding = &bindings[((iteration as usize * 17) + scenario.seed as usize) % bindings.len()];
+        let binding =
+            &bindings[((iteration as usize * 17) + scenario.seed as usize) % bindings.len()];
         let sequence = if matches!(scenario.kind, ScenarioKind::ResolveChordPrefix) {
             &binding.sequence[..1]
         } else {
@@ -277,7 +280,10 @@ fn benchmark_conflicts(scenario: &Scenario) -> serde_json::Value {
         for conflict in conflicts {
             checksum = mix(checksum, text_fingerprint(&conflict.left_binding_id));
             checksum = mix(checksum, text_fingerprint(&conflict.right_binding_id));
-            checksum = mix(checksum, text_fingerprint(conflict_kind_name(&conflict.kind)));
+            checksum = mix(
+                checksum,
+                text_fingerprint(conflict_kind_name(&conflict.kind)),
+            );
         }
     }
 
@@ -331,10 +337,9 @@ fn scenario_result(scenario: &Scenario, started: Instant, checksum: u32) -> serd
 }
 
 fn main() {
-    let manifest: BenchmarkManifest = serde_json::from_str(include_str!(
-        "../../../benchmarks/scenarios.json"
-    ))
-    .expect("benchmark scenario manifest must be valid");
+    let manifest: BenchmarkManifest =
+        serde_json::from_str(include_str!("../../../benchmarks/scenarios.json"))
+            .expect("benchmark scenario manifest must be valid");
 
     let results = manifest
         .scenarios
