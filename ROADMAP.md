@@ -82,11 +82,21 @@ Acceptance: a browser consumer can attach one controller and dispatch semantic a
 
 Acceptance: keyboard, mouse, and gamepad bindings can drive the same semantic runtime action without changing its handler; cross-language fixtures, adapter transition tests, and the production Pages build validate the behavior.
 
-## 6. Presets, persistence, and schema evolution
+## 6. Presets, persistence, and schema evolution — implemented
 
-Add a versioned portable format, preset inheritance, user deltas over presets/defaults, migration rules for renamed/removed actions, deterministic import/export, stable ordering, and provenance for every effective binding.
+- Portable configuration schema v1 separates the persisted document version from the consumer registry version.
+- Portable add/remove/replace patches carry action identity, allowing migrations to update or retire overrides without guessing from a stale binding id.
+- Presets support deterministic inheritance; missing presets and inheritance cycles fail closed rather than partially applying an unknown hierarchy.
+- User deltas are layered over inherited presets and application defaults without copying the full default keymap into storage.
+- Ordered registry migrations support action rename, action removal, and binding rename across explicit version steps.
+- Removed-action overrides are dropped with a visible warning; stale binding overrides remain visible warnings and are never silently reinterpreted as a different command.
+- Future registry versions, missing migration paths, malformed migration direction, unknown actions, action mismatches, duplicate patch targets, and invalid preset state produce explicit diagnostics.
+- Every effective binding carries provenance identifying its default, preset, or user layer plus source metadata and patch index where relevant.
+- TypeScript provides deterministic canonical patch ordering and stable JSON serialization plus conversion to/from the existing runtime `Profile` representation.
+- Rust and TypeScript exercise the same persistence fixture for inherited presets, multi-step migration, removed actions, stale overrides, preset cycles, and provenance.
+- GitHub Pages includes a persistence lab generated from that shared fixture, allowing migration output, diagnostics, canonical JSON, effective bindings, and provenance to be inspected interactively.
 
-Acceptance: upgrading defaults does not overwrite user changes, and stale overrides are surfaced rather than silently reinterpreted.
+Acceptance: upgrading defaults does not overwrite user changes; action/binding evolution is handled only through explicit migrations, stale or retired overrides are surfaced rather than silently reinterpreted, and Rust/TypeScript agree on the effective result and provenance.
 
 ## 7. Platform/layout conflict catalog
 

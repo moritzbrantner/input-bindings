@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/public.ts",
     "./core": "./src/index.ts",
-    "./registry": "./src/registry.ts"
+    "./registry": "./src/registry.ts",
+    "./persistence": "./src/persistence.ts"
   },
   "types": "./src/public.ts"
 }

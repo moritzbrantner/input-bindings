@@ -26,11 +26,12 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Conflict analysis for duplicates, ambiguity, contextual overrides, chord prefixes, and conservative potential conflicts.
 - Profile deltas with add/remove/replace patches and diagnostics for stale or invalid overrides.
 - First-class action registry and fail-closed configuration validation.
-- Reusable React keybinding editor with search, filters, press-to-record editing, conflict explanations, import/export preview, reset, provenance, and local profile persistence in the Pages demo.
+- Reusable React keybinding editor with search, filters, keyboard overview, explicit press-to-record feedback, conflict explanations, reset, provenance, and local profile persistence in the Pages demo.
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
-- Browser adapter with keyboard normalization, IME/AltGr handling, stable release tracking, text-entry policy, focus/visibility reset, and one-call controller attachment.
+- Normalized keyboard, mouse, wheel, and gamepad inputs, with browser adapters for keyboard/mouse/gamepad runtime attachment.
+- Versioned portable configuration with inherited presets, explicit action/binding migrations, deterministic serialization, stale-override diagnostics, and provenance for every effective binding.
 - Shared JSON conformance fixtures used by Rust and TypeScript so semantic implementations cannot intentionally drift unnoticed.
-- GitHub Pages dogfood surfaces for the configuration editor, conflict fixtures, and live runtime controller behavior.
+- GitHub Pages dogfood surfaces for configuration, conflict analysis, runtime behavior, devices, and persistence/schema evolution.
 
 ## Repository layout
 
@@ -38,7 +39,7 @@ A game, editor, website, and desktop tool should not depend on one another merel
 crates/
   input-bindings-core/      authoritative deterministic semantics
 packages/
-  input-bindings/           TypeScript implementation + registry validation
+  input-bindings/           TypeScript semantics, registry + persistence
   input-bindings-runtime/   normalized runtime state, chords, repeat, releases
   input-bindings-web/       browser normalization + runtime attachment
   input-bindings-react/     reusable configuration editor
@@ -51,5 +52,7 @@ fixtures/                    cross-language conformance cases
 - Keybinding editor: https://moritzbrantner.github.io/input-bindings/
 - Conflict fixture lab: https://moritzbrantner.github.io/input-bindings/conflicts.html
 - Runtime controller lab: https://moritzbrantner.github.io/input-bindings/runtime.html
+- Device bindings lab: https://moritzbrantner.github.io/input-bindings/devices.html
+- Persistence & presets lab: https://moritzbrantner.github.io/input-bindings/persistence.html
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules and [ROADMAP.md](ROADMAP.md) for the remaining device, persistence, integration, and hardening slices.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules and [ROADMAP.md](ROADMAP.md) for the remaining platform-diagnostics, consumer-integration, and hardening slices.
