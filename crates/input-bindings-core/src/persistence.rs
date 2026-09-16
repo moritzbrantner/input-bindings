@@ -222,23 +222,23 @@ pub fn resolve_portable_configuration(
         .map(|preset| (preset.id.clone(), preset))
         .collect::<BTreeMap<_, _>>();
 
-    if let Some(preset_id) = &migrated.preset_id {
-        if let Some(chain) = resolve_preset_chain(preset_id, &preset_by_id, &mut diagnostics) {
-            for preset in chain {
-                apply_portable_layer(
-                    &mut effective,
-                    &canonicalize_patches(&preset.patches),
-                    &known_actions,
-                    EffectiveBindingProvenance {
-                        layer: EffectiveBindingLayer::Preset,
-                        source_id: preset.id.clone(),
-                        source: preset.provenance.clone(),
-                        patch_index: None,
-                    },
-                    &mut diagnostics,
-                    true,
-                );
-            }
+    if let Some(preset_id) = &migrated.preset_id
+        && let Some(chain) = resolve_preset_chain(preset_id, &preset_by_id, &mut diagnostics)
+    {
+        for preset in chain {
+            apply_portable_layer(
+                &mut effective,
+                &canonicalize_patches(&preset.patches),
+                &known_actions,
+                EffectiveBindingProvenance {
+                    layer: EffectiveBindingLayer::Preset,
+                    source_id: preset.id.clone(),
+                    source: preset.provenance.clone(),
+                    patch_index: None,
+                },
+                &mut diagnostics,
+                true,
+            );
         }
     }
 
