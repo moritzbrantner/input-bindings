@@ -1,125 +1,112 @@
 # Roadmap
 
-The goal is one reusable input-binding system for editors, games, websites, and other interactive tools. Work is organized as vertical slices so every completed phase is usable on its own.
+The goal is one reusable input-binding system for editors, games, websites, and other interactive tools. Each completed phase is a usable vertical slice with explicit authority boundaries and deterministic evidence.
 
 ## 1. Deterministic foundation — implemented
 
-- Semantic action ids independent of keys.
-- Logical and physical keyboard keys.
-- Chords and modifiers, including AltGraph.
-- Boolean contexts.
-- Deterministic resolution and explicit ambiguity.
+- Semantic action ids independent of input devices.
+- Logical and physical keyboard keys, modifiers including AltGraph, chords, and boolean contexts.
+- Deterministic precedence with explicit `pending`, `resolved`, `ambiguous`, and `none` outcomes.
 - Conflict analysis with overlap witnesses.
 - Delta-based profiles and diagnostics.
-- Rust/TypeScript conformance fixtures.
-- Browser normalization adapter.
-- CI for Rust and TypeScript.
+- Rust/TypeScript conformance fixtures and browser normalization.
 
 Acceptance: the same fixture produces the same semantic answer in Rust and TypeScript.
 
 ## 2. Binding registry and validation — implemented
 
-- First-class action registry with stable action id and consumer-supplied display metadata.
-- Category paths, repetition policy, allowed device classes, defaults, and provenance.
-- Deterministic validation reports shared by Rust and TypeScript.
-- Fail-closed diagnostics for duplicate action/binding ids, empty sequences, stale profile references, unknown actions, impossible key values, action/default mismatches, and incompatible default device classes.
-- Effective profile-applied bindings plus conflict analysis in one report.
-- Invalid bindings are excluded from conflict analysis so malformed data cannot create misleading overlap results.
+- First-class action registry with stable ids, display metadata, category paths, repeat policy, allowed devices, defaults, and provenance.
+- Deterministic fail-closed validation for malformed action/default/profile state.
+- Effective profile-applied bindings and conflict analysis in one report.
 
-Acceptance: a consumer can load an action catalog plus defaults and receive a complete deterministic diagnostic report before accepting the configuration. Rust and TypeScript validate the same shared fixtures to the same result.
+Acceptance: consumers can validate a complete catalog/profile before accepting it, with Rust and TypeScript agreeing on shared fixtures.
 
-## 3. Reusable React keybinding editor + GitHub Pages demo — implemented
+## 3. Reusable React editor + GitHub Pages — implemented
 
-- Reusable `packages/input-bindings-react` editor over the shared registry/profile model.
-- Search by action metadata or shortcut text plus press-to-record shortcut filtering.
-- Filters for category, context, device, changed/default state, and conflict type.
-- Keyboard/chord recorder with logical and physical key modes.
-- Multiple bindings per action with add, edit, disable, per-action reset, and full reset.
-- Deterministic conversion of edits back into profile deltas rather than copied defaults.
-- Conflict explanations include conflict class, counterpart action, and overlap witness contexts when available.
-- Provenance and repeat/device metadata remain visible to users.
-- Import/export preview rejects structurally invalid profile state before applying it.
-- Keyboard-accessible controls, focusable recorder, responsive layout, and no decorative KPI cards.
-- GitHub Pages realistic catalog spans editor/timeline, tables, and gameplay actions and persists the profile in local storage.
-- A second Pages conflict lab is generated directly from `fixtures/conflicts.json`, keeping duplicate, ambiguity, override, and chord-prefix examples tied to conformance fixtures.
-- Pull-request validation builds the production Pages artifact before deployment.
+- Search/filterable React configuration editor with multiple bindings, add/edit/disable/reset, import/export preview, provenance, and conflict explanations.
+- Explicit shortcut recorder feedback and a layout-aware keyboard overview showing used, selected, conflicting, pressed, and recorded keys.
+- Logical/physical recording, keyboard accessibility, local profile persistence, and fixture-backed conflict dogfood.
+- Production Pages artifact built on every PR.
 
-Acceptance: the Pages build can edit a realistic action catalog, expose every shared conflict-fixture class interactively, persist local profile changes across refresh, and reset exactly to consumer defaults.
+Acceptance: users can understand what was captured, inspect occupied/conflicting keys, persist edits, and reset exactly to consumer defaults.
 
 ## 4. Runtime controller — implemented
 
-- Reusable `packages/input-bindings-runtime` controller consumes the validated registry/profile model and dispatches semantic action lifecycle events.
-- Chord state and timeout policy remain outside the pure resolver; scheduling is injectable and deterministic tests use a fake scheduler rather than wall-clock sleeps.
-- Exact bindings that are also chord prefixes dispatch on timeout, while completed longer chords win before the timeout.
-- Chord cancellation is explicit, and a mismatching continuation can be retried as a fresh shortcut instead of losing unrelated input.
-- Key-down, repeat, and key-up are first-class; per-action repeat policy suppresses or allows repeat events.
-- Active presses are tracked so key-up produces releases, and controller resets synthesize releases for held actions before clearing state.
-- Configuration updates, window blur, document hiding, and adapter detach can reset pending/active state so gameplay movement cannot remain stuck.
-- Event consumption is configurable as `never`, `matched`, or `dispatched`; pending chord leaders can therefore reserve browser input without pretending an action already fired.
-- Every handled input returns a structured decision with sequence, contexts, resolver result, dispatches, binding ids, timeout/chord/direct cause, ambiguity, suppression, and cancellation evidence.
-- Runtime configuration fails closed when registry/profile validation fails.
-- `packages/input-bindings-web` exposes one-call browser attachment with keyboard normalization, optional text-entry filtering, preventDefault/stopPropagation, blur reset, visibility reset, and cleanup.
-- The browser adapter remembers the normalized key-down stroke through repeat/key-up so release remains correct if focus, layout mode, modifiers, event target, or default-prevention state changes while a key is held.
-- GitHub Pages includes a runtime lab for direct shortcuts, prefix timeout, multi-stroke chords, held repeat input, release, cancellation, consumption, and blur/tab reset behavior.
+- Reusable runtime controller for chord timeout/cancellation, key/input down/up, repeat policy, event consumption, dispatch evidence, and reset safety.
+- Browser attachment handles text-entry exclusion, stable release identity, blur/visibility reset, and cleanup.
+- Runtime configuration fails closed on invalid catalog/profile state.
 
-Acceptance: a browser consumer can attach one controller and dispatch semantic actions without implementing chord/timer/repeat/release state itself, and the runtime plus browser adapter are covered by deterministic tests and the production Pages build.
+Acceptance: a browser consumer attaches one controller and dispatches semantic actions without reimplementing chord/timer/repeat/release state.
 
 ## 5. Additional device bindings — implemented
 
-- Normalized input sequences now support mouse buttons, wheel directions, gamepad buttons, and signed gamepad axes while preserving the existing keyboard JSON representation.
-- Rust and TypeScript resolve the same shared device fixture, including keyboard and gamepad bindings that map to the same semantic action.
-- Device validation is per stroke and respects each action's declared allowed device classes.
-- Gamepad button/axis indices and deterministic integer-percentage thresholds/deadzones are validated fail-closed.
-- The runtime controller is device-agnostic and accepts normalized input-down/input-up transitions while keeping the keyboard API as a compatibility wrapper.
-- Browser mouse attachment translates button lifecycle and wheel pulses through the same runtime controller.
-- Browser gamepad attachment derives the controls it needs to poll from effective bindings, emits only state transitions, and applies axis threshold/deadzone hysteresis.
-- Runtime release identity is based on the held control rather than modifier state, so releasing modifiers before a key/button cannot strand an active action.
-- The React display/keyboard overview can describe non-keyboard bindings while keeping the keyboard recorder itself keyboard-specific.
-- GitHub Pages has real navigation/help hotkeys dispatched by `input-bindings-runtime` across every demo page.
-- A device lab demonstrates one action handler reached by Space, mouse click, and gamepad A, plus shared keyboard/gamepad movement and wheel actions.
-- Pages also publishes a stable self-contained ESM browser bundle as a temporary dogfood bridge for other Pages repositories before npm publication.
-- Raw pointer/touch gesture abstraction remains deferred until a concrete consumer demonstrates reusable semantics beyond mouse buttons/wheel.
+- Normalized mouse buttons, wheel directions, gamepad buttons, and signed gamepad axes.
+- Cross-language device conformance fixtures and device-aware validation.
+- Browser mouse/gamepad adapters and a device Pages lab.
+- Keyboard and gamepad can trigger the same semantic action without changing its handler.
+- A self-contained Pages ESM bridge exists temporarily for cross-repository dogfooding before package publication.
 
-Acceptance: keyboard, mouse, and gamepad bindings can drive the same semantic runtime action without changing its handler; cross-language fixtures, adapter transition tests, and the production Pages build validate the behavior.
+Acceptance: keyboard, mouse, and gamepad share one runtime/action model while domain handlers remain device-independent.
 
 ## 6. Presets, persistence, and schema evolution — implemented
 
-- Portable configuration schema v1 separates the persisted document version from the consumer registry version.
-- Portable add/remove/replace patches carry action identity, allowing migrations to update or retire overrides without guessing from a stale binding id.
-- Presets support deterministic inheritance; missing presets and inheritance cycles fail closed rather than partially applying an unknown hierarchy.
-- User deltas are layered over inherited presets and application defaults without copying the full default keymap into storage.
-- Ordered registry migrations support action rename, action removal, and binding rename across explicit version steps.
-- Removed-action overrides are dropped with a visible warning; stale binding overrides remain visible warnings and are never silently reinterpreted as a different command.
-- Future registry versions, missing migration paths, malformed migration direction, unknown actions, action mismatches, duplicate patch targets, and invalid preset state produce explicit diagnostics.
-- Every effective binding carries provenance identifying its default, preset, or user layer plus source metadata and patch index where relevant.
-- TypeScript provides deterministic canonical patch ordering and stable JSON serialization plus conversion to/from the existing runtime `Profile` representation.
-- Rust and TypeScript exercise the same persistence fixture for inherited presets, multi-step migration, removed actions, stale overrides, preset cycles, and provenance.
-- GitHub Pages includes a persistence lab generated from that shared fixture, allowing migration output, diagnostics, canonical JSON, effective bindings, and provenance to be inspected interactively.
+- Portable configuration schema v1 separates document schema version from consumer registry version.
+- Inherited presets plus user deltas over presets/defaults.
+- Explicit action rename/removal and binding-rename migrations.
+- Removed/stale overrides produce visible diagnostics rather than silent reinterpretation.
+- Deterministic serialization and provenance for every effective binding.
+- Shared Rust/TypeScript migration fixture and interactive persistence Pages lab.
 
-Acceptance: upgrading defaults does not overwrite user changes; action/binding evolution is handled only through explicit migrations, stale or retired overrides are surfaced rather than silently reinterpreted, and Rust/TypeScript agree on the effective result and provenance.
+Acceptance: upgrading defaults does not overwrite user changes and registry evolution occurs only through explicit, inspectable migrations.
 
 ## 7. Platform/layout conflict catalog — implemented
 
-- Rust and TypeScript share a deterministic platform-conflict analyzer over normalized bindings.
-- Declarative external-conflict rules carry environment targeting, advisory severity, source URL, source identity, and verification date rather than acting as universal bans.
-- The web catalog covers representative documented Chrome, Firefox, Safari, Windows, and macOS shortcuts while remaining independent from the core resolver.
-- Windows/Linux `Ctrl+Alt` combinations receive an AltGr-sensitive warning when they are not explicitly modeled as AltGraph input.
-- Globally active unmodified printable logical keys receive an IME/text-composition advisory so consumers keep text-entry contexts excluded and composing events ignored.
-- Physical bindings receive a layout-label advisory when `Keyboard.getLayoutMap()` is unavailable; the physical binding itself remains positionally valid.
-- Browser/platform detection is isolated in the web adapter and feeds the same generic analyzer used by explicit test environments.
-- Internal action conflicts and external platform/browser/input-method advisories are rendered as separate concepts in the React UI.
-- Every external advisory exposes its provenance instead of presenting changing platform behavior as timeless engine truth.
-- Rust and TypeScript validate browser, OS, AltGr, IME, and layout-sensitive cases from the same shared fixture.
-- GitHub Pages includes a platform conflict lab that can switch target platform/browser/layout-map availability and inspect the resulting advisory set and sources.
+- Shared deterministic advisory analyzer for browser/OS/input-method/layout conflicts.
+- Declarative rules carry environment targeting, severity, source URL, source id, and verification date.
+- Web catalog covers representative documented Chrome, Firefox, Safari, Windows, and macOS shortcuts.
+- Synthesized AltGr, IME/composition, and missing-layout-map advisories.
+- Internal action conflicts and external platform advisories are distinct in the React UI.
+- Shared Rust/TypeScript fixture and a switchable platform Pages lab.
 
-Acceptance: the editor explains internal conflicts and external platform conflicts distinctly, external findings never invalidate a binding by themselves, and every reported platform/layout advisory includes source provenance.
+Acceptance: external conflicts never invalidate a binding by themselves and every advisory includes provenance.
 
-## 8. First consumer integrations
+## 8. First consumer integrations — implemented
 
-Prove the boundary in three deliberately different workloads: one editor/timeline project with chords and dense commands, `tables` or another normal React application, and one game with physical movement keys plus contextual gameplay/menu bindings. Consumers must not fork resolver logic locally; missing capabilities come back here with conformance fixtures.
+Three deliberately different repositories now consume the same shared runtime semantics. The precise seams are documented in [CONSUMERS.md](CONSUMERS.md).
 
-Acceptance: all three use the same semantics while owning only actions, defaults, active contexts, and execution handlers.
+### SceneDetect RS — timeline/editor
 
-## 9. Hardening and publication
+- Existing dense workbench commands, labels, defaults, callbacks, and `scenedetect-rs.workbench.keyboard.v1` storage stay consumer-owned.
+- Existing saved single-key overrides are converted to runtime profile deltas.
+- Local key-to-command lookup was removed; shared runtime owns matching, text-entry exclusion, consumption, and reset/release lifecycle.
+- Native CI, Pages, and performance-evidence workflows passed before integration.
 
-Add property/fuzz tests for determinism and profile idempotence, representative benchmarks, stable serialization compatibility tests, WASM only if measured need justifies it, package/crate naming and licensing decisions before public release, lockfile/install reproducibility, and version/release automation. Performance work should add benchmarks rather than brittle wall-clock CI thresholds.
+### Tables — ordinary React application
+
+- Integration lives only in the Pages/example shell; `@moritzbrantner/tables` remains input-agnostic.
+- Consumer-owned `/` focuses pipeline search and `g` then `p` navigates to the pipeline overview.
+- Shared runtime owns logical normalization, chord timing, matched-event consumption, text-entry exclusion, and reset behavior.
+- Main verify, public-contract, deterministic-findings, Rust/Wasm parity, and benchmark evidence passed before integration.
+
+### Medieval — game controls
+
+- Physical WASD/arrows, zoom keys, Space, L/C, 0, and P remain consumer-owned defaults mapped to semantic battle actions.
+- Medieval remains authoritative for camera behavior, unit orders, formations, pause state, and the WASM battle simulation.
+- The direct browser `keydown` switch was removed; shared runtime owns physical matching, repeat policy, consumption, and release/reset lifecycle.
+- Tactical browser E2E, web contracts, full Rust validation, asset integration, and Windows/Linux/macOS desktop smoke passed before integration.
+
+All three currently consume the self-contained Pages ESM bridge while publication is hardened. None contains a fork of resolver, conflict, or runtime lifecycle logic.
+
+Acceptance: editor, ordinary React app, and game all use the same semantics while owning only their action catalogs, defaults, active contexts, and execution handlers.
+
+## 9. Hardening and publication — next
+
+- Add property/fuzz-style determinism and profile-idempotence coverage.
+- Add representative non-gating benchmarks that preserve historical comparability.
+- Add explicit stable serialization compatibility fixtures.
+- Keep browser execution in TypeScript unless measured evidence justifies a WASM boundary.
+- Finalize package/crate naming, license, package contents, and reproducible lockfile/install behavior.
+- Produce versioned release artifacts and release automation before replacing the temporary Pages ESM bridge in consumers.
+- Do not use brittle wall-clock performance pass/fail thresholds in ordinary CI.
+
+Acceptance: release artifacts are reproducible and versioned, serialization compatibility is guarded, determinism properties are exercised beyond hand-written examples, and consumer repos can replace the temporary bridge with pinned published/release artifacts without changing semantics.

@@ -57,4 +57,6 @@ fixtures/                    cross-language conformance cases
 - Persistence & presets lab: https://moritzbrantner.github.io/input-bindings/persistence.html
 - Platform & layout conflict lab: https://moritzbrantner.github.io/input-bindings/platform.html
 
+The first cross-repository dogfood integrations and their authority seams are documented in [CONSUMERS.md](CONSUMERS.md).
+
 See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules and [ROADMAP.md](ROADMAP.md) for the remaining consumer-integration and hardening slices.
