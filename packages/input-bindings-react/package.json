@@ -1,12 +1,29 @@
 {
   "name": "@moritzbrantner/input-bindings-react",
   "version": "0.1.0",
+  "description": "React keybinding editor, recorder, keyboard overview, and platform advisory UI",
+  "license": "MIT",
   "type": "module",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "vite build",
+    "prepack": "npm run build"
+  },
   "exports": {
-    ".": "./src/index.tsx",
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./dist/index.js"
+    },
     "./styles.css": "./src/styles.css",
-    "./model": "./src/model.ts",
-    "./platform-advisories": "./src/PlatformAwareKeybindingEditor.tsx"
+    "./platform-advisories.css": "./src/platform-advisories.css",
+    "./model": {
+      "types": "./src/model.ts",
+      "import": "./dist/model.js"
+    },
+    "./platform-advisories": {
+      "types": "./src/PlatformAwareKeybindingEditor.tsx",
+      "import": "./dist/platform-advisories.js"
+    }
   },
   "types": "./src/index.tsx",
   "dependencies": {
@@ -15,5 +32,16 @@
   },
   "peerDependencies": {
     "react": ">=19"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moritzbrantner/input-bindings.git",
+    "directory": "packages/input-bindings-react"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.6"
   }
 }
