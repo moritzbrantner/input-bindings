@@ -2,7 +2,8 @@ use std::{fs, path::PathBuf};
 
 use input_bindings_core::{
     ActionRegistry, ConfigurationDiagnosticKind, EffectiveBindingLayer, MigrationStep,
-    PortableBindingPatch, PortableConfigurationV1, PresetDefinition, resolve_portable_configuration,
+    PortableBindingPatch, PortableConfigurationV1, PresetDefinition,
+    resolve_portable_configuration,
 };
 use serde::Deserialize;
 
@@ -63,7 +64,10 @@ fn portable_persistence_fixture_matches_migration_presets_and_provenance() {
         );
         assert_eq!(report.valid, case.expected.valid, "case: {}", case.name);
         assert_eq!(
-            report.configuration.as_ref().map(|value| value.registry_version),
+            report
+                .configuration
+                .as_ref()
+                .map(|value| value.registry_version),
             Some(case.expected.migrated_registry_version),
             "case: {}",
             case.name
