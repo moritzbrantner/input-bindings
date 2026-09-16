@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.tsx",
     "./styles.css": "./src/styles.css",
-    "./model": "./src/model.ts"
+    "./model": "./src/model.ts",
+    "./platform-advisories": "./src/PlatformAwareKeybindingEditor.tsx"
   },
   "types": "./src/index.tsx",
   "dependencies": {
