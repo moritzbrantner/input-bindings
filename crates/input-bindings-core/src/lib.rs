@@ -1,6 +1,7 @@
 mod conflict;
 mod model;
 mod persistence;
+mod platform;
 mod profile;
 mod registry;
 mod resolve;
@@ -17,6 +18,11 @@ pub use persistence::{
     PortableConfigurationReport, PortableConfigurationV1, PresetDefinition,
     canonicalize_portable_configuration, portable_configuration_from_profile,
     profile_from_portable_configuration, resolve_portable_configuration,
+};
+pub use platform::{
+    BrowserFamily, PlatformConflictDiagnostic, PlatformConflictEnvironment, PlatformConflictKind,
+    PlatformConflictRule, PlatformConflictSeverity, PlatformConflictSource, PlatformFamily,
+    analyze_platform_conflicts,
 };
 pub use profile::{
     BindingPatch, Profile, ProfileApplication, ProfileDiagnostic, ProfileDiagnosticKind,
