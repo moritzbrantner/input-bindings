@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": 1,
+  "scenarios": [
+    {
+      "id": "resolve.direct.256.v1",
+      "kind": "resolveDirect",
+      "seed": 2703024129,
+      "bindingCount": 256,
+      "iterations": 20000
+    },
+    {
+      "id": "resolve.chord-prefix.256.v1",
+      "kind": "resolveChordPrefix",
+      "seed": 2246822507,
+      "bindingCount": 256,
+      "iterations": 20000
+    },
+    {
+      "id": "conflicts.overlap.128.v1",
+      "kind": "analyzeConflicts",
+      "seed": 3266489909,
+      "bindingCount": 128,
+      "iterations": 25
+    },
+    {
+      "id": "profile.apply.256x96.v1",
+      "kind": "applyProfile",
+      "seed": 668265263,
+      "bindingCount": 256,
+      "patchCount": 96,
+      "iterations": 1000
+    }
+  ]
+}
