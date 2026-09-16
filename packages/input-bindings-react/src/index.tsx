@@ -3,6 +3,7 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import {
   analyzeConflicts,
+  isKeyStroke,
   validateRegistry,
   type ActionDefinition,
   type ActionRegistry,
@@ -221,6 +222,7 @@ export function KeybindingEditor({
   };
 
   const editingBinding = editing?.bindingId ? bindingById.get(editing.bindingId) : undefined;
+  const editingSequence = editingBinding?.sequence.filter(isKeyStroke) ?? [];
   const selectedAction = selectedActionId ? actionById.get(selectedActionId) : undefined;
 
   return (
@@ -293,7 +295,7 @@ export function KeybindingEditor({
       {editing && (
         <BindingRecorder
           title={`${editing.bindingId ? "Edit" : "Add"} binding for ${actionById.get(editing.actionId)?.title ?? editing.actionId}`}
-          initialSequence={editingBinding?.sequence ?? []}
+          initialSequence={editingSequence}
           allBindings={effectiveBindings}
           allConflicts={report.conflicts}
           actionId={editing.actionId}
@@ -343,7 +345,7 @@ export function KeybindingEditor({
                       bindingById={bindingById}
                       actionById={actionById}
                       onSelect={() => { setSelectedActionId(action.id); setSelectedBindingId(binding.id); setKeyboardScope("selectedAction"); }}
-                      onEdit={() => setEditing({ actionId: action.id, bindingId: binding.id })}
+                      onEdit={binding.sequence.every(isKeyStroke) ? () => setEditing({ actionId: action.id, bindingId: binding.id }) : undefined}
                       onRemove={() => removeBinding(binding.id)}
                     />
                   ))}
@@ -413,7 +415,7 @@ function BindingEntry({ binding, selected, conflicts, bindingById, actionById, o
   bindingById: ReadonlyMap<string, Binding>;
   actionById: ReadonlyMap<string, ActionDefinition>;
   onSelect: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   onRemove: () => void;
 }) {
   return (
@@ -421,7 +423,7 @@ function BindingEntry({ binding, selected, conflicts, bindingById, actionById, o
       <div className="ib-binding-main">
         <button type="button" className="ib-binding-shortcut" aria-pressed={selected} onClick={onSelect}><kbd>{formatSequence(binding.sequence)}</kbd></button>
         <span className="ib-context">{describeWhen(binding.when)}</span>
-        <button type="button" onClick={onEdit}>Edit</button>
+        <button type="button" disabled={!onEdit} title={onEdit ? undefined : "Keyboard recorder does not edit this device binding."} onClick={onEdit}>Edit</button>
         <button type="button" onClick={onRemove}>Disable</button>
       </div>
       {conflicts.length > 0 && (
@@ -527,7 +529,7 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   onSave: (sequence: KeyStroke[]) => void;
   onCancel: () => void;
 }) {
-  const [sequence, setSequence] = useState<KeyStroke[]>(() => structuredClone(initialSequence));
+  const [sequence, setSequence] = useState<KeyStroke[]>(() => initialSequence.map((stroke) => structuredClone(stroke)));
   const [mode, setMode] = useState<"logical" | "physical">(initialSequence[0]?.key.kind ?? "logical");
   const [focused, setFocused] = useState(false);
   const [pressedCodes, setPressedCodes] = useState<Set<string>>(() => new Set());
