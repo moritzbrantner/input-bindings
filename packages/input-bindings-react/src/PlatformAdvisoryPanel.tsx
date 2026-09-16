@@ -12,6 +12,7 @@ import {
 } from "@moritzbrantner/input-bindings-web/platform-conflicts";
 
 import { formatSequence } from "./model.ts";
+import "./platform-advisories.css";
 
 export interface PlatformAdvisoryPanelProps {
   registry: ActionRegistry;
