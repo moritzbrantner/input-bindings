@@ -1,13 +1,46 @@
 {
   "name": "@moritzbrantner/input-bindings",
   "version": "0.1.0",
+  "description": "Deterministic input-binding resolution, conflict analysis, persistence, and platform advisories",
+  "license": "MIT",
   "type": "module",
-  "exports": {
-    ".": "./src/public.ts",
-    "./core": "./src/index.ts",
-    "./registry": "./src/registry.ts",
-    "./persistence": "./src/persistence.ts",
-    "./platform": "./src/platform.ts"
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "vite build",
+    "prepack": "npm run build"
   },
-  "types": "./src/public.ts"
+  "exports": {
+    ".": {
+      "types": "./src/public.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./src/index.ts",
+      "import": "./dist/core.js"
+    },
+    "./registry": {
+      "types": "./src/registry.ts",
+      "import": "./dist/registry.js"
+    },
+    "./persistence": {
+      "types": "./src/persistence.ts",
+      "import": "./dist/persistence.js"
+    },
+    "./platform": {
+      "types": "./src/platform.ts",
+      "import": "./dist/platform.js"
+    }
+  },
+  "types": "./src/public.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moritzbrantner/input-bindings.git",
+    "directory": "packages/input-bindings"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.6"
+  }
 }
