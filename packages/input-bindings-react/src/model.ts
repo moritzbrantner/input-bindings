@@ -6,6 +6,7 @@ import {
   type Binding,
   type BindingPatch,
   type InputStroke,
+  type Modifiers,
   type Profile,
   type WhenExpr,
 } from "@moritzbrantner/input-bindings";
@@ -164,14 +165,8 @@ function canonicalBinding(binding: Binding) {
   };
 }
 
-function formatModifiers(modifiers: Binding["sequence"][number] extends { modifiers?: infer M } ? M : never): string {
-  const value = (modifiers ?? {}) as {
-    ctrl?: boolean;
-    alt?: boolean;
-    shift?: boolean;
-    meta?: boolean;
-    altGraph?: boolean;
-  };
+function formatModifiers(modifiers: Modifiers | undefined): string {
+  const value = modifiers ?? {};
   return [
     value.ctrl ? "Ctrl" : null,
     value.alt ? "Alt" : null,

@@ -3,13 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/index.tsx",
-    "./styles.css": "./src/styles.css",
-    "./model": "./src/model.ts",
-    "./platform-advisories": "./src/PlatformAwareKeybindingEditor.tsx"
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moritzbrantner/input-bindings.git",
+    "directory": "packages/input-bindings-react"
   },
-  "types": "./src/index.tsx",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./model": {
+      "types": "./dist/model.d.ts",
+      "import": "./dist/model.js"
+    },
+    "./platform-advisories": {
+      "types": "./dist/PlatformAwareKeybindingEditor.d.ts",
+      "import": "./dist/PlatformAwareKeybindingEditor.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "@moritzbrantner/input-bindings": "0.1.0",
     "@moritzbrantner/input-bindings-web": "0.1.0"

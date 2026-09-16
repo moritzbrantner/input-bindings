@@ -6,11 +6,17 @@
     "packages/*"
   ],
   "scripts": {
-    "test:ts": "node --experimental-strip-types --test packages/input-bindings/test/*.test.ts packages/input-bindings-runtime/test/*.test.ts packages/input-bindings-web/test/*.test.ts packages/input-bindings-react/test/*.test.ts",
-    "build:pages": "npm run build --workspace @moritzbrantner/input-bindings-demo",
+    "build:packages": "node scripts/build-npm-packages.mjs",
+    "pack:packages": "node scripts/pack-npm-packages.mjs",
+    "test:ts": "npm run build:packages && node --experimental-strip-types --test packages/input-bindings/test/*.test.ts packages/input-bindings-runtime/test/*.test.ts packages/input-bindings-web/test/*.test.ts packages/input-bindings-react/test/*.test.ts",
+    "build:pages": "npm run build:packages && npm run build --workspace @moritzbrantner/input-bindings-demo",
     "bench:ts": "node --experimental-strip-types packages/input-bindings/benchmark/run.ts",
     "bench:rust": "cargo run --locked --release -p input-bindings-core --example benchmark --",
     "release:artifacts": "node scripts/build-release-artifacts.mjs"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=22.6"
