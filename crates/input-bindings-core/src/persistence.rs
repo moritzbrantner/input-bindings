@@ -79,12 +79,18 @@ pub struct PresetDefinition {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "camelCase")]
 pub enum MigrationRule {
-    RenameAction { from: String, to: String },
+    RenameAction {
+        from: String,
+        to: String,
+    },
     RemoveAction {
         #[serde(rename = "actionId")]
         action_id: String,
     },
-    RenameBinding { from: String, to: String },
+    RenameBinding {
+        from: String,
+        to: String,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -482,8 +488,9 @@ fn default_bindings_with_provenance(
         let mut bindings = action.defaults.iter().collect::<Vec<_>>();
         bindings.sort_by(|left, right| left.id.cmp(&right.id));
         for binding in bindings {
-            result.entry(binding.id.clone()).or_insert_with(|| {
-                EffectiveBindingWithProvenance {
+            result
+                .entry(binding.id.clone())
+                .or_insert_with(|| EffectiveBindingWithProvenance {
                     binding: binding.clone(),
                     provenance: EffectiveBindingProvenance {
                         layer: EffectiveBindingLayer::Default,
@@ -491,8 +498,7 @@ fn default_bindings_with_provenance(
                         source: action.provenance.clone(),
                         patch_index: None,
                     },
-                }
-            });
+                });
         }
     }
     result
@@ -589,14 +595,9 @@ fn apply_portable_layer(
             continue;
         }
         match patch {
-            PortableBindingPatch::Add {
-                action_id,
-                binding,
-            }
+            PortableBindingPatch::Add { action_id, binding }
             | PortableBindingPatch::Replace {
-                action_id,
-                binding,
-                ..
+                action_id, binding, ..
             } if binding.action != *action_id => {
                 push_patch_diagnostic(
                     diagnostics,
