@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
 use input_bindings_core::{
-    Binding, BindingPatch, Conflict, InputStroke, KeyMatch, KeyStroke, Modifiers, Profile, WhenExpr,
-    analyze_conflicts, apply_profile, canonicalize_portable_configuration,
+    Binding, BindingPatch, Conflict, InputStroke, KeyMatch, KeyStroke, Modifiers, Profile,
+    WhenExpr, analyze_conflicts, apply_profile, canonicalize_portable_configuration,
     portable_configuration_from_profile, profile_from_portable_configuration, resolve,
 };
 
@@ -204,8 +204,12 @@ fn generated_profiles_are_deterministic_and_canonical_persistence_is_idempotent(
             "profile depended on base order for seed {seed}"
         );
 
-        let (portable, diagnostics) = portable_configuration_from_profile(&profile, &bindings, 1, None);
-        assert!(diagnostics.is_empty(), "unexpected conversion diagnostic for seed {seed}");
+        let (portable, diagnostics) =
+            portable_configuration_from_profile(&profile, &bindings, 1, None);
+        assert!(
+            diagnostics.is_empty(),
+            "unexpected conversion diagnostic for seed {seed}"
+        );
         let canonical = canonicalize_portable_configuration(&portable);
         assert_eq!(
             canonicalize_portable_configuration(&canonical),
