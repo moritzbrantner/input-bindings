@@ -30,8 +30,9 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
 - Normalized keyboard, mouse, wheel, and gamepad inputs, with browser adapters for keyboard/mouse/gamepad runtime attachment.
 - Versioned portable configuration with inherited presets, explicit action/binding migrations, deterministic serialization, stale-override diagnostics, and provenance for every effective binding.
+- Advisory browser/OS/layout/AltGr/IME conflict analysis with environment targeting and source provenance, kept separate from internal binding conflicts.
 - Shared JSON conformance fixtures used by Rust and TypeScript so semantic implementations cannot intentionally drift unnoticed.
-- GitHub Pages dogfood surfaces for configuration, conflict analysis, runtime behavior, devices, and persistence/schema evolution.
+- GitHub Pages dogfood surfaces for configuration, internal conflicts, runtime behavior, devices, persistence/schema evolution, and platform/layout advisories.
 
 ## Repository layout
 
@@ -41,8 +42,8 @@ crates/
 packages/
   input-bindings/           TypeScript semantics, registry + persistence
   input-bindings-runtime/   normalized runtime state, chords, repeat, releases
-  input-bindings-web/       browser normalization + runtime attachment
-  input-bindings-react/     reusable configuration editor
+  input-bindings-web/       browser normalization + runtime attachment + web platform catalog
+  input-bindings-react/     reusable configuration editor + platform advisory UI
   input-bindings-demo/      GitHub Pages dogfood surfaces
 fixtures/                    cross-language conformance cases
 ```
@@ -54,5 +55,6 @@ fixtures/                    cross-language conformance cases
 - Runtime controller lab: https://moritzbrantner.github.io/input-bindings/runtime.html
 - Device bindings lab: https://moritzbrantner.github.io/input-bindings/devices.html
 - Persistence & presets lab: https://moritzbrantner.github.io/input-bindings/persistence.html
+- Platform & layout conflict lab: https://moritzbrantner.github.io/input-bindings/platform.html
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules and [ROADMAP.md](ROADMAP.md) for the remaining platform-diagnostics, consumer-integration, and hardening slices.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules and [ROADMAP.md](ROADMAP.md) for the remaining consumer-integration and hardening slices.
