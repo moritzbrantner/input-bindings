@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 3,
+  "profileId": "serialization-fixture",
+  "presetId": "vimish",
+  "patches": [
+    {
+      "op": "replace",
+      "actionId": "editor.save",
+      "bindingId": "save.default",
+      "binding": {
+        "id": "save.default",
+        "action": "editor.save",
+        "sequence": [
+          {
+            "key": { "kind": "logical", "value": "s" },
+            "modifiers": {
+              "ctrl": true,
+              "alt": false,
+              "shift": true,
+              "meta": false,
+              "altGraph": false
+            }
+          }
+        ],
+        "when": { "op": "context", "id": "editorFocused" },
+        "priority": 1
+      }
+    },
+    {
+      "op": "remove",
+      "actionId": "editor.open",
+      "bindingId": "open.default"
+    },
+    {
+      "op": "add",
+      "actionId": "editor.comment",
+      "binding": {
+        "id": "user:editor.comment:1",
+        "action": "editor.comment",
+        "sequence": [
+          {
+            "key": { "kind": "logical", "value": "k" },
+            "modifiers": {
+              "ctrl": true,
+              "alt": false,
+              "shift": false,
+              "meta": false,
+              "altGraph": false
+            }
+          },
+          {
+            "key": { "kind": "logical", "value": "c" },
+            "modifiers": {
+              "ctrl": true,
+              "alt": false,
+              "shift": false,
+              "meta": false,
+              "altGraph": false
+            }
+          }
+        ],
+        "when": { "op": "always" },
+        "priority": 0
+      }
+    }
+  ]
+}
