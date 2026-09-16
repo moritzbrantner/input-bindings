@@ -1,14 +1,38 @@
 {
   "name": "@moritzbrantner/input-bindings-web",
   "version": "0.1.0",
+  "description": "Browser adapters and platform-conflict diagnostics for input-bindings",
+  "license": "MIT",
   "type": "module",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "vite build",
+    "prepack": "npm run build"
+  },
   "exports": {
-    ".": "./src/index.ts",
-    "./platform-conflicts": "./src/platformCatalog.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./platform-conflicts": {
+      "types": "./src/platformCatalog.ts",
+      "import": "./dist/platform-conflicts.js"
+    }
   },
   "types": "./src/index.ts",
   "dependencies": {
     "@moritzbrantner/input-bindings": "0.1.0",
     "@moritzbrantner/input-bindings-runtime": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moritzbrantner/input-bindings.git",
+    "directory": "packages/input-bindings-web"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.6"
   }
 }
