@@ -2,7 +2,7 @@
 
 `input-bindings` owns normalized input, binding resolution, runtime lifecycle, persistence semantics, and reusable configuration UI. A consuming repository must continue to own its semantic actions, defaults, active contexts, and the code that actually performs each action.
 
-The first three integrations intentionally exercise different application shapes. They use the self-contained GitHub Pages ESM bridge while package publication is still being hardened; consumers must not copy resolver/runtime code locally.
+The integrations intentionally exercise different application shapes. They use the self-contained GitHub Pages ESM bridge while package publication is still being hardened; consumers must not copy resolver/runtime code locally.
 
 ## SceneDetect RS — dense timeline/editor
 
@@ -73,6 +73,29 @@ Shared foundation:
 - semantic dispatch.
 
 The direct browser `keydown` switch is removed; dispatched action ids call back into Medieval-owned functions. No battle-domain or simulation authority moves into `input-bindings`.
+
+## Angular — localized application shell
+
+Repository: `moritzbrantner/angular`
+
+Consumer-owned:
+
+- semantic navigation action ids and Alt-key defaults,
+- the `angularApp` context,
+- locale-aware route construction,
+- menu/hotkey-overlay open and close behavior,
+- the actual Angular Router effects.
+
+Shared foundation:
+
+- logical-key normalization and modifier/AltGraph semantics,
+- deterministic action matching,
+- matched-event consumption,
+- text-entry exclusion,
+- blur/visibility reset and release lifecycle,
+- semantic dispatch.
+
+The Angular integration removes its local `HotkeyService` and window-level key resolver. The adapter reports `loading`, `ready`, or `error` through a deterministic DOM data attribute so browser acceptance waits for the real shared runtime instead of racing the remote bridge. Loading failures are fail-closed; the application does not silently re-enable a second local resolver.
 
 ## Temporary browser bridge
 
