@@ -24,6 +24,22 @@ if (!browserBundleStat?.isFile()) {
   if (/from\s*["']@moritzbrantner\//u.test(source)) {
     failures.push("input-bindings-browser.js: contains an unresolved workspace package import");
   }
+
+  const browserApi = await import(browserBundleUrl.href);
+  for (const exportName of [
+    "InputRuntimeController",
+    "analyzeConflicts",
+    "applyProfile",
+    "attachGamepadRuntime",
+    "attachKeyboardRuntime",
+    "attachMouseRuntime",
+    "keyboardEventToStroke",
+    "validateRegistry",
+  ]) {
+    if (typeof browserApi[exportName] !== "function") {
+      failures.push(`input-bindings-browser.js: missing callable export ${exportName}`);
+    }
+  }
 }
 
 if (failures.length > 0) {
