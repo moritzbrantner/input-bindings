@@ -193,7 +193,7 @@ export function wheelEventToStroke(event: WheelEventLike): WheelStroke | null {
 export function normalizeLogicalKey(key: string): string {
   if (key === " ") return "Space";
   if (key === "Esc") return "Escape";
-  if (key.length === 1) return key.toLocaleLowerCase();
+  if (key.length === 1) return key.toLowerCase();
   return key;
 }
 
