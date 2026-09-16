@@ -1,0 +1,82 @@
+{
+  "patches": [
+    {
+      "actionId": "editor.comment",
+      "binding": {
+        "action": "editor.comment",
+        "id": "user:editor.comment:1",
+        "priority": 0,
+        "sequence": [
+          {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "alt": false,
+              "altGraph": false,
+              "ctrl": true,
+              "meta": false,
+              "shift": false
+            }
+          },
+          {
+            "key": {
+              "kind": "logical",
+              "value": "c"
+            },
+            "modifiers": {
+              "alt": false,
+              "altGraph": false,
+              "ctrl": true,
+              "meta": false,
+              "shift": false
+            }
+          }
+        ],
+        "when": {
+          "op": "always"
+        }
+      },
+      "op": "add"
+    },
+    {
+      "actionId": "editor.open",
+      "bindingId": "open.default",
+      "op": "remove"
+    },
+    {
+      "actionId": "editor.save",
+      "binding": {
+        "action": "editor.save",
+        "id": "save.default",
+        "priority": 1,
+        "sequence": [
+          {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            },
+            "modifiers": {
+              "alt": false,
+              "altGraph": false,
+              "ctrl": true,
+              "meta": false,
+              "shift": true
+            }
+          }
+        ],
+        "when": {
+          "id": "editorFocused",
+          "op": "context"
+        }
+      },
+      "bindingId": "save.default",
+      "op": "replace"
+    }
+  ],
+  "presetId": "vimish",
+  "profileId": "serialization-fixture",
+  "registryVersion": 3,
+  "schemaVersion": 1
+}
