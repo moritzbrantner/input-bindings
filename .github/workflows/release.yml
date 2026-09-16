@@ -1,0 +1,71 @@
+name: Release artifacts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci --ignore-scripts
+
+      - name: Build first artifact set
+        if: github.ref_type != 'tag'
+        run: npm run release:artifacts -- --output "$RUNNER_TEMP/release-a"
+      - name: Build first tagged artifact set
+        if: github.ref_type == 'tag'
+        run: npm run release:artifacts -- --version "${GITHUB_REF_NAME#v}" --output "$RUNNER_TEMP/release-a"
+
+      - name: Remove intermediate build outputs
+        run: rm -rf packages/input-bindings-demo/dist target/package
+
+      - name: Build second artifact set
+        if: github.ref_type != 'tag'
+        run: npm run release:artifacts -- --output "$RUNNER_TEMP/release-b"
+      - name: Build second tagged artifact set
+        if: github.ref_type == 'tag'
+        run: npm run release:artifacts -- --version "${GITHUB_REF_NAME#v}" --output "$RUNNER_TEMP/release-b"
+
+      - name: Verify byte-for-byte reproducibility
+        run: diff -qr "$RUNNER_TEMP/release-a" "$RUNNER_TEMP/release-b"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: input-bindings-release-${{ github.sha }}
+          path: ${{ runner.temp }}/release-a/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: input-bindings-release-${{ github.sha }}
+          path: release
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" release/* --clobber
+          else
+            gh release create "$tag" release/* --verify-tag --title "$tag" --generate-notes
+          fi
