@@ -36,14 +36,20 @@ function PersistenceLab() {
 
   const preview = useMemo(() => {
     try {
-      const configuration = JSON.parse(draft) as PortableConfigurationV1;
-      const report = resolvePortableConfiguration(configuration, {
+      const value = JSON.parse(draft) as unknown;
+      if (!isPortableConfiguration(value)) {
+        return {
+          error:
+            "JSON is not a portable configuration with schemaVersion, registryVersion, profileId, and patches.",
+        };
+      }
+      const report = resolvePortableConfiguration(value, {
         registry: fixture.registry,
         currentRegistryVersion: fixture.currentRegistryVersion,
         presets: fixture.presets,
         migrations: fixture.migrations,
       });
-      return { configuration, report };
+      return { configuration: value, report };
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Configuration could not be parsed.",
@@ -198,8 +204,12 @@ function PersistenceLab() {
                     <tbody>
                       {preview.report.effectiveBindings.map((entry) => (
                         <tr key={entry.binding.id}>
-                          <td><code>{entry.binding.id}</code></td>
-                          <td><code>{entry.binding.action}</code></td>
+                          <td>
+                            <code>{entry.binding.id}</code>
+                          </td>
+                          <td>
+                            <code>{entry.binding.action}</code>
+                          </td>
                           <td>{formatSequence(entry.binding.sequence)}</td>
                           <td>{entry.provenance.layer}</td>
                           <td>
@@ -219,6 +229,24 @@ function PersistenceLab() {
         </section>
       </div>
     </main>
+  );
+}
+
+function isPortableConfiguration(value: unknown): value is PortableConfigurationV1 {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as {
+    schemaVersion?: unknown;
+    registryVersion?: unknown;
+    profileId?: unknown;
+    presetId?: unknown;
+    patches?: unknown;
+  };
+  return (
+    Number.isInteger(candidate.schemaVersion) &&
+    Number.isInteger(candidate.registryVersion) &&
+    typeof candidate.profileId === "string" &&
+    (candidate.presetId === undefined || typeof candidate.presetId === "string") &&
+    Array.isArray(candidate.patches)
   );
 }
 
