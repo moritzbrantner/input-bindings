@@ -5,6 +5,7 @@ mod platform;
 mod profile;
 mod registry;
 mod resolve;
+mod serialization;
 
 pub use conflict::{Conflict, ConflictKind, ContextOverlap, analyze_conflicts};
 pub use model::{
@@ -33,3 +34,4 @@ pub use registry::{
     RepeatPolicy, ValidationDiagnostic, ValidationDiagnosticKind, validate_registry,
 };
 pub use resolve::{Resolution, resolve};
+pub use serialization::serialize_portable_configuration;
