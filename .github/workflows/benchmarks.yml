@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
-      - run: npm install --ignore-scripts
+      - run: npm ci --ignore-scripts
       - run: mkdir -p benchmark-results
       - name: Capture environment
         run: |
