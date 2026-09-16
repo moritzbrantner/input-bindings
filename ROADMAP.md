@@ -98,11 +98,21 @@ Acceptance: keyboard, mouse, and gamepad bindings can drive the same semantic ru
 
 Acceptance: upgrading defaults does not overwrite user changes; action/binding evolution is handled only through explicit migrations, stale or retired overrides are surfaced rather than silently reinterpreted, and Rust/TypeScript agree on the effective result and provenance.
 
-## 7. Platform/layout conflict catalog
+## 7. Platform/layout conflict catalog — implemented
 
-Add advisory browser-reserved combinations, common Windows/macOS/Linux conflicts, layout-aware labels, accessibility/system combinations, and AltGr/IME-sensitive warnings. Treat these as diagnostics with provenance, not universal bans.
+- Rust and TypeScript share a deterministic platform-conflict analyzer over normalized bindings.
+- Declarative external-conflict rules carry environment targeting, advisory severity, source URL, source identity, and verification date rather than acting as universal bans.
+- The web catalog covers representative documented Chrome, Firefox, Safari, Windows, and macOS shortcuts while remaining independent from the core resolver.
+- Windows/Linux `Ctrl+Alt` combinations receive an AltGr-sensitive warning when they are not explicitly modeled as AltGraph input.
+- Globally active unmodified printable logical keys receive an IME/text-composition advisory so consumers keep text-entry contexts excluded and composing events ignored.
+- Physical bindings receive a layout-label advisory when `Keyboard.getLayoutMap()` is unavailable; the physical binding itself remains positionally valid.
+- Browser/platform detection is isolated in the web adapter and feeds the same generic analyzer used by explicit test environments.
+- Internal action conflicts and external platform/browser/input-method advisories are rendered as separate concepts in the React UI.
+- Every external advisory exposes its provenance instead of presenting changing platform behavior as timeless engine truth.
+- Rust and TypeScript validate browser, OS, AltGr, IME, and layout-sensitive cases from the same shared fixture.
+- GitHub Pages includes a platform conflict lab that can switch target platform/browser/layout-map availability and inspect the resulting advisory set and sources.
 
-Acceptance: the editor explains internal conflicts and external platform conflicts distinctly.
+Acceptance: the editor explains internal conflicts and external platform conflicts distinctly, external findings never invalidate a binding by themselves, and every reported platform/layout advisory includes source provenance.
 
 ## 8. First consumer integrations
 
