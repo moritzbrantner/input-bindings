@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { isTextEntryTarget, keyboardEventToStroke } from "../src/index.ts";
+import {
+  isTextEntryTarget,
+  keyboardEventToStroke,
+  normalizeLogicalKey,
+} from "../src/index.ts";
 
 const baseEvent = {
   key: "K",
@@ -17,6 +21,11 @@ test("logical mode follows the produced character", () => {
     key: { kind: "logical", value: "k" },
     modifiers: { ctrl: true, alt: false, shift: false, meta: false, altGraph: false },
   });
+});
+
+test("logical key normalization is locale invariant", () => {
+  assert.equal("I".toLocaleLowerCase("tr"), "ı");
+  assert.equal(normalizeLogicalKey("I"), "i");
 });
 
 test("physical mode follows the key position", () => {
