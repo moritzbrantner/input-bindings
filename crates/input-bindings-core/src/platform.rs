@@ -217,7 +217,8 @@ fn alt_graph_source() -> PlatformConflictSource {
     PlatformConflictSource {
         id: "mdn.keyboard-event.get-modifier-state".to_owned(),
         title: "MDN KeyboardEvent.getModifierState()".to_owned(),
-        url: "https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState".to_owned(),
+        url: "https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState"
+            .to_owned(),
         verified_on: Some("2026-09-16".to_owned()),
     }
 }
