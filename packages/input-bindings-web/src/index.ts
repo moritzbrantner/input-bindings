@@ -435,8 +435,8 @@ export function gamepadStrokeActive(
 ): boolean {
   const candidates = gamepads.filter(
     (gamepad): gamepad is GamepadLike =>
-      Boolean(gamepad) &&
-      gamepad?.connected !== false &&
+      gamepad !== null &&
+      gamepad.connected !== false &&
       (stroke.gamepad === undefined || gamepad.index === stroke.gamepad),
   );
   if (stroke.device === "gamepadButton") {
