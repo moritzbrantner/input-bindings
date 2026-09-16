@@ -1,0 +1,39 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install --ignore-scripts
+      - run: mkdir -p benchmark-results
+      - name: Capture environment
+        run: |
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "runner=${RUNNER_OS}/${RUNNER_ARCH}"
+            node --version
+            rustc --version
+            cargo --version
+            uname -a
+            lscpu
+          } > benchmark-results/environment.txt
+      - name: Run TypeScript benchmarks
+        run: npm run bench:ts -- benchmark-results/typescript.json
+      - name: Run Rust benchmarks
+        run: npm run bench:rust -- benchmark-results/rust.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: input-bindings-benchmarks-${{ github.sha }}
+          path: benchmark-results/
+          retention-days: 90
