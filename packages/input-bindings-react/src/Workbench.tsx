@@ -150,6 +150,7 @@ export function InputBindingsWorkbench({
           bindings={effectiveBindings}
           conflicts={report.conflicts}
           actions={actionById}
+          scenarios={scenarios}
           onApplyRepair={applyRepair}
         />
       )}
