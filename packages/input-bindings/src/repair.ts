@@ -147,8 +147,8 @@ function addNarrowRepair(
   other: Binding,
 ): void {
   const otherWhen = other.when ?? ALWAYS;
-  if (otherWhen.op === "always") return;
   const targetWhen = target.when ?? ALWAYS;
+  if (otherWhen.op === "always" || whenEquals(targetWhen, otherWhen)) return;
   const exclusion: WhenExpr = { op: "not", expr: structuredClone(otherWhen) };
   const when: WhenExpr = targetWhen.op === "always"
     ? exclusion
@@ -159,4 +159,23 @@ function addNarrowRepair(
     againstBindingId: other.id,
     when,
   });
+}
+
+function whenEquals(left: WhenExpr, right: WhenExpr): boolean {
+  if (left.op !== right.op) return false;
+  switch (left.op) {
+    case "always":
+      return true;
+    case "context":
+      return right.op === "context" && left.id === right.id;
+    case "not":
+      return right.op === "not" && whenEquals(left.expr, right.expr);
+    case "all":
+    case "any":
+      return (
+        right.op === left.op &&
+        left.exprs.length === right.exprs.length &&
+        left.exprs.every((expr, index) => whenEquals(expr, right.exprs[index]))
+      );
+  }
 }
