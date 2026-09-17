@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import type { Binding } from "@moritzbrantner/input-bindings";
+import type { Binding, Conflict } from "@moritzbrantner/input-bindings";
 import {
+  assessConflictInScenarios,
   bindingsForScenario,
   deriveContextScenarios,
   scenarioContextFacts,
@@ -24,6 +25,12 @@ const bindings: Binding[] = [
     id: "game.jump",
     action: "game.jump",
     sequence: [{ key: { kind: "physical", value: "Space" } }],
+    when: { op: "context", id: "gameplay" },
+  },
+  {
+    id: "game.pause",
+    action: "game.pause",
+    sequence: [{ key: { kind: "logical", value: "Escape" } }],
     when: { op: "context", id: "gameplay" },
   },
   {
@@ -81,4 +88,32 @@ test("modal scenarios hide lower and fallback bindings just like runtime resolut
     bindingsForScenario(bindings, modalScenario).map((binding) => binding.id),
     ["menu.close"],
   );
+});
+
+test("conflict review distinguishes declared stack precedence from a genuinely ambiguous state", () => {
+  const conflict: Conflict = {
+    leftBindingId: "game.pause",
+    rightBindingId: "menu.close",
+    kind: "ambiguousExact",
+    witnessContexts: ["gameplay", "menuOpen"],
+  };
+  const assessments = assessConflictInScenarios(bindings, conflict, [
+    {
+      id: "pause-menu",
+      label: "Pause menu",
+      activeContexts: ["gameplay", "menuOpen"],
+      stack: [{ id: "gameplay" }, { id: "menuOpen", blocksLower: true }],
+    },
+    {
+      id: "flat-overlap",
+      label: "Flat overlap",
+      activeContexts: ["gameplay", "menuOpen"],
+      stack: [],
+    },
+  ]);
+
+  assert.deepEqual(assessments, [
+    { scenarioId: "pause-menu", scenarioLabel: "Pause menu", outcome: "orderedByStack" },
+    { scenarioId: "flat-overlap", scenarioLabel: "Flat overlap", outcome: "ambiguous" },
+  ]);
 });
