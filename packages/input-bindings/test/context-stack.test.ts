@@ -4,6 +4,7 @@ import { test } from "node:test";
 
 import {
   ContextStack,
+  explainResolutionWithContextStack,
   resolveWithContextStack,
   type ContextLayer,
 } from "../src/context-stack.ts";
@@ -22,19 +23,72 @@ const fixture = JSON.parse(
   }>;
 };
 
-test("context stack resolution matches the shared Rust/TypeScript fixture", () => {
+test("context stack resolution and trace match the shared Rust/TypeScript fixture", () => {
   for (const entry of fixture.cases) {
+    const activeContexts = new Set(entry.activeContexts);
     assert.deepEqual(
       resolveWithContextStack(
         fixture.bindings,
         entry.sequence,
-        new Set(entry.activeContexts),
+        activeContexts,
         entry.contextStack,
       ),
       entry.expected,
       entry.name,
     );
+    assert.deepEqual(
+      explainResolutionWithContextStack(
+        fixture.bindings,
+        entry.sequence,
+        activeContexts,
+        entry.contextStack,
+      ).resolution,
+      entry.expected,
+      `${entry.name} trace`,
+    );
   }
+});
+
+test("resolution trace exposes modal blocking and the actual winning layer", () => {
+  const entry = fixture.cases.find((candidate) => candidate.name === "blocking layer still resolves its own binding");
+  assert.ok(entry);
+  const trace = explainResolutionWithContextStack(
+    fixture.bindings,
+    entry.sequence,
+    new Set(entry.activeContexts),
+    entry.contextStack,
+  );
+
+  assert.deepEqual(trace.barrier, { id: "menu", depth: 1 });
+  assert.deepEqual(trace.activeContexts, ["gameplay", "menu"]);
+  assert.equal(
+    trace.candidates.find((candidate) => candidate.bindingId === "gameplay.primary")?.status,
+    "blockedByModal",
+  );
+  assert.equal(
+    trace.candidates.find((candidate) => candidate.bindingId === "menu.primary")?.status,
+    "winner",
+  );
+});
+
+test("resolution trace explains why a higher-layer chord waits instead of firing a lower exact binding", () => {
+  const entry = fixture.cases.find((candidate) => candidate.name === "top-layer chord prefix suppresses a lower-layer exact binding");
+  assert.ok(entry);
+  const trace = explainResolutionWithContextStack(
+    fixture.bindings,
+    entry.sequence,
+    new Set(entry.activeContexts),
+    entry.contextStack,
+  );
+
+  assert.equal(
+    trace.candidates.find((candidate) => candidate.bindingId === "gameplay.leader")?.status,
+    "lowerContextLayer",
+  );
+  assert.equal(
+    trace.candidates.find((candidate) => candidate.bindingId === "menu.chord")?.status,
+    "pendingContinuation",
+  );
 });
 
 test("ContextStack preserves balanced nested ownership", () => {
