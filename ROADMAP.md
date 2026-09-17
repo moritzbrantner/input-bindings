@@ -99,10 +99,22 @@ All three currently consume the self-contained Pages ESM bridge while publicatio
 
 Acceptance: editor, ordinary React app, and game all use the same semantics while owning only their action catalogs, defaults, active contexts, and execution handlers.
 
-## 9. Hardening and publication — next
+## 9. Ordered context stacks — implemented
+
+- Application-owned context layers are ordered from lowest to highest precedence while boolean context facts remain independent.
+- A binding is owned by the highest stack layer it references positively in its `when` expression; stack precedence is evaluated before explicit binding priority/specificity.
+- Non-blocking overlays fall through to lower layers when they do not handle an input.
+- `blocksLower` layers provide modal capture so menus/dialogs can suppress gameplay/editor controls without consumer-side filtering.
+- Chord-prefix decisions use the same layer precedence, preventing a lower-layer exact binding from stealing a higher-layer chord leader.
+- The runtime controller accepts an optional context-stack source without replacing the existing active-context API.
+- Rust and TypeScript share a conformance fixture covering overrides, fallthrough, modal capture, boolean facts, fallback bindings, and chord precedence.
+
+Acceptance: opening a modal menu can suppress gameplay controls, ordinary overlays can selectively override them, and Rust/TypeScript/runtime behavior agrees deterministically.
+
+## 10. Hardening and publication — next
 
 - Add property/fuzz-style determinism and profile-idempotence coverage.
-- Add representative non-gating benchmarks that preserve historical comparability.
+- Add representative non-gating benchmarks that preserve historical comparability, including stack-aware resolution scenarios.
 - Add explicit stable serialization compatibility fixtures.
 - Keep browser execution in TypeScript unless measured evidence justifies a WASM boundary.
 - Finalize package/crate naming, license, package contents, and reproducible lockfile/install behavior.
@@ -110,3 +122,58 @@ Acceptance: editor, ordinary React app, and game all use the same semantics whil
 - Do not use brittle wall-clock performance pass/fail thresholds in ordinary CI.
 
 Acceptance: release artifacts are reproducible and versioned, serialization compatibility is guarded, determinism properties are exercised beyond hand-written examples, and consumer repos can replace the temporary bridge with pinned published/release artifacts without changing semantics.
+
+## 11. Rich gestures and temporal input — planned
+
+- Tap versus hold and press/release-specific bindings.
+- Double-tap and ordered key/button sequences beyond the current chord model.
+- Analog threshold and directional-axis gestures with deterministic hysteresis rules where needed.
+- Keep timing policy in the runtime layer; do not leak clocks into the pure resolver.
+
+Acceptance: richer gestures map to the same semantic action model without application-specific timing state machines.
+
+## 12. First-class conflict repair — planned
+
+- Distinguish hard conflicts, intentional stack overrides, shadowed/unreachable bindings, ambiguous chords, and safe contextual overlap.
+- Make conflict analysis aware of declared context-stack relationships without assuming every runtime stack is globally fixed.
+- Return structured repair operations such as replace, swap, unbind, narrow context, or keep-both-with-context.
+- Keep repair suggestions deterministic and separate from applying user changes.
+
+Acceptance: the editor can explain both why two bindings overlap and which deterministic repairs are valid without silently changing configuration.
+
+## 13. Resolution inspector and Pages input lab — planned
+
+- Live normalized input/event history.
+- Current ordered context stack plus independent boolean context facts.
+- Candidate bindings, shadowed candidates, modal barriers, chord state, and the reason the winning binding won.
+- Controller diagrams and pressed-control visualization for gamepads/keyboards where useful.
+- Command search such as “show everything bound to Space” and filtering by device/context/action.
+
+Acceptance: a user can press an input in Pages and trace raw normalization through context precedence to the dispatched semantic action.
+
+## 14. Profile UX, device overrides, and accessibility alternatives — planned
+
+The persistence/profile foundation already exists in phase 6; this phase builds higher-level user workflows on it.
+
+- Named user profiles and quick profile switching without duplicating consumer defaults.
+- Device-specific override layers where one user wants different keyboard/gamepad/touch mappings.
+- Accessibility-oriented alternatives for commands that otherwise require difficult chords or simultaneous input.
+- Import/export UX that preserves provenance, migration diagnostics, and deterministic deltas.
+
+Acceptance: users can maintain multiple portable binding setups and accessibility alternatives without forking the application's defaults.
+
+## 15. Settings integration and consumer dogfood — planned
+
+- Integrate the binding editor with the shared settings UI through adapters rather than moving React/settings concerns into input core.
+- Dogfood ordered contexts in at least one game and one editor, including a modal menu and a non-blocking overlay.
+- Verify persistence ownership: `input-bindings` owns binding semantics/schema while the settings layer owns presentation and application-level settings orchestration.
+
+Acceptance: the same binding semantics work cleanly inside the settings framework without either repository absorbing the other's authority.
+
+## 16. Touch and advanced device interaction — later
+
+- Swipe, pinch, virtual-stick, and touch-region bindings where they can be normalized deterministically.
+- Interactive device diagrams and per-device diagnostics.
+- Preserve semantic actions so touch/gamepad/keyboard remain alternative inputs rather than separate command systems.
+
+Acceptance: touch and richer device input reuse the same action/context/profile foundations instead of creating a parallel input architecture.

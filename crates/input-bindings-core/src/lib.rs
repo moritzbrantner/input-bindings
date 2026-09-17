@@ -1,4 +1,5 @@
 mod conflict;
+mod context_stack;
 mod model;
 mod persistence;
 mod platform;
@@ -7,6 +8,7 @@ mod registry;
 mod resolve;
 
 pub use conflict::{Conflict, ConflictKind, ContextOverlap, analyze_conflicts};
+pub use context_stack::{ContextLayer, resolve_with_context_stack};
 pub use model::{
     AxisDirection, Binding, DeviceStroke, InputStroke, KeyMatch, KeyStroke, Modifiers,
     WheelDirection, WhenExpr,
