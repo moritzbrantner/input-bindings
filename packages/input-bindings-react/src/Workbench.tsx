@@ -7,18 +7,25 @@ import {
 } from "react";
 
 import {
-  resolveWithContextStack,
+  applyConflictRepair,
+  explainResolutionWithContextStack,
   validateRegistry,
   type ActionDefinition,
   type ActionRegistry,
   type Binding,
+  type ConflictRepair,
   type Profile,
-  type Resolution,
+  type ResolutionTrace,
 } from "@moritzbrantner/input-bindings";
 import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
 
+import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
 import { KeyboardView, KeybindingEditor } from "./index.tsx";
-import { describeWhen, formatSequence } from "./model.ts";
+import { describeWhen, formatSequence, profileFromBindings } from "./model.ts";
+import {
+  ResolutionInspector,
+  type ResolutionHistoryEntry,
+} from "./ResolutionInspector.tsx";
 import {
   bindingsForScenario,
   deriveContextScenarios,
@@ -29,7 +36,7 @@ import {
 
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
 
-export type InputBindingsWorkbenchView = "bindings" | "keyboard" | "preview";
+export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 
 export interface InputBindingsWorkbenchProps {
   registry: ActionRegistry;
@@ -101,6 +108,11 @@ export function InputBindingsWorkbench({
   );
   const activeContexts = useMemo(() => scenarioContextFacts(scenario), [scenario]);
 
+  const applyRepair = (repair: ConflictRepair) => {
+    const repaired = applyConflictRepair(effectiveBindings, repair);
+    onProfileChange(profileFromBindings(registry, repaired, profile.id));
+  };
+
   return (
     <section className={["ib-workbench", className].filter(Boolean).join(" ")}>
       <header className="ib-workbench-header">
@@ -115,7 +127,7 @@ export function InputBindingsWorkbench({
         <WorkbenchTabs view={view} onChange={setView} />
       </header>
 
-      {view !== "bindings" && (
+      {(view === "keyboard" || view === "preview") && (
         <ScenarioToolbar
           scenarios={scenarios}
           scenario={scenario}
@@ -130,6 +142,15 @@ export function InputBindingsWorkbench({
           registry={registry}
           profile={profile}
           onProfileChange={onProfileChange}
+        />
+      )}
+
+      {view === "conflicts" && (
+        <ConflictRepairPanel
+          bindings={effectiveBindings}
+          conflicts={report.conflicts}
+          actions={actionById}
+          onApplyRepair={applyRepair}
         />
       )}
 
@@ -167,8 +188,9 @@ function WorkbenchTabs({
 }) {
   const tabs: readonly { id: InputBindingsWorkbenchView; label: string; description: string }[] = [
     { id: "bindings", label: "All shortcuts", description: "Search, edit, disable, reset, import, and export bindings." },
+    { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
     { id: "keyboard", label: "Keyboard map", description: "See where the active shortcuts live on a keyboard." },
-    { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect what the current context resolves." },
+    { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
   ];
 
   return (
@@ -363,17 +385,23 @@ function PreviewMode({
   keyboardMode: InputBindingsKeyboardMode;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
+  const historyIdRef = useRef(0);
   const [capturing, setCapturing] = useState(false);
   const [pressedCodes, setPressedCodes] = useState<Set<string>>(() => new Set());
   const [sequence, setSequence] = useState<Binding["sequence"]>([]);
-  const [resolution, setResolution] = useState<Resolution>({ kind: "none" });
+  const [trace, setTrace] = useState<ResolutionTrace>(() =>
+    explainResolutionWithContextStack(bindings, [], activeContexts, scenario.stack ?? []),
+  );
+  const [history, setHistory] = useState<ResolutionHistoryEntry[]>([]);
 
   useEffect(() => {
     setPressedCodes(new Set());
     setSequence([]);
-    setResolution({ kind: "none" });
+    setTrace(explainResolutionWithContextStack(bindings, [], activeContexts, scenario.stack ?? []));
+    setHistory([]);
+    historyIdRef.current = 0;
     setCapturing(false);
-  }, [keyboardMode, scenario.id]);
+  }, [keyboardMode, scenario, bindings, activeContexts]);
 
   const startCapture = () => {
     setCapturing(true);
@@ -401,17 +429,17 @@ function PreviewMode({
     });
     if (!stroke) return;
 
-    let nextSequence = resolution.kind === "pending" ? [...sequence, stroke] : [stroke];
-    let nextResolution = resolveWithContextStack(
+    let nextSequence = trace.resolution.kind === "pending" ? [...sequence, stroke] : [stroke];
+    let nextTrace = explainResolutionWithContextStack(
       bindings,
       nextSequence,
       activeContexts,
       scenario.stack ?? [],
     );
 
-    if (resolution.kind === "pending" && nextResolution.kind === "none") {
+    if (trace.resolution.kind === "pending" && nextTrace.resolution.kind === "none") {
       nextSequence = [stroke];
-      nextResolution = resolveWithContextStack(
+      nextTrace = explainResolutionWithContextStack(
         bindings,
         nextSequence,
         activeContexts,
@@ -420,7 +448,15 @@ function PreviewMode({
     }
 
     setSequence(nextSequence);
-    setResolution(nextResolution);
+    setTrace(nextTrace);
+    historyIdRef.current += 1;
+    const historyEntry: ResolutionHistoryEntry = {
+      id: historyIdRef.current,
+      normalized: formatSequence([stroke]),
+      physicalCode: event.code || "Unidentified",
+      result: resolutionHistoryLabel(nextTrace, actions, bindingById),
+    };
+    setHistory((current) => [historyEntry, ...current].slice(0, 8));
   };
 
   const onKeyUp = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -430,6 +466,14 @@ function PreviewMode({
       next.delete(event.code);
       return next;
     });
+  };
+
+  const clearTrace = () => {
+    setSequence([]);
+    setTrace(explainResolutionWithContextStack(bindings, [], activeContexts, scenario.stack ?? []));
+    setHistory([]);
+    historyIdRef.current = 0;
+    captureRef.current?.focus();
   };
 
   return (
@@ -454,23 +498,14 @@ function PreviewMode({
             ) : (
               <button type="button" onClick={stopCapture}>Stop preview</button>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setSequence([]);
-                setResolution({ kind: "none" });
-                captureRef.current?.focus();
-              }}
-            >
-              Clear
-            </button>
+            <button type="button" onClick={clearTrace}>Clear</button>
           </div>
         </div>
 
         <p className="ib-preview-instruction">
           {capturing
             ? "Preview is active. Browser shortcuts are suppressed while this panel has focus."
-            : "Start preview, then press a shortcut. The physical keys will light up and resolution will be explained below."}
+            : "Start preview, then press a shortcut. The physical keys will light up and the resolver evidence will be explained below."}
         </p>
 
         <KeyboardView
@@ -481,11 +516,18 @@ function PreviewMode({
         />
 
         <ResolutionPanel
-          resolution={resolution}
+          resolution={trace.resolution}
           sequence={sequence}
           actions={actions}
           bindingById={bindingById}
           keyboardMode={keyboardMode}
+        />
+
+        <ResolutionInspector
+          trace={trace}
+          history={history}
+          actions={actions}
+          bindingById={bindingById}
         />
       </section>
       <ShortcutReferenceList bindings={activeBindings} actions={actions} />
@@ -500,7 +542,7 @@ function ResolutionPanel({
   bindingById,
   keyboardMode,
 }: {
-  resolution: Resolution;
+  resolution: ResolutionTrace["resolution"];
   sequence: Binding["sequence"];
   actions: ReadonlyMap<string, ActionDefinition>;
   bindingById: ReadonlyMap<string, Binding>;
@@ -562,6 +604,30 @@ function ResolutionPanel({
       <p>{detail}</p>
     </div>
   );
+}
+
+function resolutionHistoryLabel(
+  trace: ResolutionTrace,
+  actions: ReadonlyMap<string, ActionDefinition>,
+  bindingById: ReadonlyMap<string, Binding>,
+): string {
+  switch (trace.resolution.kind) {
+    case "none":
+      return "No active binding";
+    case "resolved":
+      return actions.get(trace.resolution.action)?.title ?? trace.resolution.action;
+    case "pending":
+      return `Waiting for chord (${trace.resolution.continuationBindingIds.length} continuation${trace.resolution.continuationBindingIds.length === 1 ? "" : "s"})`;
+    case "ambiguous": {
+      const actionNames = [
+        ...new Set(trace.resolution.bindingIds.map((bindingId) => {
+          const binding = bindingById.get(bindingId);
+          return binding ? (actions.get(binding.action)?.title ?? binding.action) : bindingId;
+        })),
+      ];
+      return `Ambiguous: ${actionNames.join(", ")}`;
+    }
+  }
 }
 
 function cloneScenario(scenario: InputBindingsContextScenario): InputBindingsContextScenario {
