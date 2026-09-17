@@ -26,7 +26,8 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Conflict analysis for duplicates, ambiguity, contextual overrides, chord prefixes, and conservative potential conflicts.
 - Profile deltas with add/remove/replace patches and diagnostics for stale or invalid overrides.
 - First-class action registry and fail-closed configuration validation.
-- Reusable React keybinding editor with search, filters, keyboard overview, explicit press-to-record feedback, conflict explanations, reset, provenance, and local profile persistence in the Pages demo.
+- Reusable React controls-settings workbench with an all-shortcuts editor, context-aware keyboard map, and explicit live preview that lights real key presses and resolves them through the same ordered-context semantics used at runtime.
+- Search, filters, logical/physical recording, conflict explanations, reset, provenance, and local profile persistence in the Pages dogfood.
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
 - Normalized keyboard, mouse, wheel, and gamepad inputs, with browser adapters for keyboard/mouse/gamepad runtime attachment.
 - Versioned portable configuration with inherited presets, explicit action/binding migrations, deterministic serialization, stale-override diagnostics, and provenance for every effective binding.
@@ -43,14 +44,14 @@ packages/
   input-bindings/           TypeScript semantics, registry + persistence
   input-bindings-runtime/   normalized runtime state, chords, repeat, releases
   input-bindings-web/       browser normalization + runtime attachment + web platform catalog
-  input-bindings-react/     reusable configuration editor + platform advisory UI
+  input-bindings-react/     reusable controls-settings workbench + platform advisory UI
   input-bindings-demo/      GitHub Pages dogfood surfaces
 fixtures/                    cross-language conformance cases
 ```
 
 ## Dogfood pages
 
-- Keybinding editor: https://moritzbrantner.github.io/input-bindings/
+- Controls settings workbench: https://moritzbrantner.github.io/input-bindings/
 - Conflict fixture lab: https://moritzbrantner.github.io/input-bindings/conflicts.html
 - Runtime controller lab: https://moritzbrantner.github.io/input-bindings/runtime.html
 - Device bindings lab: https://moritzbrantner.github.io/input-bindings/devices.html
@@ -59,4 +60,4 @@ fixtures/                    cross-language conformance cases
 
 The first cross-repository dogfood integrations and their authority seams are documented in [CONSUMERS.md](CONSUMERS.md).
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules and [ROADMAP.md](ROADMAP.md) for the remaining consumer-integration and hardening slices.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for authority boundaries and deterministic resolution rules, [UX.md](UX.md) for the reusable default settings experience, and [ROADMAP.md](ROADMAP.md) for the remaining consumer-integration and hardening slices.
