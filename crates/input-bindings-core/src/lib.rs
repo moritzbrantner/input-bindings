@@ -8,7 +8,11 @@ mod registry;
 mod resolve;
 
 pub use conflict::{Conflict, ConflictKind, ContextOverlap, analyze_conflicts};
-pub use context_stack::{ContextLayer, resolve_with_context_stack};
+pub use context_stack::{
+    ContextLayer, ResolutionBarrierTrace, ResolutionCandidateMatch, ResolutionCandidateStatus,
+    ResolutionCandidateTrace, ResolutionTrace, explain_resolution_with_context_stack,
+    resolve_with_context_stack,
+};
 pub use model::{
     AxisDirection, Binding, DeviceStroke, InputStroke, KeyMatch, KeyStroke, Modifiers,
     WheelDirection, WhenExpr,
