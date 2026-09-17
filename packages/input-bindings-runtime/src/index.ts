@@ -1,9 +1,11 @@
 import {
   inputStrokeIdentity,
   resolve,
+  resolveWithContextStack,
   validateRegistry,
   type ActionRegistry,
   type Binding,
+  type ContextLayer,
   type InputStroke,
   type KeyStroke,
   type Profile,
@@ -76,6 +78,7 @@ export interface RuntimeControllerOptions {
   registry: ActionRegistry;
   profile?: Profile;
   getActiveContexts: () => ReadonlySet<string>;
+  getContextStack?: () => readonly ContextLayer[];
   chordTimeoutMs?: number;
   consumePolicy?: RuntimeConsumePolicy;
   retryOnChordMismatch?: boolean;
@@ -112,6 +115,7 @@ export class InputRuntimeController {
   private profile: Profile | undefined;
   private report: RegistryValidationReport;
   private readonly getActiveContexts: () => ReadonlySet<string>;
+  private readonly getContextStack?: () => readonly ContextLayer[];
   private readonly chordTimeoutMs: number;
   private readonly consumePolicy: RuntimeConsumePolicy;
   private readonly retryOnChordMismatch: boolean;
@@ -127,6 +131,7 @@ export class InputRuntimeController {
     this.registry = structuredClone(options.registry);
     this.profile = options.profile ? structuredClone(options.profile) : undefined;
     this.getActiveContexts = options.getActiveContexts;
+    this.getContextStack = options.getContextStack;
     this.chordTimeoutMs = options.chordTimeoutMs ?? 1000;
     this.consumePolicy = options.consumePolicy ?? "matched";
     this.retryOnChordMismatch = options.retryOnChordMismatch ?? true;
@@ -168,7 +173,8 @@ export class InputRuntimeController {
     const repeat = options.repeat ?? false;
     const triggerKey = inputStrokeIdentity(stroke);
     this.pressedInputs.add(triggerKey);
-    const contexts = this.contexts();
+    const contextStack = this.contextStack();
+    const contexts = this.contexts(contextStack);
 
     if (!this.report.valid) {
       return this.emit(
@@ -197,13 +203,13 @@ export class InputRuntimeController {
     }
 
     const sequence = [...this.pending, structuredClone(stroke)];
-    const resolution = resolve(this.report.effectiveBindings, sequence, new Set(contexts));
+    const resolution = this.resolve(sequence, contexts, contextStack);
 
     if (resolution.kind === "none" && this.pending.length > 0) {
       const cancelledSequence = structuredClone(this.pending);
       this.clearPending();
       if (this.retryOnChordMismatch) {
-        return this.processFreshStroke(stroke, repeat, contexts, cancelledSequence);
+        return this.processFreshStroke(stroke, repeat, contexts, contextStack, cancelledSequence);
       }
       return this.emit(
         this.decision(
@@ -226,7 +232,7 @@ export class InputRuntimeController {
   }
 
   handleInputUp(stroke: InputStroke): RuntimeDecision {
-    const contexts = this.contexts();
+    const contexts = this.contexts(this.contextStack());
     const triggerKey = inputStrokeIdentity(stroke);
     this.pressedInputs.delete(triggerKey);
 
@@ -280,7 +286,7 @@ export class InputRuntimeController {
   }
 
   cancelChord(reason = "explicit"): RuntimeDecision {
-    const contexts = this.contexts();
+    const contexts = this.contexts(this.contextStack());
     const cancelledSequence = structuredClone(this.pending);
     this.clearPending();
     return this.emit(
@@ -296,7 +302,7 @@ export class InputRuntimeController {
   }
 
   reset(reason = "explicit"): RuntimeDecision {
-    const contexts = this.contexts();
+    const contexts = this.contexts(this.contextStack());
     const sequence = structuredClone(this.pending);
     this.clearPending();
     this.pressedInputs.clear();
@@ -331,10 +337,11 @@ export class InputRuntimeController {
     stroke: InputStroke,
     repeat: boolean,
     contexts: string[],
+    contextStack: readonly ContextLayer[] | undefined,
     cancelledSequence: InputStroke[],
   ): RuntimeDecision {
     const sequence = [structuredClone(stroke)];
-    const resolution = resolve(this.report.effectiveBindings, sequence, new Set(contexts));
+    const resolution = this.resolve(sequence, contexts, contextStack);
     return this.finishInputDown(sequence, stroke, repeat, contexts, resolution, cancelledSequence);
   }
 
@@ -466,11 +473,12 @@ export class InputRuntimeController {
 
     const sequence = structuredClone(this.pending);
     this.pending = [];
-    const contexts = this.contexts();
+    const contextStack = this.contextStack();
+    const contexts = this.contexts(contextStack);
     const exactBindings = this.report.effectiveBindings.filter(
       (binding) => binding.sequence.length === sequence.length,
     );
-    const resolution = resolve(exactBindings, sequence, new Set(contexts));
+    const resolution = this.resolve(sequence, contexts, contextStack, exactBindings);
 
     if (resolution.kind === "resolved") {
       const dispatch: RuntimeDispatch = {
@@ -528,6 +536,18 @@ export class InputRuntimeController {
     );
   }
 
+  private resolve(
+    sequence: readonly InputStroke[],
+    contexts: readonly string[],
+    contextStack: readonly ContextLayer[] | undefined,
+    bindings: readonly Binding[] = this.report.effectiveBindings,
+  ): Resolution {
+    const activeContexts = new Set(contexts);
+    return contextStack
+      ? resolveWithContextStack(bindings, sequence, activeContexts, contextStack)
+      : resolve(bindings, sequence, activeContexts);
+  }
+
   private activate(dispatch: RuntimeDispatch, triggerStroke: InputStroke): void {
     const triggerKey = inputStrokeIdentity(triggerStroke);
     const existing = this.active.get(triggerKey) ?? [];
@@ -543,8 +563,16 @@ export class InputRuntimeController {
     }
   }
 
-  private contexts(): string[] {
-    return [...this.getActiveContexts()].sort();
+  private contextStack(): ContextLayer[] | undefined {
+    return this.getContextStack?.().map((layer) =>
+      layer.blocksLower ? { id: layer.id, blocksLower: true } : { id: layer.id },
+    );
+  }
+
+  private contexts(contextStack: readonly ContextLayer[] | undefined): string[] {
+    const contexts = new Set(this.getActiveContexts());
+    for (const layer of contextStack ?? []) contexts.add(layer.id);
+    return [...contexts].sort();
   }
 
   private clearPending(): void {
