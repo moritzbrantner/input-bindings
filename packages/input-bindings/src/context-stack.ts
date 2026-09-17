@@ -2,6 +2,7 @@ import {
   evaluateWhen,
   inputStrokeEquals,
   resolve,
+  whenSpecificity,
   type Binding,
   type InputStroke,
   type Resolution,
@@ -15,6 +16,51 @@ export interface ContextLayer {
 
 export interface ContextStackPushOptions {
   blocksLower?: boolean;
+}
+
+export type ResolutionCandidateMatch = "none" | "exact" | "continuation";
+
+export type ResolutionCandidateStatus =
+  | "inactiveContext"
+  | "inputLongerThanBinding"
+  | "sequenceMismatch"
+  | "blockedByModal"
+  | "lowerContextLayer"
+  | "pendingExact"
+  | "pendingContinuation"
+  | "lowerRank"
+  | "winner"
+  | "equivalentWinner"
+  | "ambiguousWinner";
+
+export interface ResolutionCandidateTrace {
+  bindingId: string;
+  action: string;
+  match: ResolutionCandidateMatch;
+  status: ResolutionCandidateStatus;
+  ownerDepth?: number;
+  priority: number;
+  specificity: number;
+}
+
+export interface ResolutionBarrierTrace {
+  id: string;
+  depth: number;
+}
+
+export interface ResolutionTrace {
+  resolution: Resolution;
+  activeContexts: string[];
+  contextStack: ContextLayer[];
+  barrier?: ResolutionBarrierTrace;
+  candidates: ResolutionCandidateTrace[];
+}
+
+interface WorkingCandidate {
+  binding: Binding;
+  traceIndex: number;
+  depth: number;
+  match: Exclude<ResolutionCandidateMatch, "none">;
 }
 
 /**
@@ -82,40 +128,136 @@ export function resolveWithContextStack(
   activeContexts: ReadonlySet<string>,
   contextStack: readonly ContextLayer[],
 ): Resolution {
-  if (sequence.length === 0) return { kind: "none" };
+  return explainResolutionWithContextStack(
+    bindings,
+    sequence,
+    activeContexts,
+    contextStack,
+  ).resolution;
+}
 
+/**
+ * Produces deterministic resolution evidence without changing the resolver's decision rules.
+ * Candidate rows are sorted by binding id so the same state produces byte-stable inspector output.
+ */
+export function explainResolutionWithContextStack(
+  bindings: readonly Binding[],
+  sequence: readonly InputStroke[],
+  activeContexts: ReadonlySet<string>,
+  contextStack: readonly ContextLayer[],
+): ResolutionTrace {
   const contexts = new Set(activeContexts);
   const depthByContext = new Map<string, number>();
-  let barrierDepth = -1;
+  let barrier: ResolutionBarrierTrace | undefined;
 
   contextStack.forEach((layer, index) => {
     contexts.add(layer.id);
     depthByContext.set(layer.id, index);
-    if (layer.blocksLower) barrierDepth = index;
+    if (layer.blocksLower) barrier = { id: layer.id, depth: index };
   });
 
-  let topDepth: number | undefined;
-  const selected: Binding[] = [];
+  const baseTrace = {
+    activeContexts: [...contexts].sort(),
+    contextStack: contextStack.map(cloneLayer),
+    ...(barrier ? { barrier } : {}),
+  };
 
-  for (const binding of bindings) {
-    if (!evaluateWhen(binding.when, contexts) || sequence.length > binding.sequence.length) continue;
+  if (sequence.length === 0) {
+    return { resolution: { kind: "none" }, ...baseTrace, candidates: [] };
+  }
+
+  const candidates: ResolutionCandidateTrace[] = [];
+  const working: WorkingCandidate[] = [];
+  const sortedBindings = [...bindings].sort((left, right) => left.id.localeCompare(right.id));
+
+  for (const binding of sortedBindings) {
+    const base = {
+      bindingId: binding.id,
+      action: binding.action,
+      priority: binding.priority ?? 0,
+      specificity: whenSpecificity(binding.when),
+    };
+
+    if (!evaluateWhen(binding.when, contexts)) {
+      candidates.push({ ...base, match: "none", status: "inactiveContext" });
+      continue;
+    }
+    if (sequence.length > binding.sequence.length) {
+      candidates.push({ ...base, match: "none", status: "inputLongerThanBinding" });
+      continue;
+    }
     if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
+      candidates.push({ ...base, match: "none", status: "sequenceMismatch" });
       continue;
     }
 
     const depth = ownerDepth(binding.when, depthByContext);
-    if (depth < barrierDepth) continue;
+    const match = sequence.length === binding.sequence.length ? "exact" : "continuation";
+    if (barrier && depth < barrier.depth) {
+      candidates.push({
+        ...base,
+        match,
+        status: "blockedByModal",
+        ownerDepth: depth,
+      });
+      continue;
+    }
 
-    if (topDepth === undefined || depth > topDepth) {
-      topDepth = depth;
-      selected.length = 0;
-      selected.push(binding);
-    } else if (depth === topDepth) {
-      selected.push(binding);
+    const traceIndex = candidates.length;
+    candidates.push({
+      ...base,
+      match,
+      status: "lowerContextLayer",
+      ownerDepth: depth,
+    });
+    working.push({ binding, traceIndex, depth, match });
+  }
+
+  if (working.length === 0) {
+    return { resolution: { kind: "none" }, ...baseTrace, candidates };
+  }
+
+  const topDepth = Math.max(...working.map((candidate) => candidate.depth));
+  const selected = working.filter((candidate) => candidate.depth === topDepth);
+  const selectedBindings = selected.map((candidate) => candidate.binding);
+  const resolution = resolve(selectedBindings, sequence, contexts);
+
+  for (const candidate of selected) {
+    const trace = candidates[candidate.traceIndex];
+    switch (resolution.kind) {
+      case "pending":
+        trace.status = candidate.match === "exact" ? "pendingExact" : "pendingContinuation";
+        break;
+      case "ambiguous":
+        trace.status = resolution.bindingIds.includes(candidate.binding.id)
+          ? "ambiguousWinner"
+          : "lowerRank";
+        break;
+      case "resolved": {
+        if (candidate.binding.id === resolution.bindingId) {
+          trace.status = "winner";
+          break;
+        }
+        const winner = selectedBindings.find((binding) => binding.id === resolution.bindingId);
+        trace.status = winner && sameRank(candidate.binding, winner) && candidate.binding.action === winner.action
+          ? "equivalentWinner"
+          : "lowerRank";
+        break;
+      }
+      case "none":
+        trace.status = "lowerRank";
+        break;
     }
   }
 
-  return topDepth === undefined ? { kind: "none" } : resolve(selected, sequence, contexts);
+  return { resolution, ...baseTrace, candidates };
+}
+
+function sameRank(left: Binding, right: Binding): boolean {
+  return (
+    (left.priority ?? 0) === (right.priority ?? 0) &&
+    whenSpecificity(left.when) === whenSpecificity(right.when)
+  );
 }
 
 function ownerDepth(
