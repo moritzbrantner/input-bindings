@@ -118,7 +118,7 @@ function renderWorkbench(initialView: InputBindingsWorkbenchView): string {
   );
 }
 
-test("default workbench exposes the complete reusable settings navigation with a list-only shortcut view", () => {
+test("default workbench exposes the complete navigation and marks shortcut editing as list-only", () => {
   const html = renderWorkbench("bindings");
 
   assert.match(html, /Keyboard &amp; controls/);
@@ -128,7 +128,7 @@ test("default workbench exposes the complete reusable settings navigation with a
   assert.match(html, /Try shortcuts/);
   assert.match(html, /3 actions · 3 bindings · 1 conflict/);
   assert.match(html, /Save document/);
-  assert.doesNotMatch(html, /Keyboard overview/);
+  assert.match(html, /ib-editor ib-workbench-list-only/);
 });
 
 test("conflict review distinguishes stack-ordered and still-ambiguous application scenarios", () => {
