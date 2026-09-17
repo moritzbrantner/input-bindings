@@ -132,24 +132,42 @@ Acceptance: release artifacts are reproducible and versioned, serialization comp
 
 Acceptance: richer gestures map to the same semantic action model without application-specific timing state machines.
 
-## 12. First-class conflict repair — planned
+## 12. First-class conflict repair — in progress
 
-- Distinguish hard conflicts, intentional stack overrides, shadowed/unreachable bindings, ambiguous chords, and safe contextual overlap.
-- Make conflict analysis aware of declared context-stack relationships without assuming every runtime stack is globally fixed.
-- Return structured repair operations such as replace, swap, unbind, narrow context, or keep-both-with-context.
-- Keep repair suggestions deterministic and separate from applying user changes.
+Implemented first slice:
 
-Acceptance: the editor can explain both why two bindings overlap and which deterministic repairs are valid without silently changing configuration.
+- Deterministic conflict-repair plans are separate from applying changes; opening conflict review never mutates a profile.
+- Current dispositions distinguish redundant duplicates, ambiguous exact matches, ordered exact overrides, chord-prefix overlaps, and conservative potential overlaps.
+- Current structured operations are keep, prefer-by-priority, narrow context, and unbind; applying one produces ordinary effective bindings/profile deltas rather than a second configuration model.
+- Rust and TypeScript mirror repair planning/application behavior with tests covering ambiguity, deterministic preference, context narrowing, duplicate handling, and avoidance of degenerate context repairs.
+- The React workbench has a dedicated conflict-review surface with explicit repair choices and binding/context explanations.
+- Consumer-supplied context scenarios are evaluated with the real stack resolver, so a theoretical Boolean overlap can be shown as intentionally ordered by a higher/modal layer instead of being presented as unresolved runtime ambiguity.
 
-## 13. Resolution inspector and Pages input lab — planned
+Remaining:
 
-- Live normalized input/event history.
-- Current ordered context stack plus independent boolean context facts.
-- Candidate bindings, shadowed candidates, modal barriers, chord state, and the reason the winning binding won.
-- Controller diagrams and pressed-control visualization for gamepads/keyboards where useful.
-- Command search such as “show everything bound to Space” and filtering by device/context/action.
+- Add direct replace/swap operations where they materially simplify common repair flows.
+- Deepen classification for globally shadowed/unreachable bindings and other intentional stack-override cases without assuming one fixed stack for every consumer.
+- Keep repair suggestions deterministic, inspectable, and non-applying by default.
 
-Acceptance: a user can press an input in Pages and trace raw normalization through context precedence to the dispatched semantic action.
+Acceptance: the editor can explain both why two bindings overlap and which deterministic repairs are valid without silently changing configuration. This is substantially implemented; replace/swap and deeper reachability classification remain.
+
+## 13. Resolution inspector and Pages input lab — in progress
+
+Implemented first slice:
+
+- Ordered-context resolution now exposes a deterministic evidence trace in Rust and TypeScript, and ordinary stack resolution delegates to that trace result so inspector and runtime decisions cannot drift.
+- Evidence includes active contexts, ordered stack, modal barrier, candidate input-prefix matches, owner depth, explicit priority, context specificity, and the final candidate status.
+- Candidate status distinguishes inactive/mismatched input, modal blocking, lower stack layer, chord waiting, lower rank, winner, equivalent same-action winner, and ambiguous top-rank winner.
+- The workbench Try Shortcuts view keeps a short normalized keyboard-event history and shows candidate/shadow/barrier/winner evidence alongside the physical keyboard visualization.
+- Context switching in Pages exercises global, editor, timeline, table, gameplay, and a modal menu state using the same semantics as runtime resolution.
+
+Remaining:
+
+- Add command-oriented inspection such as “show everything bound to Space” and filtering by device/context/action.
+- Add controller/gamepad diagrams and event evidence where useful, without requiring every consumer to ship a debugging profiler.
+- Extend the live inspector to richer device/gesture input as those semantics land.
+
+Acceptance: a user can already press a keyboard input in Pages and trace normalized input through context precedence to the semantic result; richer device inspection and command search remain.
 
 ## 14. Profile UX, device overrides, and accessibility alternatives — planned
 

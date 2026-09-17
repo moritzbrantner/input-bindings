@@ -1,6 +1,8 @@
 import {
+  explainResolutionWithContextStack,
   resolveWithContextStack,
   type Binding,
+  type Conflict,
   type ContextLayer,
 } from "@moritzbrantner/input-bindings";
 
@@ -15,6 +17,19 @@ export interface InputBindingsContextScenario {
   activeContexts?: readonly string[];
   stack?: readonly ContextLayer[];
   defaultKeyboardMode?: InputBindingsKeyboardMode;
+}
+
+export type ConflictScenarioOutcome =
+  | "notSimultaneouslyActive"
+  | "orderedByStack"
+  | "orderedByRank"
+  | "ambiguous"
+  | "chordWait";
+
+export interface ConflictScenarioAssessment {
+  scenarioId: string;
+  scenarioLabel: string;
+  outcome: ConflictScenarioOutcome;
 }
 
 export function deriveContextScenarios(
@@ -69,6 +84,55 @@ export function bindingsForScenario(
       stack,
     );
     return resolution.kind === "resolved" && resolution.bindingId === binding.id;
+  });
+}
+
+export function assessConflictInScenarios(
+  bindings: readonly Binding[],
+  conflict: Conflict,
+  scenarios: readonly InputBindingsContextScenario[],
+): ConflictScenarioAssessment[] {
+  const left = bindings.find((binding) => binding.id === conflict.leftBindingId);
+  const right = bindings.find((binding) => binding.id === conflict.rightBindingId);
+  if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) return [];
+
+  const sequence = left.sequence.length <= right.sequence.length ? left.sequence : right.sequence;
+  return scenarios.map((scenario) => {
+    const trace = explainResolutionWithContextStack(
+      bindings,
+      sequence,
+      new Set(scenario.activeContexts ?? []),
+      scenario.stack ?? [],
+    );
+    const leftTrace = trace.candidates.find((candidate) => candidate.bindingId === left.id);
+    const rightTrace = trace.candidates.find((candidate) => candidate.bindingId === right.id);
+    let outcome: ConflictScenarioOutcome = "notSimultaneouslyActive";
+
+    if (leftTrace && rightTrace && leftTrace.match !== "none" && rightTrace.match !== "none") {
+      if (
+        [leftTrace.status, rightTrace.status].some(
+          (status) => status === "blockedByModal" || status === "lowerContextLayer",
+        )
+      ) {
+        outcome = "orderedByStack";
+      } else if (
+        trace.resolution.kind === "ambiguous" &&
+        trace.resolution.bindingIds.includes(left.id) &&
+        trace.resolution.bindingIds.includes(right.id)
+      ) {
+        outcome = "ambiguous";
+      } else if (trace.resolution.kind === "pending") {
+        outcome = "chordWait";
+      } else if (trace.resolution.kind === "resolved") {
+        outcome = "orderedByRank";
+      }
+    }
+
+    return {
+      scenarioId: scenario.id,
+      scenarioLabel: scenario.label,
+      outcome,
+    };
   });
 }
 

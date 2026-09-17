@@ -5,10 +5,15 @@ mod persistence;
 mod platform;
 mod profile;
 mod registry;
+mod repair;
 mod resolve;
 
 pub use conflict::{Conflict, ConflictKind, ContextOverlap, analyze_conflicts};
-pub use context_stack::{ContextLayer, resolve_with_context_stack};
+pub use context_stack::{
+    ContextLayer, ResolutionBarrierTrace, ResolutionCandidateMatch, ResolutionCandidateStatus,
+    ResolutionCandidateTrace, ResolutionTrace, explain_resolution_with_context_stack,
+    resolve_with_context_stack,
+};
 pub use model::{
     AxisDirection, Binding, DeviceStroke, InputStroke, KeyMatch, KeyStroke, Modifiers,
     WheelDirection, WhenExpr,
@@ -33,5 +38,9 @@ pub use profile::{
 pub use registry::{
     ActionDefinition, ActionRegistry, DeviceClass, Provenance, RegistryValidationReport,
     RepeatPolicy, ValidationDiagnostic, ValidationDiagnosticKind, validate_registry,
+};
+pub use repair::{
+    ConflictDisposition, ConflictRepair, ConflictRepairKeepReason, ConflictRepairPlan,
+    apply_conflict_repair, plan_conflict_repairs,
 };
 pub use resolve::{Resolution, resolve};

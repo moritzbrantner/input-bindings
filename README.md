@@ -24,10 +24,12 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Multi-stroke chords and boolean context expressions (`always`, `context`, `not`, `all`, `any`).
 - Deterministic precedence with explicit `pending`, `resolved`, `ambiguous`, and `none` outcomes.
 - Conflict analysis for duplicates, ambiguity, contextual overrides, chord prefixes, and conservative potential conflicts.
+- Deterministic conflict-repair planning with explicit keep, prefer, context-narrowing, and unbind operations; repair planning never mutates a profile implicitly.
+- Explainable ordered-context resolution traces exposing candidates, modal barriers, shadowing, rank decisions, chord waiting, ambiguity, and the winning binding in Rust and TypeScript.
 - Profile deltas with add/remove/replace patches and diagnostics for stale or invalid overrides.
 - First-class action registry and fail-closed configuration validation.
-- Reusable React controls-settings workbench with an all-shortcuts editor, context-aware keyboard map, and explicit live preview that lights real key presses and resolves them through the same ordered-context semantics used at runtime.
-- Search, filters, logical/physical recording, conflict explanations, reset, provenance, and local profile persistence in the Pages dogfood.
+- Reusable React controls-settings workbench with all-shortcuts editing, dedicated conflict review/repair, a context-aware keyboard map, and live preview that lights real key presses and explains the same ordered-context decision used at runtime.
+- Search, filters, logical/physical recording, declared context-scenario evidence, normalized input history, reset, provenance, and local profile persistence in the Pages dogfood.
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
 - Normalized keyboard, mouse, wheel, and gamepad inputs, with browser adapters for keyboard/mouse/gamepad runtime attachment.
 - Versioned portable configuration with inherited presets, explicit action/binding migrations, deterministic serialization, stale-override diagnostics, and provenance for every effective binding.
