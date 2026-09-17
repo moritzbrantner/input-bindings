@@ -123,6 +123,7 @@ export class InputRuntimeController {
   private readonly onDispatch?: (dispatch: RuntimeDispatch) => void;
   private readonly onDecision?: (decision: RuntimeDecision) => void;
   private pending: InputStroke[] = [];
+  private pendingExactBindingIds: string[] = [];
   private timer: unknown;
   private readonly active = new Map<string, ActiveActivation[]>();
   private readonly pressedInputs = new Set<string>();
@@ -373,6 +374,7 @@ export class InputRuntimeController {
 
     if (resolution.kind === "pending") {
       this.pending = structuredClone(sequence);
+      this.pendingExactBindingIds = [...resolution.exactBindingIds];
       this.scheduleTimeout();
       return this.emit(
         this.decision(
@@ -472,11 +474,14 @@ export class InputRuntimeController {
     if (this.pending.length === 0 || !this.report.valid) return;
 
     const sequence = structuredClone(this.pending);
+    const pendingExactBindingIds = new Set(this.pendingExactBindingIds);
     this.pending = [];
+    this.pendingExactBindingIds = [];
     const contextStack = this.contextStack();
     const contexts = this.contexts(contextStack);
     const exactBindings = this.report.effectiveBindings.filter(
-      (binding) => binding.sequence.length === sequence.length,
+      (binding) =>
+        pendingExactBindingIds.has(binding.id) && binding.sequence.length === sequence.length,
     );
     const resolution = this.resolve(sequence, contexts, contextStack, exactBindings);
 
@@ -577,6 +582,7 @@ export class InputRuntimeController {
 
   private clearPending(): void {
     this.pending = [];
+    this.pendingExactBindingIds = [];
     if (this.timer !== undefined) {
       this.scheduler.clearTimeout(this.timer);
       this.timer = undefined;
