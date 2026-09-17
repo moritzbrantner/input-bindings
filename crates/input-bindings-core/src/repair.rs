@@ -78,7 +78,7 @@ pub fn plan_conflict_repairs(bindings: &[Binding], conflict: &Conflict) -> Confl
     };
 
     let mut repairs = Vec::new();
-    match conflict.kind {
+    match &conflict.kind {
         ConflictKind::Duplicate => repairs.push(ConflictRepair::Keep {
             reason: ConflictRepairKeepReason::RedundantSameAction,
         }),
@@ -93,7 +93,7 @@ pub fn plan_conflict_repairs(bindings: &[Binding], conflict: &Conflict) -> Confl
         ConflictKind::AmbiguousExact | ConflictKind::ChordPrefix => {}
     }
 
-    if conflict.kind == ConflictKind::AmbiguousExact {
+    if matches!(&conflict.kind, ConflictKind::AmbiguousExact) {
         add_prefer_repair(&mut repairs, left, right);
         add_prefer_repair(&mut repairs, right, left);
     }
