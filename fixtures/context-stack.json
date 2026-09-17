@@ -1,0 +1,79 @@
+{
+  "bindings": [
+    {"id":"gameplay.primary","action":"game.primary","sequence":[{"key":{"kind":"physical","value":"Space"}}],"when":{"op":"context","id":"gameplay"},"priority":100},
+    {"id":"menu.primary","action":"menu.primary","sequence":[{"key":{"kind":"physical","value":"Space"}}],"when":{"op":"context","id":"menu"}},
+    {"id":"gameplay.move","action":"game.move","sequence":[{"key":{"kind":"physical","value":"KeyW"}}],"when":{"op":"context","id":"gameplay"}},
+    {"id":"gameplay.use","action":"game.use","sequence":[{"key":{"kind":"logical","value":"e"}}],"when":{"op":"context","id":"gameplay"}},
+    {"id":"inventory.use","action":"inventory.use","sequence":[{"key":{"kind":"logical","value":"e"}}],"when":{"op":"context","id":"inventory"}},
+    {"id":"editor.delete","action":"editor.delete","sequence":[{"key":{"kind":"logical","value":"Delete"}}],"when":{"op":"all","exprs":[{"op":"context","id":"editor"},{"op":"context","id":"selectionExists"}]}},
+    {"id":"menu.delete","action":"menu.delete","sequence":[{"key":{"kind":"logical","value":"Delete"}}],"when":{"op":"context","id":"menu"}},
+    {"id":"gameplay.leader","action":"game.leader","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"gameplay"}},
+    {"id":"menu.chord","action":"menu.command","sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}},{"key":{"kind":"logical","value":"c"},"modifiers":{"ctrl":true}}],"when":{"op":"context","id":"menu"}},
+    {"id":"global.help","action":"global.help","sequence":[{"key":{"kind":"physical","value":"F1"}}]}
+  ],
+  "cases": [
+    {
+      "name":"higher layer overrides lower priority even when lower binding has a larger explicit priority",
+      "sequence":[{"key":{"kind":"physical","value":"Space"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"menu"}],
+      "expected":{"kind":"resolved","bindingId":"menu.primary","action":"menu.primary"}
+    },
+    {
+      "name":"non-blocking overlay falls through when it has no matching binding",
+      "sequence":[{"key":{"kind":"physical","value":"KeyW"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"inventory"}],
+      "expected":{"kind":"resolved","bindingId":"gameplay.move","action":"game.move"}
+    },
+    {
+      "name":"non-blocking overlay wins when both layers match",
+      "sequence":[{"key":{"kind":"logical","value":"e"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"inventory"}],
+      "expected":{"kind":"resolved","bindingId":"inventory.use","action":"inventory.use"}
+    },
+    {
+      "name":"blocking layer suppresses unmatched lower inputs",
+      "sequence":[{"key":{"kind":"physical","value":"KeyW"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"menu","blocksLower":true}],
+      "expected":{"kind":"none"}
+    },
+    {
+      "name":"blocking layer still resolves its own binding",
+      "sequence":[{"key":{"kind":"physical","value":"Space"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"menu","blocksLower":true}],
+      "expected":{"kind":"resolved","bindingId":"menu.primary","action":"menu.primary"}
+    },
+    {
+      "name":"boolean facts remain independent from stack ownership",
+      "sequence":[{"key":{"kind":"logical","value":"Delete"}}],
+      "activeContexts":["selectionExists"],
+      "contextStack":[{"id":"editor"}],
+      "expected":{"kind":"resolved","bindingId":"editor.delete","action":"editor.delete"}
+    },
+    {
+      "name":"top-layer chord prefix suppresses a lower-layer exact binding",
+      "sequence":[{"key":{"kind":"logical","value":"k"},"modifiers":{"ctrl":true}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"menu"}],
+      "expected":{"kind":"pending","exactBindingIds":[],"continuationBindingIds":["menu.chord"]}
+    },
+    {
+      "name":"fallback binding remains available through a non-blocking overlay",
+      "sequence":[{"key":{"kind":"physical","value":"F1"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"menu"}],
+      "expected":{"kind":"resolved","bindingId":"global.help","action":"global.help"}
+    },
+    {
+      "name":"blocking layer suppresses fallback binding",
+      "sequence":[{"key":{"kind":"physical","value":"F1"}}],
+      "activeContexts":[],
+      "contextStack":[{"id":"gameplay"},{"id":"menu","blocksLower":true}],
+      "expected":{"kind":"none"}
+    }
+  ]
+}
