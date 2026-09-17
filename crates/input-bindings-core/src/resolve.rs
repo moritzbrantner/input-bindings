@@ -60,10 +60,7 @@ pub fn resolve(
     finish_resolution(exact, continuations)
 }
 
-pub(crate) fn finish_resolution(
-    exact: Vec<&Binding>,
-    continuations: Vec<&Binding>,
-) -> Resolution {
+pub(crate) fn finish_resolution(exact: Vec<&Binding>, continuations: Vec<&Binding>) -> Resolution {
     if !continuations.is_empty() {
         let mut exact_binding_ids = exact
             .iter()
