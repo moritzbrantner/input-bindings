@@ -1,5 +1,5 @@
 import {
-  evaluateWhen,
+  resolveWithContextStack,
   type Binding,
   type ContextLayer,
 } from "@moritzbrantner/input-bindings";
@@ -57,8 +57,19 @@ export function bindingsForScenario(
   bindings: readonly Binding[],
   scenario: InputBindingsContextScenario,
 ): Binding[] {
-  const contexts = scenarioContextFacts(scenario);
-  return bindings.filter((binding) => evaluateWhen(binding.when, contexts));
+  const booleanContexts = new Set(scenario.activeContexts ?? []);
+  const stack = scenario.stack ?? [];
+
+  return bindings.filter((binding) => {
+    if (binding.sequence.length === 0) return false;
+    const resolution = resolveWithContextStack(
+      [binding],
+      binding.sequence,
+      booleanContexts,
+      stack,
+    );
+    return resolution.kind === "resolved" && resolution.bindingId === binding.id;
+  });
 }
 
 export function prettyContextLabel(value: string): string {
