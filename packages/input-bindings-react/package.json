@@ -21,6 +21,11 @@
       "import": "./dist/index.js"
     },
     "./styles.css": "./dist/styles.css",
+    "./workbench": {
+      "types": "./dist/Workbench.d.ts",
+      "import": "./dist/Workbench.js"
+    },
+    "./workbench.css": "./dist/workbench.css",
     "./model": {
       "types": "./dist/model.d.ts",
       "import": "./dist/model.js"
