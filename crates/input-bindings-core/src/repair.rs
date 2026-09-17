@@ -175,7 +175,7 @@ fn add_prefer_repair(repairs: &mut Vec<ConflictRepair>, target: &Binding, other:
 }
 
 fn add_narrow_repair(repairs: &mut Vec<ConflictRepair>, target: &Binding, other: &Binding) {
-    if other.when == WhenExpr::Always {
+    if other.when == WhenExpr::Always || target.when == other.when {
         return;
     }
     let exclusion = WhenExpr::Not {
