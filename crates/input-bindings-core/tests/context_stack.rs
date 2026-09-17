@@ -45,7 +45,8 @@ fn context_stack_resolution_and_trace_match_shared_fixture() {
             &active_contexts,
             &case.context_stack,
         );
-        let traced = serde_json::to_value(trace.resolution).expect("trace resolution should serialize");
+        let traced =
+            serde_json::to_value(trace.resolution).expect("trace resolution should serialize");
         assert_eq!(traced, case.expected, "trace case: {}", case.name);
     }
 }
@@ -58,7 +59,11 @@ fn resolution_trace_exposes_modal_blocking_and_winning_layer() {
         .iter()
         .find(|case| case.name == "blocking layer still resolves its own binding")
         .expect("fixture case should exist");
-    let active_contexts = case.active_contexts.iter().cloned().collect::<BTreeSet<_>>();
+    let active_contexts = case
+        .active_contexts
+        .iter()
+        .cloned()
+        .collect::<BTreeSet<_>>();
     let trace = explain_resolution_with_context_stack(
         &fixture.bindings,
         &case.sequence,
@@ -88,7 +93,11 @@ fn resolution_trace_explains_higher_layer_chord_waiting() {
         .iter()
         .find(|case| case.name == "top-layer chord prefix suppresses a lower-layer exact binding")
         .expect("fixture case should exist");
-    let active_contexts = case.active_contexts.iter().cloned().collect::<BTreeSet<_>>();
+    let active_contexts = case
+        .active_contexts
+        .iter()
+        .cloned()
+        .collect::<BTreeSet<_>>();
     let trace = explain_resolution_with_context_stack(
         &fixture.bindings,
         &case.sequence,
