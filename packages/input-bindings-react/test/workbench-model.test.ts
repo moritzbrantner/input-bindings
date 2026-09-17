@@ -26,13 +26,19 @@ const bindings: Binding[] = [
     sequence: [{ key: { kind: "physical", value: "Space" } }],
     when: { op: "context", id: "gameplay" },
   },
+  {
+    id: "menu.close",
+    action: "menu.close",
+    sequence: [{ key: { kind: "logical", value: "Escape" } }],
+    when: { op: "context", id: "menuOpen" },
+  },
 ];
 
 test("derived scenarios provide a usable global view plus every declared context", () => {
   const scenarios = deriveContextScenarios(bindings);
   assert.deepEqual(
     scenarios.map((scenario) => scenario.id),
-    ["global", "context:editorFocused", "context:gameplay"],
+    ["global", "context:editorFocused", "context:gameplay", "context:menuOpen"],
   );
   assert.deepEqual(scenarios[1].stack, [{ id: "editorFocused" }]);
 });
@@ -49,7 +55,7 @@ test("scenario facts merge explicit facts with ordered stack layers", () => {
   );
 });
 
-test("shortcut reference only shows bindings whose boolean contexts are active", () => {
+test("shortcut reference only shows bindings whose contexts are reachable", () => {
   const editorScenario = {
     id: "editor",
     label: "Editor",
@@ -60,5 +66,19 @@ test("shortcut reference only shows bindings whose boolean contexts are active",
   assert.deepEqual(
     bindingsForScenario(bindings, editorScenario).map((binding) => binding.id),
     ["global.palette", "editor.save"],
+  );
+});
+
+test("modal scenarios hide lower and fallback bindings just like runtime resolution", () => {
+  const modalScenario = {
+    id: "pause-menu",
+    label: "Pause menu",
+    activeContexts: ["gameplay", "menuOpen"],
+    stack: [{ id: "gameplay" }, { id: "menuOpen", blocksLower: true }],
+  } as const;
+
+  assert.deepEqual(
+    bindingsForScenario(bindings, modalScenario).map((binding) => binding.id),
+    ["menu.close"],
   );
 });
