@@ -10,11 +10,17 @@ import {
 } from "@moritzbrantner/input-bindings";
 
 import { describeWhen, formatSequence } from "./model.ts";
+import {
+  assessConflictInScenarios,
+  type ConflictScenarioAssessment,
+  type InputBindingsContextScenario,
+} from "./workbench-model.ts";
 
 export interface ConflictRepairPanelProps {
   bindings: readonly Binding[];
   conflicts: readonly Conflict[];
   actions: ReadonlyMap<string, ActionDefinition>;
+  scenarios?: readonly InputBindingsContextScenario[];
   onApplyRepair: (repair: ConflictRepair) => void;
 }
 
@@ -22,6 +28,7 @@ export function ConflictRepairPanel({
   bindings,
   conflicts,
   actions,
+  scenarios = [],
   onApplyRepair,
 }: ConflictRepairPanelProps) {
   const bindingById = useMemo(
@@ -31,6 +38,10 @@ export function ConflictRepairPanel({
   const plans = useMemo(
     () => conflicts.map((conflict) => planConflictRepairs(bindings, conflict)),
     [bindings, conflicts],
+  );
+  const scenarioEvidence = useMemo(
+    () => conflicts.map((conflict) => assessConflictInScenarios(bindings, conflict, scenarios)),
+    [bindings, conflicts, scenarios],
   );
 
   return (
@@ -43,7 +54,7 @@ export function ConflictRepairPanel({
         <span>{conflicts.length} overlap{conflicts.length === 1 ? "" : "s"}</span>
       </div>
       <p className="ib-reference-help">
-        Repairs are suggestions only. Nothing changes until you choose an operation, and every operation is stored as the same profile delta used by ordinary editing.
+        Repairs are suggestions only. Nothing changes until you choose an operation. Declared application scenarios are checked with the real context-stack resolver so stack-ordered overlaps are not mistaken for unresolved runtime ambiguity.
       </p>
 
       {plans.length === 0 ? (
@@ -53,7 +64,7 @@ export function ConflictRepairPanel({
         </div>
       ) : (
         <div className="ib-conflict-cards">
-          {plans.map((plan) => {
+          {plans.map((plan, planIndex) => {
             const left = bindingById.get(plan.conflict.leftBindingId);
             const right = bindingById.get(plan.conflict.rightBindingId);
             return (
@@ -71,9 +82,11 @@ export function ConflictRepairPanel({
                 <p>{dispositionExplanation(plan.disposition)}</p>
                 {plan.conflict.witnessContexts?.length ? (
                   <p className="ib-conflict-witness">
-                    Reproduces when: {plan.conflict.witnessContexts.join(", ")}
+                    Boolean-context witness: {plan.conflict.witnessContexts.join(", ")}
                   </p>
                 ) : null}
+
+                <ScenarioEvidence assessments={scenarioEvidence[planIndex] ?? []} />
 
                 <div className="ib-conflict-pair">
                   <BindingSummary binding={left} actions={actions} />
@@ -107,6 +120,43 @@ export function ConflictRepairPanel({
       )}
     </section>
   );
+}
+
+function ScenarioEvidence({ assessments }: { assessments: readonly ConflictScenarioAssessment[] }) {
+  if (assessments.length === 0) return null;
+  const observed = assessments.filter((assessment) => assessment.outcome !== "notSimultaneouslyActive");
+  if (observed.length === 0) {
+    return (
+      <div className="ib-scenario-evidence">
+        <strong>Declared scenarios</strong>
+        <span>This overlap is not simultaneously active in any supplied application scenario.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ib-scenario-evidence">
+      <strong>Declared scenario evidence</strong>
+      <ul>
+        {observed.map((assessment) => (
+          <li key={assessment.scenarioId}>
+            <span>{assessment.scenarioLabel}</span>
+            <strong>{scenarioOutcomeLabel(assessment.outcome)}</strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function scenarioOutcomeLabel(outcome: ConflictScenarioAssessment["outcome"]): string {
+  switch (outcome) {
+    case "notSimultaneouslyActive": return "not active together";
+    case "orderedByStack": return "ordered by context stack";
+    case "orderedByRank": return "ordered by priority / specificity";
+    case "ambiguous": return "still ambiguous";
+    case "chordWait": return "chord wait remains";
+  }
 }
 
 function BindingSummary({
@@ -153,7 +203,7 @@ function dispositionExplanation(disposition: ConflictDisposition): string {
     case "redundant":
       return "This does not make dispatch ambiguous, but one duplicate can usually be removed to keep the profile understandable.";
     case "ambiguous":
-      return "Runtime cannot choose between different actions at the same layer and rank. Prefer one, separate their contexts, or unbind one.";
+      return "Without stack ordering, runtime cannot choose between different actions at the same rank. Declared scenarios below show whether the application stack already resolves that overlap.";
     case "orderedOverride":
       return "Priority or context specificity already orders these exact shortcuts. You can keep that intent or make the separation explicit.";
     case "chordPrefix":
