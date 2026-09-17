@@ -2,8 +2,11 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import type { ActionRegistry, Binding, Profile, WhenExpr } from "@moritzbrantner/input-bindings";
-import { KeybindingEditor } from "@moritzbrantner/input-bindings-react";
-import "@moritzbrantner/input-bindings-react/styles.css";
+import {
+  InputBindingsWorkbench,
+  type InputBindingsContextScenario,
+} from "@moritzbrantner/input-bindings-react/workbench";
+import "@moritzbrantner/input-bindings-react/workbench.css";
 import "./site.css";
 
 const STORAGE_KEY = "input-bindings-demo-profile-v1";
@@ -215,8 +218,78 @@ const registry: ActionRegistry = {
       defaults: [logical("game.targetNearest.default", "game.targetNearest", "f", { ctrl: true }, context("gameplay"))],
       provenance: { source: "gameplay", version: "1" },
     },
+    {
+      id: "menu.close",
+      title: "Close menu",
+      description: "Close the current modal menu without allowing the underlying game to react.",
+      categoryPath: ["Menu", "Navigation"],
+      repeatPolicy: "never",
+      allowedDevices: ["keyboard"],
+      defaults: [logical("menu.close.default", "menu.close", "Escape", {}, context("menuOpen"))],
+      provenance: { source: "demo-shell", version: "1" },
+    },
+    {
+      id: "menu.confirm",
+      title: "Confirm menu item",
+      categoryPath: ["Menu", "Navigation"],
+      repeatPolicy: "never",
+      allowedDevices: ["keyboard"],
+      defaults: [logical("menu.confirm.default", "menu.confirm", "Enter", {}, context("menuOpen"))],
+      provenance: { source: "demo-shell", version: "1" },
+    },
   ],
 };
+
+const contextScenarios: InputBindingsContextScenario[] = [
+  {
+    id: "global",
+    label: "Global shell",
+    description: "Only application-wide shortcuts are active.",
+    activeContexts: [],
+    stack: [],
+    defaultKeyboardMode: "logical",
+  },
+  {
+    id: "editor",
+    label: "Editor focused",
+    description: "An editor owns the active interaction layer while global commands remain available.",
+    activeContexts: ["editorFocused"],
+    stack: [{ id: "editorFocused" }],
+    defaultKeyboardMode: "logical",
+  },
+  {
+    id: "timeline",
+    label: "Timeline focused",
+    description: "Timeline chord shortcuts and navigation are active.",
+    activeContexts: ["timelineFocused"],
+    stack: [{ id: "timelineFocused" }],
+    defaultKeyboardMode: "logical",
+  },
+  {
+    id: "table",
+    label: "Table focused",
+    description: "Table-specific row and column commands are active.",
+    activeContexts: ["tableFocused"],
+    stack: [{ id: "tableFocused" }],
+    defaultKeyboardMode: "logical",
+  },
+  {
+    id: "gameplay",
+    label: "Gameplay",
+    description: "Physical movement controls are active. Switch matching mode to inspect logical game shortcuts too.",
+    activeContexts: ["gameplay"],
+    stack: [{ id: "gameplay" }],
+    defaultKeyboardMode: "physical",
+  },
+  {
+    id: "pause-menu",
+    label: "Gameplay + modal menu",
+    description: "The menu sits above gameplay and blocks lower input layers until it closes.",
+    activeContexts: ["gameplay", "menuOpen"],
+    stack: [{ id: "gameplay" }, { id: "menuOpen", blocksLower: true }],
+    defaultKeyboardMode: "logical",
+  },
+];
 
 function loadProfile(): Profile {
   try {
@@ -245,17 +318,22 @@ function App() {
       <header className="site-header">
         <div>
           <p className="site-eyebrow">input-bindings / GitHub Pages dogfood</p>
-          <h1>Reusable keybinding editor</h1>
+          <h1>Reusable controls settings workbench</h1>
           <p>
-            Configure the same semantic binding model intended for editors, games, tables, and normal web applications. Changes are stored locally in this browser as profile deltas over the defaults.
+            A default settings surface for editors, games, tables, and web applications: browse and edit every shortcut, inspect a spatial keyboard map, then test real key presses against application-owned contexts.
           </p>
         </div>
         <a href="https://github.com/moritzbrantner/input-bindings">Repository</a>
       </header>
       <p className="site-note">
-        The catalog intentionally contains contextual overlaps and a chord-prefix overlap so conflict explanations can be exercised interactively.
+        Switch between editor, timeline, table, gameplay, and a modal pause-menu scenario. The pause menu uses the real ordered-context resolver and blocks lower gameplay controls rather than hiding them only in the UI.
       </p>
-      <KeybindingEditor registry={registry} profile={profile} onProfileChange={updateProfile} />
+      <InputBindingsWorkbench
+        registry={registry}
+        profile={profile}
+        onProfileChange={updateProfile}
+        contextScenarios={contextScenarios}
+      />
     </main>
   );
 }

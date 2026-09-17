@@ -32,7 +32,7 @@ for (const packagePath of packages) {
 }
 
 const reactRoot = resolve(root, "packages/input-bindings-react");
-for (const css of ["styles.css", "platform-advisories.css"]) {
+for (const css of ["styles.css", "platform-advisories.css", "workbench.css"]) {
   copyFileSync(resolve(reactRoot, "src", css), resolve(reactRoot, "dist", css));
 }
 
