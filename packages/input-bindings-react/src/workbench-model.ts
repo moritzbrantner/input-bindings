@@ -108,7 +108,7 @@ export function assessConflictInScenarios(
     const rightTrace = trace.candidates.find((candidate) => candidate.bindingId === right.id);
     let outcome: ConflictScenarioOutcome = "notSimultaneouslyActive";
 
-    if (leftTrace?.match !== "none" && rightTrace?.match !== "none") {
+    if (leftTrace && rightTrace && leftTrace.match !== "none" && rightTrace.match !== "none") {
       if (
         [leftTrace.status, rightTrace.status].some(
           (status) => status === "blockedByModal" || status === "lowerContextLayer",
