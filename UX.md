@@ -16,6 +16,7 @@ This is the configuration view and the default landing surface.
 - Disable and reset individual actions or reset the complete profile.
 - Explain internal conflicts next to the affected bindings.
 - Keep import/export and migration diagnostics visible rather than silently reinterpreting configuration.
+- Keep this view list-only; the keyboard map is a separate primary view rather than a permanent sidebar competing for space.
 
 Applications should not need to build their own keybinding form for the ordinary case.
 
@@ -38,11 +39,14 @@ The conflict analyzer remains conservative when no runtime stack is known; appli
 This is the spatial reference view.
 
 - Show which keys are occupied in the selected application context.
-- Keep a textual cheat sheet beside the keyboard so the diagram is never the only source of information.
+- Do not render a complete action list beside the keyboard.
+- Let the user select any key and show only the bindings/actions attached to that key in the current scenario.
+- Keep the selected key visually highlighted, including unused keys, so inspection has a persistent spatial anchor.
+- For an unused selected key, say explicitly that no active shortcut uses it in the current application context.
 - Allow consumers to provide realistic context scenarios such as Editor, Timeline, Gameplay, or Modal menu.
 - Distinguish logical key matching from physical-position matching instead of pretending they are interchangeable.
 
-The keyboard diagram is a reference aid; semantic bindings remain authoritative.
+This preserves two complementary modes without duplicating them on screen: **All shortcuts** is for exhaustive list-based editing, while **Keyboard map** is for spatial, key-by-key inspection. The keyboard diagram remains a reference aid; semantic bindings remain authoritative.
 
 ### Try shortcuts
 
@@ -56,6 +60,7 @@ This is the interactive confidence/debugging view.
 - Keep a short normalized-input history showing the logical/physical stroke and resulting semantic decision.
 - Show the current ordered context stack, independent Boolean facts, and active modal barrier.
 - Show matching candidates with context ownership depth, priority, specificity, and the reason each candidate won, waited, lost rank, was shadowed by a higher layer, or was blocked by a modal barrier.
+- Do not repeat a complete shortcut list beside the preview; the preview is for live resolver evidence, not browsing all actions.
 - Context scenarios can include ordered stack layers and modal `blocksLower` barriers, so a pause menu can demonstrate that gameplay input is genuinely suppressed.
 
 The inspector is evidence from the resolver itself: the ordinary `resolveWithContextStack` API delegates to the same trace computation, so presentation cannot silently drift from runtime decisions. Preview mode remains opt-in so the settings UI does not unexpectedly consume browser/application shortcuts.
@@ -88,11 +93,11 @@ If no scenarios are supplied, the React package derives a useful global scenario
 
 ## Usability requirements
 
-- Every keyboard-only visualization has an equivalent textual representation.
+- Every keyboard-only visualization exposes textual details for the selected key; the entire shortcut list is available separately in **All shortcuts**.
 - All editing and repair operations remain normal focusable controls; color is never the sole conflict/selection signal.
 - Repair choices explain their effect before application and never mutate the profile merely because the panel was opened.
 - Preview capture requires explicit activation and provides a visible stop action.
-- Responsive layouts collapse the keyboard/list and inspector splits without dropping either representation.
+- Responsive layouts keep each primary view usable without forcing list and keyboard content into a simultaneous split layout.
 - Keyboard-layout labels are presentation metadata; physical bindings continue to preserve exact positions.
 - User overrides remain deltas over application defaults, so applications can evolve defaults without overwriting user intent.
 

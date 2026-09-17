@@ -10,6 +10,7 @@ import {
   type InputStroke,
   type Profile,
 } from "@moritzbrantner/input-bindings";
+import { bindingIdsForCode } from "@moritzbrantner/input-bindings-react";
 import { profileFromBindings } from "@moritzbrantner/input-bindings-react/model";
 import {
   InputBindingsWorkbench,
@@ -18,6 +19,8 @@ import {
 } from "@moritzbrantner/input-bindings-react/workbench";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+
+import { bindingsForScenario } from "../src/workbench-model.ts";
 
 const escapeStroke: InputStroke = {
   key: { kind: "logical", value: "Escape" },
@@ -115,7 +118,7 @@ function renderWorkbench(initialView: InputBindingsWorkbenchView): string {
   );
 }
 
-test("default workbench exposes the complete reusable settings navigation", () => {
+test("default workbench exposes the complete navigation and marks shortcut editing as list-only", () => {
   const html = renderWorkbench("bindings");
 
   assert.match(html, /Keyboard &amp; controls/);
@@ -124,6 +127,8 @@ test("default workbench exposes the complete reusable settings navigation", () =
   assert.match(html, /Keyboard map/);
   assert.match(html, /Try shortcuts/);
   assert.match(html, /3 actions · 3 bindings · 1 conflict/);
+  assert.match(html, /Save document/);
+  assert.match(html, /ib-editor ib-workbench-list-only/);
 });
 
 test("conflict review distinguishes stack-ordered and still-ambiguous application scenarios", () => {
@@ -141,25 +146,35 @@ test("conflict review distinguishes stack-ordered and still-ambiguous applicatio
   assert.match(html, /Unbind Close menu/);
 });
 
-test("keyboard reference hides gameplay bindings behind a modal menu barrier", () => {
+test("keyboard reference is a single spatial surface with click-to-inspect guidance", () => {
   const html = renderWorkbench("keyboard");
 
   assert.match(html, /Pause menu keyboard/);
-  assert.match(html, /Close menu/);
-  assert.doesNotMatch(html, />Pause game</);
+  assert.match(html, /Select a key to inspect its shortcuts/);
+  assert.match(html, /No complete shortcut list is shown in keyboard mode/);
   assert.match(html, /Stack: gameplay → menuOpen \(modal\)/);
+  assert.doesNotMatch(html, /Active shortcuts/);
 });
 
-test("preview inspector renders the same modal stack and barrier used by resolution", () => {
+test("clicked-key inspection is scoped to bindings reachable in the selected scenario", () => {
+  const report = validateRegistry(registry, profile);
+  const pauseMenuBindings = bindingsForScenario(report.effectiveBindings, scenarios[0]!);
+
+  assert.deepEqual(
+    bindingIdsForCode(pauseMenuBindings, "Escape"),
+    ["menu.close.default"],
+  );
+});
+
+test("preview inspector renders the same modal stack and barrier without a parallel shortcut list", () => {
   const html = renderWorkbench("preview");
 
   assert.match(html, /Press your actual keyboard/);
   assert.match(html, /Why this input resolved/);
   assert.match(html, /gameplay → menuOpen \(modal\)/);
   assert.match(html, /menuOpen at depth 1/);
-  assert.match(html, /Close menu/);
-  assert.doesNotMatch(html, />Pause game</);
   assert.match(html, /Start preview and press a key to build an input trace/);
+  assert.doesNotMatch(html, /Active shortcuts/);
 });
 
 test("explicit prefer repair flows through profile deltas and removes flat runtime ambiguity", () => {
