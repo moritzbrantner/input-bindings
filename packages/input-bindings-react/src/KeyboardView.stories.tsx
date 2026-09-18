@@ -82,7 +82,7 @@ const azerty = new Map<string, string>([
   ["Slash", "!"],
   ["Digit1", "&"],
   ["Digit2", "é"],
-  ["Digit3", "\\""],
+  ["Digit3", '"'],
   ["Digit4", "'"],
   ["Digit5", "("],
   ["Digit6", "-"],
