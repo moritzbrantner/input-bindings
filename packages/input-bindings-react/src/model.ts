@@ -5,6 +5,8 @@ import {
   type ActionRegistry,
   type Binding,
   type BindingPatch,
+  type Conflict,
+  type ConflictKind,
   type InputStroke,
   type Modifiers,
   type Profile,
@@ -63,6 +65,73 @@ export function actionIsChanged(
     .sort((a, b) => a.id.localeCompare(b.id));
   if (defaults.length !== effective.length) return true;
   return defaults.some((binding, index) => !bindingEquals(binding, effective[index]));
+}
+
+export interface ActionEditorIndexEntry {
+  bindings: readonly Binding[];
+  changed: boolean;
+  contexts: ReadonlySet<string>;
+  conflictKinds: ReadonlySet<ConflictKind>;
+  searchText: string;
+}
+
+export function createActionEditorIndex(
+  registry: ActionRegistry,
+  effectiveBindings: readonly Binding[],
+  conflicts: readonly Conflict[],
+): ReadonlyMap<string, ActionEditorIndexEntry> {
+  const bindingsByAction = new Map<string, Binding[]>();
+  const actionByBindingId = new Map<string, string>();
+
+  for (const binding of effectiveBindings) {
+    const entries = bindingsByAction.get(binding.action);
+    if (entries) entries.push(binding);
+    else bindingsByAction.set(binding.action, [binding]);
+    actionByBindingId.set(binding.id, binding.action);
+  }
+
+  for (const bindings of bindingsByAction.values()) {
+    bindings.sort((left, right) => left.id.localeCompare(right.id));
+  }
+
+  const conflictKindsByAction = new Map<string, Set<ConflictKind>>();
+  for (const conflict of conflicts) {
+    for (const bindingId of [conflict.leftBindingId, conflict.rightBindingId]) {
+      const actionId = actionByBindingId.get(bindingId);
+      if (!actionId) continue;
+      const kinds = conflictKindsByAction.get(actionId);
+      if (kinds) kinds.add(conflict.kind);
+      else conflictKindsByAction.set(actionId, new Set([conflict.kind]));
+    }
+  }
+
+  const result = new Map<string, ActionEditorIndexEntry>();
+  for (const action of registry.actions) {
+    const bindings = bindingsByAction.get(action.id) ?? [];
+    const contexts = new Set(bindings.flatMap((binding) => contextsForWhen(binding.when)));
+    const category = (action.categoryPath ?? []).join(" / ");
+    const searchText = [
+      action.id,
+      action.title,
+      action.description ?? "",
+      category,
+      action.provenance?.source ?? "",
+      action.provenance?.version ?? "",
+      ...bindings.map((binding) => formatSequence(binding.sequence)),
+    ]
+      .join(" ")
+      .toLocaleLowerCase();
+
+    result.set(action.id, {
+      bindings,
+      changed: actionIsChanged(action, bindings),
+      contexts,
+      conflictKinds: conflictKindsByAction.get(action.id) ?? new Set<ConflictKind>(),
+      searchText,
+    });
+  }
+
+  return result;
 }
 
 export function nextBindingId(actionId: string, bindings: readonly Binding[]): string {

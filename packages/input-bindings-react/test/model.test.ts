@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import type { ActionRegistry, Binding } from "@moritzbrantner/input-bindings";
+import type { ActionRegistry, Binding, Conflict } from "@moritzbrantner/input-bindings";
 import {
   actionIsChanged,
+  createActionEditorIndex,
   formatSequence,
   nextBindingId,
   profileFromBindings,
@@ -89,4 +90,49 @@ test("new ids and labels are stable and readable", () => {
     ]),
     "Ctrl+k then Shift+[KeyP]",
   );
+});
+
+
+test("editor action index precomputes filtering metadata without changing binding semantics", () => {
+  const defaults = registry.actions.flatMap((action) => action.defaults ?? []);
+  const effective: Binding[] = [
+    ...defaults,
+    {
+      id: "user:editor.save:1",
+      action: "editor.save",
+      sequence: [{ key: { kind: "logical", value: "F2" } }],
+      when: { op: "context", id: "editorFocused" },
+    },
+  ];
+  const conflicts: Conflict[] = [
+    {
+      leftBindingId: "editor.save.default",
+      rightBindingId: "game.jump.default",
+      kind: "ambiguousExact",
+    },
+  ];
+
+  const index = createActionEditorIndex(registry, effective, conflicts);
+  const save = index.get("editor.save");
+  const jump = index.get("game.jump");
+
+  assert.ok(save);
+  assert.ok(jump);
+  assert.deepEqual(
+    save.bindings.map((binding) => binding.id),
+    ["editor.save.default", "user:editor.save:1"],
+  );
+  assert.equal(save.changed, true);
+  assert.equal(save.contexts.has("editorFocused"), true);
+  assert.equal(save.conflictKinds.has("ambiguousExact"), true);
+  assert.match(save.searchText, /editor\.save/);
+  assert.match(save.searchText, /ctrl\+s/);
+  assert.match(save.searchText, /f2/);
+
+  assert.deepEqual(
+    jump.bindings.map((binding) => binding.id),
+    ["game.jump.default"],
+  );
+  assert.equal(jump.changed, false);
+  assert.equal(jump.conflictKinds.has("ambiguousExact"), true);
 });

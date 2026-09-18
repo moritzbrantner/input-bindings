@@ -17,8 +17,8 @@ import {
 import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
 
 import {
-  actionIsChanged,
   contextsForWhen,
+  createActionEditorIndex,
   describeWhen,
   formatSequence,
   formatStroke,
@@ -93,6 +93,24 @@ export function KeybindingEditor({
     return result;
   }, [report.conflicts]);
 
+  const actionIndex = useMemo(
+    () => createActionEditorIndex(registry, effectiveBindings, report.conflicts),
+    [effectiveBindings, registry, report.conflicts],
+  );
+  const sortedActions = useMemo(
+    () =>
+      [...registry.actions].sort(
+        (left, right) =>
+          categoryLabel(left).localeCompare(categoryLabel(right)) ||
+          left.title.localeCompare(right.title),
+      ),
+    [registry],
+  );
+  const keyboardFilterIds = useMemo(
+    () => new Set(keyboardFilter?.bindingIds ?? []),
+    [keyboardFilter],
+  );
+
   const categories = useMemo(
     () => [...new Set(registry.actions.map((action) => categoryLabel(action)).filter(Boolean))].sort(),
     [registry],
@@ -112,52 +130,36 @@ export function KeybindingEditor({
 
   const filteredActions = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
-    return [...registry.actions]
-      .sort((left, right) =>
-        categoryLabel(left).localeCompare(categoryLabel(right)) || left.title.localeCompare(right.title),
-      )
-      .filter((action) => {
-        const bindings = effectiveBindings.filter((binding) => binding.action === action.id);
-        const changed = actionIsChanged(action, effectiveBindings);
-        const actionConflicts = bindings.flatMap((binding) => conflictsByBinding.get(binding.id) ?? []);
-        const searchable = [
-          action.id,
-          action.title,
-          action.description ?? "",
-          categoryLabel(action),
-          action.provenance?.source ?? "",
-          action.provenance?.version ?? "",
-          ...bindings.map((binding) => formatSequence(binding.sequence)),
-        ]
-          .join(" ")
-          .toLocaleLowerCase();
+    return sortedActions.filter((action) => {
+      const metadata = actionIndex.get(action.id);
+      if (!metadata) return false;
+      const bindings = metadata.bindings;
 
-        if (normalizedQuery && !searchable.includes(normalizedQuery)) return false;
-        if (category !== "all" && categoryLabel(action) !== category) return false;
-        if (context !== "all" && !bindings.some((binding) => contextsForWhen(binding.when).includes(context))) return false;
-        if (device !== "all" && !(action.allowedDevices ?? []).includes(device)) return false;
-        if (changedFilter === "changed" && !changed) return false;
-        if (changedFilter === "default" && changed) return false;
-        if (conflictFilter === "none" && actionConflicts.length > 0) return false;
-        if (
-          conflictFilter !== "all" &&
-          conflictFilter !== "none" &&
-          !actionConflicts.some((conflict) => conflict.kind === conflictFilter)
-        ) return false;
-        if (
-          shortcutFilter.length > 0 &&
-          !bindings.some((binding) => sequenceStartsWith(binding.sequence, shortcutFilter))
-        ) return false;
-        if (
-          keyboardFilter &&
-          !bindings.some((binding) => keyboardFilter.bindingIds.includes(binding.id))
-        ) return false;
-        return true;
-      });
+      if (normalizedQuery && !metadata.searchText.includes(normalizedQuery)) return false;
+      if (category !== "all" && categoryLabel(action) !== category) return false;
+      if (context !== "all" && !metadata.contexts.has(context)) return false;
+      if (device !== "all" && !(action.allowedDevices ?? []).includes(device)) return false;
+      if (changedFilter === "changed" && !metadata.changed) return false;
+      if (changedFilter === "default" && metadata.changed) return false;
+      if (conflictFilter === "none" && metadata.conflictKinds.size > 0) return false;
+      if (
+        conflictFilter !== "all" &&
+        conflictFilter !== "none" &&
+        !metadata.conflictKinds.has(conflictFilter)
+      ) return false;
+      if (
+        shortcutFilter.length > 0 &&
+        !bindings.some((binding) => sequenceStartsWith(binding.sequence, shortcutFilter))
+      ) return false;
+      if (
+        keyboardFilter &&
+        !bindings.some((binding) => keyboardFilterIds.has(binding.id))
+      ) return false;
+      return true;
+    });
   }, [
-    registry,
-    effectiveBindings,
-    conflictsByBinding,
+    actionIndex,
+    sortedActions,
     query,
     category,
     context,
@@ -166,6 +168,7 @@ export function KeybindingEditor({
     conflictFilter,
     shortcutFilter,
     keyboardFilter,
+    keyboardFilterIds,
   ]);
 
   const visibleActionIds = useMemo(() => filteredActions.map((action) => action.id), [filteredActions]);
@@ -313,8 +316,9 @@ export function KeybindingEditor({
             <span role="columnheader">Details</span>
           </div>
           {filteredActions.map((action) => {
-            const bindings = effectiveBindings.filter((binding) => binding.action === action.id).sort((left, right) => left.id.localeCompare(right.id));
-            const changed = actionIsChanged(action, effectiveBindings);
+            const metadata = actionIndex.get(action.id);
+            const bindings = metadata?.bindings ?? [];
+            const changed = metadata?.changed ?? false;
             const canAddKeyboard = (action.allowedDevices ?? []).includes("keyboard");
             const actionSelected = selectedActionId === action.id;
             return (
