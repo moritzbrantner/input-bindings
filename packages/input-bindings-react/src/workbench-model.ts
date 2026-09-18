@@ -1,6 +1,6 @@
 import {
   explainResolutionWithContextStack,
-  resolveWithContextStack,
+  reachableBindingsWithContextStack,
   type Binding,
   type Conflict,
   type ContextLayer,
@@ -72,19 +72,11 @@ export function bindingsForScenario(
   bindings: readonly Binding[],
   scenario: InputBindingsContextScenario,
 ): Binding[] {
-  const booleanContexts = new Set(scenario.activeContexts ?? []);
-  const stack = scenario.stack ?? [];
-
-  return bindings.filter((binding) => {
-    if (binding.sequence.length === 0) return false;
-    const resolution = resolveWithContextStack(
-      [binding],
-      binding.sequence,
-      booleanContexts,
-      stack,
-    );
-    return resolution.kind === "resolved" && resolution.bindingId === binding.id;
-  });
+  return reachableBindingsWithContextStack(
+    bindings,
+    new Set(scenario.activeContexts ?? []),
+    scenario.stack ?? [],
+  );
 }
 
 export function assessConflictInScenarios(
