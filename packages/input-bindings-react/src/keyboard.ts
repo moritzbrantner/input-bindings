@@ -11,7 +11,9 @@ export interface KeyboardKeyDefinition {
   width?: number;
 }
 
-export const KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[] = [
+export type KeyboardGeometry = "ansi" | "iso";
+
+export const ANSI_KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[] = [
   [
     { code: "Escape", label: "Esc", width: 1.25 },
     { code: "F1", label: "F1" },
@@ -70,8 +72,33 @@ export const KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[] = [
   ],
 ] as const;
 
+export const ISO_KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[] =
+  ANSI_KEYBOARD_ROWS.map((row, index) =>
+    index === 4
+      ? [
+          { code: "ShiftLeft", label: "Shift", width: 1.6 },
+          { code: "IntlBackslash", label: "<>" },
+          ..."ZXCVBNM".split("").map((letter) => ({ code: `Key${letter}`, label: letter })),
+          { code: "Comma", label: "," },
+          { code: "Period", label: "." },
+          { code: "Slash", label: "/" },
+          { code: "ShiftRight", label: "Shift", width: 2.2 },
+        ]
+      : row,
+  );
+
+export const KEYBOARD_ROWS = ANSI_KEYBOARD_ROWS;
+
+export function keyboardRowsForGeometry(
+  geometry: KeyboardGeometry,
+): readonly (readonly KeyboardKeyDefinition[])[] {
+  return geometry === "iso" ? ISO_KEYBOARD_ROWS : ANSI_KEYBOARD_ROWS;
+}
+
 const KEYBOARD_LABEL_BY_CODE = new Map(
-  KEYBOARD_ROWS.flat().map((key) => [key.code, key.label] as const),
+  [...ANSI_KEYBOARD_ROWS.flat(), ...ISO_KEYBOARD_ROWS.flat()].map(
+    (key) => [key.code, key.label] as const,
+  ),
 );
 
 const SPECIAL_LOGICAL_CODES: Readonly<Record<string, string>> = {
@@ -108,7 +135,7 @@ const PUNCTUATION_CODES: Readonly<Record<string, string>> = {
   "/": "Slash",
 };
 
-const LAYOUT_LABEL_CODE = /^(?:Key[A-Z]|Digit[0-9]|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/u;
+const LAYOUT_LABEL_CODE = /^(?:Key[A-Z]|Digit[0-9]|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|IntlBackslash|Semicolon|Quote|Comma|Period|Slash)$/u;
 
 export function keyboardLabelForCode(
   code: string,
