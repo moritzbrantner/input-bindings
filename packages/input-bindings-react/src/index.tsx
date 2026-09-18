@@ -28,9 +28,8 @@ import {
 } from "./model.ts";
 import {
   KEYBOARD_ROWS,
-  bindingIdsForCode,
-  bindingUsesCode,
   codesForSequence,
+  createKeyboardBindingIndex,
   keyboardLabelForCode,
   type KeyboardKeyDefinition,
 } from "./keyboard.ts";
@@ -466,13 +465,41 @@ export function KeyboardView({ bindings, conflicts = [], selectedActionId, selec
       case "visible": return visibleActions.size > 0 ? bindings.filter((binding) => visibleActions.has(binding.action)) : bindings;
     }
   }, [bindings, conflictIds, context, scope, selectedActionId, visibleActions]);
+  const allBindingIdsByCode = useMemo(
+    () => createKeyboardBindingIndex(bindings, layoutLabels),
+    [bindings, layoutLabels],
+  );
+  const scopedBindingIdsByCode = useMemo(
+    () => scopedBindings === bindings
+      ? allBindingIdsByCode
+      : createKeyboardBindingIndex(scopedBindings, layoutLabels),
+    [allBindingIdsByCode, bindings, layoutLabels, scopedBindings],
+  );
+  const selectedCodes = useMemo(() => {
+    if (!selectedBindingId) return new Set<string>();
+    const selectedBinding = bindings.find((binding) => binding.id === selectedBindingId);
+    return new Set(
+      selectedBinding ? codesForSequence(selectedBinding.sequence, layoutLabels) : [],
+    );
+  }, [bindings, layoutLabels, selectedBindingId]);
 
   return (
     <div className="ib-keyboard" aria-label="Keyboard binding overview">
       {KEYBOARD_ROWS.map((row, rowIndex) => (
         <div className="ib-keyboard-row" key={rowIndex}>
           {row.map((key) => (
-            <KeyboardKey key={key.code} definition={key} bindings={scopedBindings} allBindings={bindings} conflictIds={conflictIds} selectedBindingId={selectedBindingId} pressed={pressedCodes.has(key.code)} highlighted={highlightedCodes.has(key.code)} layoutLabels={layoutLabels} onInspect={onKeyInspect} />
+            <KeyboardKey
+              key={key.code}
+              definition={key}
+              scopedBindingIds={scopedBindingIdsByCode.get(key.code) ?? []}
+              allBindingIds={allBindingIdsByCode.get(key.code) ?? []}
+              conflictIds={conflictIds}
+              selected={selectedCodes.has(key.code)}
+              pressed={pressedCodes.has(key.code)}
+              highlighted={highlightedCodes.has(key.code)}
+              layoutLabels={layoutLabels}
+              onInspect={onKeyInspect}
+            />
           ))}
         </div>
       ))}
@@ -480,27 +507,24 @@ export function KeyboardView({ bindings, conflicts = [], selectedActionId, selec
   );
 }
 
-function KeyboardKey({ definition, bindings, allBindings, conflictIds, selectedBindingId, pressed, highlighted, layoutLabels, onInspect }: {
+function KeyboardKey({ definition, scopedBindingIds, allBindingIds, conflictIds, selected, pressed, highlighted, layoutLabels, onInspect }: {
   definition: KeyboardKeyDefinition;
-  bindings: readonly Binding[];
-  allBindings: readonly Binding[];
+  scopedBindingIds: readonly string[];
+  allBindingIds: readonly string[];
   conflictIds: ReadonlySet<string>;
-  selectedBindingId?: string;
+  selected: boolean;
   pressed: boolean;
   highlighted: boolean;
   layoutLabels?: ReadonlyMap<string, string>;
   onInspect?: (code: string, bindingIds: string[]) => void;
 }) {
-  const scopedBindingIds = bindingIdsForCode(bindings, definition.code, layoutLabels);
-  const allBindingIds = bindingIdsForCode(allBindings, definition.code, layoutLabels);
   const conflicting = allBindingIds.some((id) => conflictIds.has(id));
-  const selected = selectedBindingId ? allBindings.some((binding) => binding.id === selectedBindingId && bindingUsesCode(binding, definition.code, layoutLabels)) : false;
   const classes = ["ib-key", scopedBindingIds.length > 0 ? "is-used" : "", conflicting ? "is-conflict" : "", selected ? "is-selected" : "", pressed ? "is-pressed" : "", highlighted ? "is-highlighted" : ""].filter(Boolean).join(" ");
   const label = keyboardLabelForCode(definition.code, layoutLabels);
   const detail = allBindingIds.length === 0 ? "unused" : `${allBindingIds.length} binding${allBindingIds.length === 1 ? "" : "s"}`;
 
   return (
-    <button type="button" className={classes} style={{ flex: definition.width ?? 1 }} title={`${definition.code}: ${detail}`} aria-label={`${label}, ${detail}${conflicting ? ", conflict" : ""}`} onClick={() => onInspect?.(definition.code, allBindingIds)}>
+    <button type="button" className={classes} style={{ flex: definition.width ?? 1 }} title={`${definition.code}: ${detail}`} aria-label={`${label}, ${detail}${conflicting ? ", conflict" : ""}`} onClick={() => onInspect?.(definition.code, [...allBindingIds])}>
       <span className="ib-key-label">{label}</span>
       {allBindingIds.length > 0 && <span className="ib-key-count">{allBindingIds.length}</span>}
     </button>

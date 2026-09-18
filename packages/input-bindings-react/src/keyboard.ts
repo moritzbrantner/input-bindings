@@ -70,6 +70,10 @@ export const KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[] = [
   ],
 ] as const;
 
+const KEYBOARD_LABEL_BY_CODE = new Map(
+  KEYBOARD_ROWS.flat().map((key) => [key.code, key.label] as const),
+);
+
 const SPECIAL_LOGICAL_CODES: Readonly<Record<string, string>> = {
   Escape: "Escape",
   Esc: "Escape",
@@ -110,7 +114,7 @@ export function keyboardLabelForCode(
   code: string,
   layoutLabels?: ReadonlyMap<string, string>,
 ): string {
-  const fallback = KEYBOARD_ROWS.flat().find((key) => key.code === code)?.label ?? code;
+  const fallback = KEYBOARD_LABEL_BY_CODE.get(code) ?? code;
   if (!LAYOUT_LABEL_CODE.test(code)) return fallback;
   const layoutLabel = layoutLabels?.get(code);
   if (!layoutLabel || layoutLabel.trim().length === 0) return fallback;
@@ -166,6 +170,29 @@ export function codesForSequence(
         .flatMap((stroke) => codesForStroke(stroke, layoutLabels)),
     ),
   ];
+}
+
+export type KeyboardBindingIndex = ReadonlyMap<string, readonly string[]>;
+
+export function createKeyboardBindingIndex(
+  bindings: readonly Binding[],
+  layoutLabels?: ReadonlyMap<string, string>,
+): KeyboardBindingIndex {
+  const result = new Map<string, string[]>();
+
+  for (const binding of bindings) {
+    for (const code of codesForSequence(binding.sequence, layoutLabels)) {
+      const bindingIds = result.get(code);
+      if (bindingIds) {
+        bindingIds.push(binding.id);
+      } else {
+        result.set(code, [binding.id]);
+      }
+    }
+  }
+
+  for (const bindingIds of result.values()) bindingIds.sort();
+  return result;
 }
 
 export function bindingUsesCode(
