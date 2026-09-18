@@ -104,7 +104,11 @@ function LayoutComparisonStory() {
           >
             <h2 id={`layout-${fixture.id}`}>{fixture.label}</h2>
             <p>{fixture.description}</p>
-            <KeyboardView bindings={bindings} layoutLabels={fixture.layoutLabels} />
+            <KeyboardView
+              bindings={bindings}
+              geometry={fixture.geometry}
+              layoutLabels={fixture.layoutLabels}
+            />
           </section>
         ))}
       </div>
@@ -113,8 +117,10 @@ function LayoutComparisonStory() {
 }
 
 function argsForLayout(id: KeyboardLayoutFixture["id"]): Partial<KeyboardViewProps> {
+  const fixture = keyboardLayoutFixture(id);
   return {
-    layoutLabels: keyboardLayoutFixture(id).layoutLabels,
+    geometry: fixture.geometry,
+    layoutLabels: fixture.layoutLabels,
   };
 }
 
@@ -126,6 +132,7 @@ const meta = {
     bindings,
   },
   argTypes: {
+    geometry: { control: "inline-radio", options: ["ansi", "iso"] },
     layoutLabels: { control: false },
     pressedCodes: { control: false },
     highlightedSequence: { control: false },
