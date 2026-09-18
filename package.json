@@ -15,7 +15,8 @@
     "release:artifacts": "node scripts/build-release-artifacts.mjs",
     "storybook": "storybook dev -p 6006",
     "build:storybook": "storybook build --output-dir storybook-static",
-    "test:storybook": "playwright test -c playwright.storybook.config.ts"
+    "test:storybook": "npm run build:storybook && npm run test:storybook:built",
+    "test:storybook:built": "playwright test -c playwright.storybook.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0",

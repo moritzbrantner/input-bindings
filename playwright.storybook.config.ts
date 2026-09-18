@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm run storybook -- --host 127.0.0.1 --port 6017 --ci",
+    command: "node scripts/serve-storybook-static.mjs",
     reuseExistingServer: false,
     timeout: 120_000,
     url: "http://127.0.0.1:6017",

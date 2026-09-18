@@ -43,4 +43,4 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
       - run: npm run build:storybook
-      - run: npm run test:storybook
+      - run: npm run test:storybook:built

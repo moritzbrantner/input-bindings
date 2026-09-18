@@ -3,7 +3,13 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { Binding, Conflict } from "@moritzbrantner/input-bindings";
 
-import { KeyboardView, type KeyboardViewProps } from "./index.tsx";
+import { KeyboardView, type KeyboardViewProps } from "../src/index.tsx";
+import {
+  KEYBOARD_LAYOUT_FIXTURES,
+  keyboardLayoutFixture,
+  type KeyboardLayoutFixture,
+} from "./keyboard-layouts.ts";
+import "./KeyboardView.stories.css";
 
 const bindings: Binding[] = [
   {
@@ -61,81 +67,12 @@ const conflicts: Conflict[] = [
   },
 ];
 
-const qwertz = new Map<string, string>([
-  ["KeyY", "z"],
-  ["KeyZ", "y"],
-  ["BracketLeft", "ü"],
-  ["Semicolon", "ö"],
-  ["Quote", "ä"],
-  ["Minus", "ß"],
-]);
-
-const azerty = new Map<string, string>([
-  ["KeyQ", "a"],
-  ["KeyW", "z"],
-  ["KeyA", "q"],
-  ["KeyZ", "w"],
-  ["Semicolon", "m"],
-  ["KeyM", ","],
-  ["Comma", ";"],
-  ["Period", ":"],
-  ["Slash", "!"],
-  ["Digit1", "&"],
-  ["Digit2", "é"],
-  ["Digit3", '"'],
-  ["Digit4", "'"],
-  ["Digit5", "("],
-  ["Digit6", "-"],
-  ["Digit7", "è"],
-  ["Digit8", "_"],
-  ["Digit9", "ç"],
-  ["Digit0", "à"],
-]);
-
-const dvorak = new Map<string, string>([
-  ["KeyQ", "'"],
-  ["KeyW", ","],
-  ["KeyE", "."],
-  ["KeyR", "p"],
-  ["KeyT", "y"],
-  ["KeyY", "f"],
-  ["KeyU", "g"],
-  ["KeyI", "c"],
-  ["KeyO", "r"],
-  ["KeyP", "l"],
-  ["KeyA", "a"],
-  ["KeyS", "o"],
-  ["KeyD", "e"],
-  ["KeyF", "u"],
-  ["KeyG", "i"],
-  ["KeyH", "d"],
-  ["KeyJ", "h"],
-  ["KeyK", "t"],
-  ["KeyL", "n"],
-  ["Semicolon", "s"],
-  ["KeyZ", ";"],
-  ["KeyX", "q"],
-  ["KeyC", "j"],
-  ["KeyV", "k"],
-  ["KeyB", "x"],
-  ["KeyN", "b"],
-  ["KeyM", "m"],
-]);
-
 function KeyboardStory(args: KeyboardViewProps) {
   const [inspection, setInspection] = useState("No key inspected");
 
   return (
-    <main
-      className="ib-editor"
-      style={{
-        margin: "0 auto",
-        maxWidth: "980px",
-        minHeight: "100vh",
-        padding: "2rem",
-      }}
-    >
-      <h1 style={{ marginTop: 0 }}>Keyboard view</h1>
+    <main className="ib-editor ib-story-keyboard">
+      <h1>Keyboard view</h1>
       <p>
         Physical positions stay tied to KeyboardEvent.code while layout labels change what is shown
         and where logical bindings are displayed.
@@ -151,6 +88,34 @@ function KeyboardStory(args: KeyboardViewProps) {
       </output>
     </main>
   );
+}
+
+function LayoutComparisonStory() {
+  return (
+    <main className="ib-editor ib-story-keyboard">
+      <h1>Keyboard layout comparison</h1>
+      <div className="ib-layout-gallery">
+        {KEYBOARD_LAYOUT_FIXTURES.map((fixture) => (
+          <section
+            className="ib-layout-card"
+            data-layout={fixture.id}
+            key={fixture.id}
+            aria-labelledby={`layout-${fixture.id}`}
+          >
+            <h2 id={`layout-${fixture.id}`}>{fixture.label}</h2>
+            <p>{fixture.description}</p>
+            <KeyboardView bindings={bindings} layoutLabels={fixture.layoutLabels} />
+          </section>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+function argsForLayout(id: KeyboardLayoutFixture["id"]): Partial<KeyboardViewProps> {
+  return {
+    layoutLabels: keyboardLayoutFixture(id).layoutLabels,
+  };
 }
 
 const meta = {
@@ -171,24 +136,24 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Qwerty: Story = {};
+export const Qwerty: Story = {
+  args: argsForLayout("qwerty"),
+};
 
 export const Qwertz: Story = {
-  args: {
-    layoutLabels: qwertz,
-  },
+  args: argsForLayout("qwertz"),
 };
 
 export const Azerty: Story = {
-  args: {
-    layoutLabels: azerty,
-  },
+  args: argsForLayout("azerty"),
 };
 
 export const Dvorak: Story = {
-  args: {
-    layoutLabels: dvorak,
-  },
+  args: argsForLayout("dvorak"),
+};
+
+export const Colemak: Story = {
+  args: argsForLayout("colemak"),
 };
 
 export const InteractionStates: Story = {
@@ -203,4 +168,8 @@ export const InteractionStates: Story = {
     pressedCodes: new Set(["KeyW"]),
     selectedBindingId: "physical.z",
   },
+};
+
+export const LayoutComparison: Story = {
+  render: () => <LayoutComparisonStory />,
 };

@@ -16,7 +16,7 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-  stories: ["../packages/input-bindings-react/src/**/*.stories.@(ts|tsx)"],
+  stories: ["../packages/input-bindings-react/storybook/**/*.stories.@(ts|tsx)"],
   viteFinal(viteConfig) {
     viteConfig.resolve = {
       ...viteConfig.resolve,
