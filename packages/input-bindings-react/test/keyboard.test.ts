@@ -142,4 +142,4 @@ test("keyboard view only exposes keys as controls when inspection is enabled", (
   assert.match(interactiveMarkup, /<button[^>]+class="ib-key/u);
   assert.match(interactiveMarkup, /data-key-code="KeyA"/u);
 });
-\n
+
