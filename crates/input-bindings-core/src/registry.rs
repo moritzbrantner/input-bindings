@@ -104,10 +104,30 @@ pub struct RegistryValidationReport {
     pub conflicts: Vec<Conflict>,
 }
 
-pub fn validate_registry(
-    registry: &ActionRegistry,
-    profile: Option<&Profile>,
-) -> RegistryValidationReport {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CompiledActionRegistry {
+    base_bindings: Vec<Binding>,
+    diagnostics: Vec<ValidationDiagnostic>,
+    conflicts: Vec<Conflict>,
+    known_actions: BTreeSet<String>,
+    allowed_devices_by_action: BTreeMap<String, Vec<DeviceClass>>,
+}
+
+impl CompiledActionRegistry {
+    pub fn base_bindings(&self) -> &[Binding] {
+        &self.base_bindings
+    }
+
+    pub fn diagnostics(&self) -> &[ValidationDiagnostic] {
+        &self.diagnostics
+    }
+
+    pub fn conflicts(&self) -> &[Conflict] {
+        &self.conflicts
+    }
+}
+
+pub fn compile_action_registry(registry: &ActionRegistry) -> CompiledActionRegistry {
     let mut actions = registry.actions.clone();
     actions.sort_by(|left, right| {
         left.id
@@ -119,9 +139,9 @@ pub fn validate_registry(
         .iter()
         .map(|action| action.id.clone())
         .collect::<BTreeSet<_>>();
-    let action_by_id = actions
+    let allowed_devices_by_action = actions
         .iter()
-        .map(|action| (action.id.clone(), action))
+        .map(|action| (action.id.clone(), action.allowed_devices.clone()))
         .collect::<BTreeMap<_, _>>();
     let mut diagnostics = Vec::new();
 
@@ -193,7 +213,7 @@ pub fn validate_registry(
             validate_binding(
                 binding,
                 &known_actions,
-                &action_by_id,
+                &allowed_devices_by_action,
                 None,
                 &mut diagnostics,
             );
@@ -204,59 +224,87 @@ pub fn validate_registry(
     for binding in flattened_defaults {
         base.entry(binding.id.clone()).or_insert(binding);
     }
-    let base = base.into_values().collect::<Vec<_>>();
+    let base_bindings = base.into_values().collect::<Vec<_>>();
 
-    let mut effective_bindings = base.clone();
-    if let Some(profile) = profile {
-        let application = apply_profile(&base, profile);
-        effective_bindings = application.bindings;
+    let resolvable = base_bindings
+        .iter()
+        .filter(|binding| binding_is_resolvable(binding, &known_actions))
+        .cloned()
+        .collect::<Vec<_>>();
+    let conflicts = analyze_conflicts(&resolvable);
 
-        let mut profile_diagnostics = application
-            .diagnostics
-            .into_iter()
-            .map(|entry| {
-                let kind = match entry.kind {
-                    ProfileDiagnosticKind::AddCollision => {
-                        ValidationDiagnosticKind::ProfileAddCollision
-                    }
-                    ProfileDiagnosticKind::MissingBinding => {
-                        ValidationDiagnosticKind::ProfileMissingBinding
-                    }
-                    ProfileDiagnosticKind::ReplacementIdMismatch => {
-                        ValidationDiagnosticKind::ProfileReplacementIdMismatch
-                    }
-                };
-                diagnostic(
-                    kind,
-                    None,
-                    Some(entry.binding_id),
-                    Some(entry.patch_index),
-                    None,
-                )
-            })
-            .collect::<Vec<_>>();
-
-        for (patch_index, patch) in profile.patches.iter().enumerate() {
-            match patch {
-                BindingPatch::Add { binding } | BindingPatch::Replace { binding, .. } => {
-                    validate_binding(
-                        binding,
-                        &known_actions,
-                        &action_by_id,
-                        Some(patch_index),
-                        &mut profile_diagnostics,
-                    );
-                }
-                BindingPatch::Remove { .. } => {}
-            }
-        }
-        profile_diagnostics.sort_by_key(|entry| entry.patch_index.unwrap_or(usize::MAX));
-        diagnostics.extend(profile_diagnostics);
+    CompiledActionRegistry {
+        base_bindings,
+        diagnostics,
+        conflicts,
+        known_actions,
+        allowed_devices_by_action,
     }
+}
+
+pub fn validate_compiled_registry(
+    compiled: &CompiledActionRegistry,
+    profile: Option<&Profile>,
+) -> RegistryValidationReport {
+    let mut diagnostics = compiled.diagnostics.clone();
+
+    let Some(profile) = profile.filter(|profile| !profile.patches.is_empty()) else {
+        return RegistryValidationReport {
+            valid: diagnostics.is_empty(),
+            effective_bindings: compiled.base_bindings.clone(),
+            diagnostics,
+            conflicts: compiled.conflicts.clone(),
+        };
+    };
+
+    let application = apply_profile(&compiled.base_bindings, profile);
+    let effective_bindings = application.bindings;
+
+    let mut profile_diagnostics = application
+        .diagnostics
+        .into_iter()
+        .map(|entry| {
+            let kind = match entry.kind {
+                ProfileDiagnosticKind::AddCollision => {
+                    ValidationDiagnosticKind::ProfileAddCollision
+                }
+                ProfileDiagnosticKind::MissingBinding => {
+                    ValidationDiagnosticKind::ProfileMissingBinding
+                }
+                ProfileDiagnosticKind::ReplacementIdMismatch => {
+                    ValidationDiagnosticKind::ProfileReplacementIdMismatch
+                }
+            };
+            diagnostic(
+                kind,
+                None,
+                Some(entry.binding_id),
+                Some(entry.patch_index),
+                None,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    for (patch_index, patch) in profile.patches.iter().enumerate() {
+        match patch {
+            BindingPatch::Add { binding } | BindingPatch::Replace { binding, .. } => {
+                validate_binding(
+                    binding,
+                    &compiled.known_actions,
+                    &compiled.allowed_devices_by_action,
+                    Some(patch_index),
+                    &mut profile_diagnostics,
+                );
+            }
+            BindingPatch::Remove { .. } => {}
+        }
+    }
+    profile_diagnostics.sort_by_key(|entry| entry.patch_index.unwrap_or(usize::MAX));
+    diagnostics.extend(profile_diagnostics);
 
     let resolvable = effective_bindings
         .iter()
-        .filter(|binding| binding_is_resolvable(binding, &known_actions))
+        .filter(|binding| binding_is_resolvable(binding, &compiled.known_actions))
         .cloned()
         .collect::<Vec<_>>();
     let conflicts = analyze_conflicts(&resolvable);
@@ -269,10 +317,17 @@ pub fn validate_registry(
     }
 }
 
+pub fn validate_registry(
+    registry: &ActionRegistry,
+    profile: Option<&Profile>,
+) -> RegistryValidationReport {
+    validate_compiled_registry(&compile_action_registry(registry), profile)
+}
+
 fn validate_binding(
     binding: &Binding,
     known_actions: &BTreeSet<String>,
-    action_by_id: &BTreeMap<String, &ActionDefinition>,
+    allowed_devices_by_action: &BTreeMap<String, Vec<DeviceClass>>,
     patch_index: Option<usize>,
     diagnostics: &mut Vec<ValidationDiagnostic>,
 ) {
@@ -306,9 +361,9 @@ fn validate_binding(
         ));
     }
 
-    let allowed = action_by_id
+    let allowed = allowed_devices_by_action
         .get(&binding.action)
-        .map(|action| action.allowed_devices.as_slice())
+        .map(Vec::as_slice)
         .unwrap_or_default();
 
     for (stroke_index, stroke) in binding.sequence.iter().enumerate() {
