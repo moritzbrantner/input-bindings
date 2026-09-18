@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 
-import { validateRegistry } from "@moritzbrantner/input-bindings";
+import {
+  compileActionRegistry,
+  validateCompiledRegistry,
+} from "@moritzbrantner/input-bindings";
 
 import {
   KeybindingEditor,
@@ -9,9 +12,13 @@ import {
 import { PlatformAdvisoryPanel } from "./PlatformAdvisoryPanel.tsx";
 
 export function PlatformAwareKeybindingEditor(props: KeybindingEditorProps) {
+  const compiledRegistry = useMemo(
+    () => props.compiledRegistry ?? compileActionRegistry(props.registry),
+    [props.compiledRegistry, props.registry],
+  );
   const report = useMemo(
-    () => validateRegistry(props.registry, props.profile),
-    [props.registry, props.profile],
+    () => validateCompiledRegistry(compiledRegistry, props.profile),
+    [compiledRegistry, props.profile],
   );
 
   return (
@@ -20,7 +27,7 @@ export function PlatformAwareKeybindingEditor(props: KeybindingEditorProps) {
         registry={props.registry}
         bindings={report.effectiveBindings}
       />
-      <KeybindingEditor {...props} />
+      <KeybindingEditor {...props} compiledRegistry={compiledRegistry} />
     </div>
   );
 }
