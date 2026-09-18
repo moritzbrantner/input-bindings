@@ -1,0 +1,40 @@
+.ib-story-keyboard {
+  margin: 0 auto;
+  max-width: 980px;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.ib-story-keyboard > h1 {
+  margin-top: 0;
+}
+
+.ib-layout-gallery {
+  display: grid;
+  gap: 1rem;
+}
+
+.ib-layout-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--ib-border);
+  border-radius: 0.75rem;
+  background: var(--ib-surface);
+}
+
+.ib-layout-card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ib-layout-card p {
+  margin: 0.25rem 0 0.8rem;
+  color: var(--ib-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 620px) {
+  .ib-story-keyboard {
+    padding: 1rem;
+  }
+}
