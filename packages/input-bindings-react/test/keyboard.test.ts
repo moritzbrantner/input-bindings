@@ -5,7 +5,7 @@ import type { Binding } from "@moritzbrantner/input-bindings";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { KeyboardView } from "../src/index.tsx";
+import { KeyboardView } from "@moritzbrantner/input-bindings-react";
 import {
   bindingIdsForCode,
   codeForStroke,
