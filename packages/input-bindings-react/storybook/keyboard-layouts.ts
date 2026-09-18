@@ -1,7 +1,10 @@
+import type { KeyboardGeometry } from "../src/keyboard.ts";
+
 export interface KeyboardLayoutFixture {
   id: "qwerty" | "qwertz" | "azerty" | "dvorak" | "colemak";
   label: string;
   description: string;
+  geometry: KeyboardGeometry;
   layoutLabels: ReadonlyMap<string, string>;
 }
 
@@ -9,13 +12,15 @@ export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
   {
     id: "qwerty",
     label: "US QWERTY",
-    description: "Default labels; logical and physical Z share the KeyZ position.",
+    description: "Default ANSI labels; logical and physical Z share the KeyZ position.",
+    geometry: "ansi",
     layoutLabels: new Map(),
   },
   {
     id: "qwertz",
     label: "German QWERTZ",
-    description: "Representative German labels with Y/Z swapped and common umlaut keys.",
+    description: "Representative German QWERTZ labels on an ISO physical geometry.",
+    geometry: "iso",
     layoutLabels: new Map([
       ["KeyY", "z"],
       ["KeyZ", "y"],
@@ -26,12 +31,14 @@ export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
       ["Equal", "´"],
       ["Backslash", "#"],
       ["Slash", "-"],
+      ["IntlBackslash", "<"],
     ]),
   },
   {
     id: "azerty",
     label: "French AZERTY",
-    description: "Representative French labels including A/Q, Z/W, M, and the number row.",
+    description: "Representative French AZERTY labels on an ISO physical geometry.",
+    geometry: "iso",
     layoutLabels: new Map([
       ["KeyQ", "a"],
       ["KeyW", "z"],
@@ -52,12 +59,14 @@ export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
       ["Digit8", "_"],
       ["Digit9", "ç"],
       ["Digit0", "à"],
+      ["IntlBackslash", "<"],
     ]),
   },
   {
     id: "dvorak",
     label: "Dvorak",
-    description: "Standard Dvorak letter positions represented through Keyboard Layout Map labels.",
+    description: "Standard Dvorak letter positions on ANSI geometry.",
+    geometry: "ansi",
     layoutLabels: new Map([
       ["KeyQ", "'"],
       ["KeyW", ","],
@@ -91,7 +100,8 @@ export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
   {
     id: "colemak",
     label: "Colemak",
-    description: "Standard Colemak letter positions while preserving the familiar bottom-left shortcuts.",
+    description: "Standard Colemak letter positions on ANSI geometry.",
+    geometry: "ansi",
     layoutLabels: new Map([
       ["KeyE", "f"],
       ["KeyR", "p"],
