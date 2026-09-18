@@ -36,8 +36,9 @@ pub use profile::{
     apply_profile,
 };
 pub use registry::{
-    ActionDefinition, ActionRegistry, DeviceClass, Provenance, RegistryValidationReport,
-    RepeatPolicy, ValidationDiagnostic, ValidationDiagnosticKind, validate_registry,
+    ActionDefinition, ActionRegistry, CompiledActionRegistry, DeviceClass, Provenance,
+    RegistryValidationReport, RepeatPolicy, ValidationDiagnostic, ValidationDiagnosticKind,
+    compile_action_registry, validate_compiled_registry, validate_registry,
 };
 pub use repair::{
     ConflictDisposition, ConflictRepair, ConflictRepairKeepReason, ConflictRepairPlan,

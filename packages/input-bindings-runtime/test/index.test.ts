@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import type { ActionRegistry, Binding, KeyStroke } from "@moritzbrantner/input-bindings";
+import type { ActionRegistry, Binding, KeyStroke, Profile } from "@moritzbrantner/input-bindings";
 import {
   InputRuntimeController,
   type RuntimeDispatch,
@@ -224,4 +224,29 @@ test("dispatched-only consumption leaves pending chord leaders unconsumed", () =
   const pending = controller.handleKeyDown(stroke("k", { ctrl: true }));
   assert.equal(pending.kind, "pending");
   assert.equal(pending.consumed, false);
+});
+
+
+test("profile-only updates reuse the runtime registry baseline while changing effective bindings", () => {
+  const save = logical("save.default", "save", "s", { ctrl: true });
+  const controller = new InputRuntimeController({
+    registry: registry([save]),
+    getActiveContexts: () => new Set(),
+  });
+
+  assert.equal(controller.handleKeyDown(stroke("s", { ctrl: true })).kind, "dispatched");
+  controller.handleKeyUp(stroke("s"));
+
+  const disabled: Profile = {
+    id: "user",
+    patches: [{ op: "remove", bindingId: "save.default" }],
+  };
+  const reset = controller.updateProfile(disabled);
+  assert.equal(reset.kind, "reset");
+  assert.equal(controller.effectiveBindings.length, 0);
+  assert.equal(controller.handleKeyDown(stroke("s", { ctrl: true })).kind, "none");
+
+  controller.updateProfile();
+  assert.equal(controller.effectiveBindings.length, 1);
+  assert.equal(controller.handleKeyDown(stroke("s", { ctrl: true })).kind, "dispatched");
 });

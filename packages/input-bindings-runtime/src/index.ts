@@ -1,10 +1,12 @@
 import {
+  compileActionRegistry,
   inputStrokeIdentity,
   resolve,
   resolveWithContextStack,
-  validateRegistry,
+  validateCompiledRegistry,
   type ActionRegistry,
   type Binding,
+  type CompiledActionRegistry,
   type ContextLayer,
   type InputStroke,
   type KeyStroke,
@@ -112,6 +114,7 @@ const defaultScheduler: RuntimeScheduler = {
 
 export class InputRuntimeController {
   private registry: ActionRegistry;
+  private compiledRegistry: CompiledActionRegistry;
   private profile: Profile | undefined;
   private report: RegistryValidationReport;
   private readonly getActiveContexts: () => ReadonlySet<string>;
@@ -130,6 +133,7 @@ export class InputRuntimeController {
 
   constructor(options: RuntimeControllerOptions) {
     this.registry = structuredClone(options.registry);
+    this.compiledRegistry = compileActionRegistry(this.registry);
     this.profile = options.profile ? structuredClone(options.profile) : undefined;
     this.getActiveContexts = options.getActiveContexts;
     this.getContextStack = options.getContextStack;
@@ -139,7 +143,7 @@ export class InputRuntimeController {
     this.scheduler = options.scheduler ?? defaultScheduler;
     this.onDispatch = options.onDispatch;
     this.onDecision = options.onDecision;
-    this.report = validateRegistry(this.registry, this.profile);
+    this.report = validateCompiledRegistry(this.compiledRegistry, this.profile);
   }
 
   get validationReport(): RegistryValidationReport {
@@ -161,8 +165,16 @@ export class InputRuntimeController {
   updateConfiguration(registry: ActionRegistry, profile?: Profile): RuntimeDecision {
     const decision = this.reset("configurationChanged");
     this.registry = structuredClone(registry);
+    this.compiledRegistry = compileActionRegistry(this.registry);
     this.profile = profile ? structuredClone(profile) : undefined;
-    this.report = validateRegistry(this.registry, this.profile);
+    this.report = validateCompiledRegistry(this.compiledRegistry, this.profile);
+    return decision;
+  }
+
+  updateProfile(profile?: Profile): RuntimeDecision {
+    const decision = this.reset("profileChanged");
+    this.profile = profile ? structuredClone(profile) : undefined;
+    this.report = validateCompiledRegistry(this.compiledRegistry, this.profile);
     return decision;
   }
 

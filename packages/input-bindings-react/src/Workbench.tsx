@@ -8,14 +8,16 @@ import {
 
 import {
   applyConflictRepair,
+  compileActionRegistry,
   explainResolutionWithContextStack,
-  validateRegistry,
+  validateCompiledRegistry,
   type ActionDefinition,
   type ActionRegistry,
   type Binding,
   type ConflictRepair,
   type KeyStroke,
   type Profile,
+  type RegistryValidationReport,
   type ResolutionTrace,
 } from "@moritzbrantner/input-bindings";
 import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
@@ -72,7 +74,11 @@ export function InputBindingsWorkbench({
   initialView = "bindings",
   className,
 }: InputBindingsWorkbenchProps) {
-  const report = useMemo(() => validateRegistry(registry, profile), [registry, profile]);
+  const compiledRegistry = useMemo(() => compileActionRegistry(registry), [registry]);
+  const report = useMemo(
+    () => validateCompiledRegistry(compiledRegistry, profile),
+    [compiledRegistry, profile],
+  );
   const effectiveBindings = report.effectiveBindings;
   const actionById = useMemo(
     () => new Map(registry.actions.map((action) => [action.id, action])),
@@ -147,6 +153,7 @@ export function InputBindingsWorkbench({
           registry={registry}
           profile={profile}
           onProfileChange={onProfileChange}
+          compiledRegistry={compiledRegistry}
           className="ib-workbench-list-only"
         />
       )}
@@ -305,7 +312,7 @@ function KeyboardReference({
 }: {
   bindings: readonly Binding[];
   actions: ReadonlyMap<string, ActionDefinition>;
-  conflicts: ReturnType<typeof validateRegistry>["conflicts"];
+  conflicts: RegistryValidationReport["conflicts"];
   scenario: InputBindingsContextScenario;
 }) {
   const [selection, setSelection] = useState<KeyInspectionSelection | null>(null);
@@ -362,7 +369,7 @@ function KeyInspectionDetails({
   selection: KeyInspectionSelection | null;
   bindings: readonly Binding[];
   actions: ReadonlyMap<string, ActionDefinition>;
-  conflicts: ReturnType<typeof validateRegistry>["conflicts"];
+  conflicts: RegistryValidationReport["conflicts"];
   scenario: InputBindingsContextScenario;
 }) {
   const bindingById = useMemo(
@@ -439,7 +446,7 @@ function PreviewMode({
   activeBindings: readonly Binding[];
   actions: ReadonlyMap<string, ActionDefinition>;
   bindingById: ReadonlyMap<string, Binding>;
-  conflicts: ReturnType<typeof validateRegistry>["conflicts"];
+  conflicts: RegistryValidationReport["conflicts"];
   activeContexts: ReadonlySet<string>;
   scenario: InputBindingsContextScenario;
   keyboardMode: InputBindingsKeyboardMode;

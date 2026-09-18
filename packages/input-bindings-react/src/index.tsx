@@ -3,11 +3,13 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import {
   analyzeConflicts,
+  compileActionRegistry,
   isKeyStroke,
-  validateRegistry,
+  validateCompiledRegistry,
   type ActionDefinition,
   type ActionRegistry,
   type Binding,
+  type CompiledActionRegistry,
   type Conflict,
   type ConflictKind,
   type DeviceClass,
@@ -41,6 +43,7 @@ export interface KeybindingEditorProps {
   registry: ActionRegistry;
   profile: Profile;
   onProfileChange: (profile: Profile) => void;
+  compiledRegistry?: CompiledActionRegistry;
   className?: string;
 }
 
@@ -53,9 +56,17 @@ export function KeybindingEditor({
   registry,
   profile,
   onProfileChange,
+  compiledRegistry,
   className,
 }: KeybindingEditorProps) {
-  const report = useMemo(() => validateRegistry(registry, profile), [registry, profile]);
+  const compiled = useMemo(
+    () => compiledRegistry ?? compileActionRegistry(registry),
+    [compiledRegistry, registry],
+  );
+  const report = useMemo(
+    () => validateCompiledRegistry(compiled, profile),
+    [compiled, profile],
+  );
   const effectiveBindings = report.effectiveBindings;
   const layoutLabels = useKeyboardLayoutLabels();
   const [query, setQuery] = useState("");
@@ -279,7 +290,7 @@ export function KeybindingEditor({
       )}
 
       {transferOpen && (
-        <ProfileTransfer registry={registry} profile={profile} onApply={(next) => { onProfileChange(next); setTransferOpen(false); }} onClose={() => setTransferOpen(false)} />
+        <ProfileTransfer compiledRegistry={compiled} profile={profile} onApply={(next) => { onProfileChange(next); setTransferOpen(false); }} onClose={() => setTransferOpen(false)} />
       )}
 
       {shortcutRecorderOpen && (
@@ -653,9 +664,12 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   );
 }
 
-function ProfileTransfer({ registry, profile, onApply, onClose }: { registry: ActionRegistry; profile: Profile; onApply: (profile: Profile) => void; onClose: () => void; }) {
+function ProfileTransfer({ compiledRegistry, profile, onApply, onClose }: { compiledRegistry: CompiledActionRegistry; profile: Profile; onApply: (profile: Profile) => void; onClose: () => void; }) {
   const [draft, setDraft] = useState(() => JSON.stringify(profile, null, 2));
-  const preview = useMemo(() => parseProfilePreview(registry, draft), [registry, draft]);
+  const preview = useMemo(
+    () => parseProfilePreview(compiledRegistry, draft),
+    [compiledRegistry, draft],
+  );
   return (
     <section className="ib-transfer" aria-labelledby="ib-transfer-title">
       <h2 id="ib-transfer-title">Import / export profile</h2>
@@ -675,11 +689,11 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   return <label className="ib-filter-select"><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}><option value="all">All</option>{options.map((option) => <option value={option} key={option}>{prettyLabel(option)}</option>)}</select></label>;
 }
 
-function parseProfilePreview(registry: ActionRegistry, draft: string) {
+function parseProfilePreview(compiledRegistry: CompiledActionRegistry, draft: string) {
   try {
     const value = JSON.parse(draft) as unknown;
     if (!isProfile(value)) return { error: "JSON is not a profile with an id and patches array." };
-    try { return { profile: value, report: validateRegistry(registry, value) }; }
+    try { return { profile: value, report: validateCompiledRegistry(compiledRegistry, value) }; }
     catch (error) { return { error: error instanceof Error ? error.message : "Profile validation failed." }; }
   } catch (error) { return { error: error instanceof Error ? error.message : "Invalid JSON." }; }
 }
