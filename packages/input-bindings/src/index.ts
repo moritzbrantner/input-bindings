@@ -238,46 +238,172 @@ export function resolve(
 export function analyzeConflicts(bindings: readonly Binding[]): Conflict[] {
   const conflicts: Conflict[] = [];
 
-  for (let leftIndex = 0; leftIndex < bindings.length; leftIndex += 1) {
+  for (const [leftIndex, rightIndex] of conflictCandidatePairs(bindings)) {
     const left = bindings[leftIndex];
-    for (let rightIndex = leftIndex + 1; rightIndex < bindings.length; rightIndex += 1) {
-      const right = bindings[rightIndex];
-      const relation = sequenceRelation(left.sequence, right.sequence);
-      if (relation === "separate") continue;
+    const right = bindings[rightIndex];
+    const relation = sequenceRelation(left.sequence, right.sequence);
+    if (relation === "separate") continue;
 
-      const overlap = contextOverlap(left.when, right.when);
-      if (overlap.kind === "disjoint") continue;
+    const overlap = contextOverlap(left.when, right.when);
+    if (overlap.kind === "disjoint") continue;
 
-      let kind: ConflictKind;
-      if (overlap.kind === "unknown") {
-        kind = relation === "exact" ? "potentialExact" : "potentialPrefix";
-      } else if (relation === "prefix") {
-        kind = "chordPrefix";
-      } else if (
-        left.action === right.action &&
-        whenEquals(left.when, right.when) &&
-        (left.priority ?? 0) === (right.priority ?? 0)
-      ) {
-        kind = "duplicate";
-      } else if (rankEquals(bindingRank(left), bindingRank(right))) {
-        kind = "ambiguousExact";
-      } else {
-        kind = "overrideExact";
-      }
-
-      const conflict: Conflict = {
-        leftBindingId: left.id,
-        rightBindingId: right.id,
-        kind,
-      };
-      if (overlap.kind === "overlap" && overlap.witnessContexts.length > 0) {
-        conflict.witnessContexts = overlap.witnessContexts;
-      }
-      conflicts.push(conflict);
+    let kind: ConflictKind;
+    if (overlap.kind === "unknown") {
+      kind = relation === "exact" ? "potentialExact" : "potentialPrefix";
+    } else if (relation === "prefix") {
+      kind = "chordPrefix";
+    } else if (
+      left.action === right.action &&
+      whenEquals(left.when, right.when) &&
+      (left.priority ?? 0) === (right.priority ?? 0)
+    ) {
+      kind = "duplicate";
+    } else if (rankEquals(bindingRank(left), bindingRank(right))) {
+      kind = "ambiguousExact";
+    } else {
+      kind = "overrideExact";
     }
+
+    const conflict: Conflict = {
+      leftBindingId: left.id,
+      rightBindingId: right.id,
+      kind,
+    };
+    if (overlap.kind === "overlap" && overlap.witnessContexts.length > 0) {
+      conflict.witnessContexts = overlap.witnessContexts;
+    }
+    conflicts.push(conflict);
   }
 
   return conflicts;
+}
+
+interface ConflictSequenceTrieNode {
+  children: Map<string, ConflictSequenceTrieNode>;
+  terminalIndices: number[];
+  subtreeIndices: number[];
+}
+
+function conflictCandidatePairs(bindings: readonly Binding[]): Array<readonly [number, number]> {
+  const root = conflictTrieNode();
+  const pairs: Array<readonly [number, number]> = [];
+
+  bindings.forEach((binding, rightIndex) => {
+    for (const leftIndex of conflictCandidateIndices(root, binding.sequence)) {
+      pairs.push([leftIndex, rightIndex]);
+    }
+    insertConflictSequence(root, binding.sequence, rightIndex);
+  });
+
+  pairs.sort(([leftA, rightA], [leftB, rightB]) => leftA - leftB || rightA - rightB);
+  return pairs;
+}
+
+function conflictCandidateIndices(
+  root: ConflictSequenceTrieNode,
+  sequence: readonly InputStroke[],
+): Set<number> {
+  const result = new Set<number>();
+  let node = root;
+
+  if (sequence.length === 0) {
+    for (const index of root.subtreeIndices) result.add(index);
+    return result;
+  }
+
+  for (const index of root.terminalIndices) result.add(index);
+
+  for (let strokeIndex = 0; strokeIndex < sequence.length; strokeIndex += 1) {
+    const child = node.children.get(conflictStrokeKey(sequence[strokeIndex]));
+    if (!child) return result;
+    node = child;
+
+    const candidates =
+      strokeIndex === sequence.length - 1 ? node.subtreeIndices : node.terminalIndices;
+    for (const index of candidates) result.add(index);
+  }
+
+  return result;
+}
+
+function insertConflictSequence(
+  root: ConflictSequenceTrieNode,
+  sequence: readonly InputStroke[],
+  bindingIndex: number,
+): void {
+  let node = root;
+  node.subtreeIndices.push(bindingIndex);
+
+  for (const stroke of sequence) {
+    const key = conflictStrokeKey(stroke);
+    let child = node.children.get(key);
+    if (!child) {
+      child = conflictTrieNode();
+      node.children.set(key, child);
+    }
+    node = child;
+    node.subtreeIndices.push(bindingIndex);
+  }
+
+  node.terminalIndices.push(bindingIndex);
+}
+
+function conflictTrieNode(): ConflictSequenceTrieNode {
+  return { children: new Map(), terminalIndices: [], subtreeIndices: [] };
+}
+
+function conflictStrokeKey(stroke: InputStroke): string {
+  if (isKeyStroke(stroke)) {
+    return JSON.stringify([
+      "keyboard",
+      stroke.key.kind,
+      stroke.key.value,
+      Boolean(stroke.modifiers?.ctrl),
+      Boolean(stroke.modifiers?.alt),
+      Boolean(stroke.modifiers?.shift),
+      Boolean(stroke.modifiers?.meta),
+      Boolean(stroke.modifiers?.altGraph),
+    ]);
+  }
+
+  switch (stroke.device) {
+    case "mouseButton":
+      return JSON.stringify([
+        "mouseButton",
+        stroke.button,
+        Boolean(stroke.modifiers?.ctrl),
+        Boolean(stroke.modifiers?.alt),
+        Boolean(stroke.modifiers?.shift),
+        Boolean(stroke.modifiers?.meta),
+        Boolean(stroke.modifiers?.altGraph),
+      ]);
+    case "wheel":
+      return JSON.stringify([
+        "wheel",
+        stroke.direction,
+        Boolean(stroke.modifiers?.ctrl),
+        Boolean(stroke.modifiers?.alt),
+        Boolean(stroke.modifiers?.shift),
+        Boolean(stroke.modifiers?.meta),
+        Boolean(stroke.modifiers?.altGraph),
+      ]);
+    case "gamepadButton":
+      return JSON.stringify([
+        "gamepadButton",
+        stroke.gamepad ?? null,
+        stroke.button,
+        stroke.threshold,
+      ]);
+    case "gamepadAxis":
+      return JSON.stringify([
+        "gamepadAxis",
+        stroke.gamepad ?? null,
+        stroke.axis,
+        stroke.direction,
+        stroke.threshold,
+        stroke.deadzone,
+      ]);
+  }
 }
 
 export function applyProfile(
