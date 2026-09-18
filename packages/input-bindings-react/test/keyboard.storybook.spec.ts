@@ -10,6 +10,7 @@ test("QWERTY keeps logical and physical Z on the same displayed position", async
   await expect(key(page, "KeyZ").locator(".ib-key-label")).toHaveText("Z");
   await expect(key(page, "KeyZ")).toHaveAttribute("title", "KeyZ: 2 bindings");
   await expect(key(page, "KeyY")).toHaveAttribute("title", "KeyY: unused");
+  await expect(key(page, "IntlBackslash")).toHaveCount(0);
 });
 
 test("QWERTZ swaps displayed Y/Z labels while logical Z follows the layout", async ({ page }) => {
@@ -21,6 +22,7 @@ test("QWERTZ swaps displayed Y/Z labels while logical Z follows the layout", asy
   await expect(key(page, "KeyZ")).toHaveAttribute("title", "KeyZ: 1 binding");
   await expect(key(page, "KeyY")).toHaveClass(/\bis-used\b/);
   await expect(key(page, "KeyZ")).toHaveClass(/\bis-used\b/);
+  await expect(key(page, "IntlBackslash").locator(".ib-key-label")).toHaveText("<");
 });
 
 test("AZERTY exposes the common A/Q and Z/W physical-position swaps", async ({ page }) => {
@@ -30,6 +32,7 @@ test("AZERTY exposes the common A/Q and Z/W physical-position swaps", async ({ p
   await expect(key(page, "KeyA").locator(".ib-key-label")).toHaveText("Q");
   await expect(key(page, "KeyW").locator(".ib-key-label")).toHaveText("Z");
   await expect(key(page, "KeyZ").locator(".ib-key-label")).toHaveText("W");
+  await expect(key(page, "IntlBackslash").locator(".ib-key-label")).toHaveText("<");
 });
 
 test("Dvorak and Colemak expose distinct logical label positions", async ({ page }) => {
@@ -78,6 +81,9 @@ test("layout comparison renders the same physical keyboard under every fixture",
   }
   await expect(page.locator("[data-layout] button.ib-key")).toHaveCount(0);
 
+  await expect(layoutKey(page, "qwerty", "IntlBackslash")).toHaveCount(0);
+  await expect(layoutKey(page, "qwertz", "IntlBackslash")).toHaveCount(1);
+  await expect(layoutKey(page, "azerty", "IntlBackslash")).toHaveCount(1);
   await expect(layoutKey(page, "qwertz", "KeyY").locator(".ib-key-label")).toHaveText("Z");
   await expect(layoutKey(page, "azerty", "KeyQ").locator(".ib-key-label")).toHaveText("A");
   await expect(layoutKey(page, "dvorak", "KeyS").locator(".ib-key-label")).toHaveText("O");
