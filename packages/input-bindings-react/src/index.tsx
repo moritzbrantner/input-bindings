@@ -29,10 +29,11 @@ import {
   sequenceStartsWith,
 } from "./model.ts";
 import {
-  KEYBOARD_ROWS,
   codesForSequence,
   createKeyboardBindingIndex,
   keyboardLabelForCode,
+  keyboardRowsForGeometry,
+  type KeyboardGeometry,
   type KeyboardKeyDefinition,
 } from "./keyboard.ts";
 
@@ -465,10 +466,11 @@ export interface KeyboardViewProps {
   pressedCodes?: ReadonlySet<string>;
   highlightedSequence?: readonly KeyStroke[];
   layoutLabels?: ReadonlyMap<string, string>;
+  geometry?: KeyboardGeometry;
   onKeyInspect?: (code: string, bindingIds: string[]) => void;
 }
 
-export function KeyboardView({ bindings, conflicts = [], selectedActionId, selectedBindingId, scope = "visible", context, visibleActionIds = [], pressedCodes = new Set<string>(), highlightedSequence = [], layoutLabels, onKeyInspect }: KeyboardViewProps) {
+export function KeyboardView({ bindings, conflicts = [], selectedActionId, selectedBindingId, scope = "visible", context, visibleActionIds = [], pressedCodes = new Set<string>(), highlightedSequence = [], layoutLabels, geometry = "ansi", onKeyInspect }: KeyboardViewProps) {
   const conflictIds = useMemo(() => new Set(conflicts.flatMap((conflict) => [conflict.leftBindingId, conflict.rightBindingId])), [conflicts]);
   const visibleActions = useMemo(() => new Set(visibleActionIds), [visibleActionIds]);
   const highlightedCodes = useMemo(() => new Set(codesForSequence(highlightedSequence, layoutLabels)), [highlightedSequence, layoutLabels]);
@@ -490,6 +492,7 @@ export function KeyboardView({ bindings, conflicts = [], selectedActionId, selec
       : createKeyboardBindingIndex(scopedBindings, layoutLabels),
     [allBindingIdsByCode, bindings, layoutLabels, scopedBindings],
   );
+  const keyboardRows = keyboardRowsForGeometry(geometry);
   const selectedCodes = useMemo(() => {
     if (!selectedBindingId) return new Set<string>();
     const selectedBinding = bindings.find((binding) => binding.id === selectedBindingId);
@@ -500,7 +503,7 @@ export function KeyboardView({ bindings, conflicts = [], selectedActionId, selec
 
   return (
     <div className="ib-keyboard" role="group" aria-label="Keyboard binding overview">
-      {KEYBOARD_ROWS.map((row, rowIndex) => (
+      {keyboardRows.map((row, rowIndex) => (
         <div className="ib-keyboard-row" key={rowIndex}>
           {row.map((key) => (
             <KeyboardKey
