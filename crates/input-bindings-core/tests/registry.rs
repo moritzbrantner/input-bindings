@@ -46,7 +46,6 @@ fn registry_validation_matches_shared_fixtures() {
     }
 }
 
-
 #[test]
 fn compiled_registry_reuses_the_same_baseline_across_profiles() {
     let content = fs::read_to_string(fixture_path("registry.json"))
