@@ -157,6 +157,59 @@ test("generated resolver and conflict cases are invariant to registry order", ()
   }
 });
 
+test("conflict discovery does no context-overlap work for sequence-disjoint bindings", () => {
+  let contextReads = 0;
+  const countedAlways = (): WhenExpr =>
+    Object.defineProperty({}, "op", {
+      enumerable: true,
+      get() {
+        contextReads += 1;
+        return "always";
+      },
+    }) as WhenExpr;
+
+  const bindings: Binding[] = Array.from({ length: 128 }, (_, index) => ({
+    id: `sparse.${index}`,
+    action: `action.${index}`,
+    sequence: [{ key: { kind: "physical", value: `Code${index}` } }],
+    when: countedAlways(),
+  }));
+
+  assert.deepEqual(analyzeConflicts(bindings), []);
+  assert.equal(
+    contextReads,
+    0,
+    "sequence-disjoint pairs should be rejected before context overlap analysis",
+  );
+});
+
+test("conflict discovery preserves original left-major result ordering", () => {
+  const key = (value: string): InputStroke => ({
+    key: { kind: "logical", value },
+  });
+  const bindings: Binding[] = [
+    { id: "empty", action: "empty", sequence: [] },
+    { id: "a", action: "a", sequence: [key("a")] },
+    { id: "ab", action: "ab", sequence: [key("a"), key("b")] },
+    { id: "a2", action: "a2", sequence: [key("a")] },
+  ];
+
+  assert.deepEqual(
+    analyzeConflicts(bindings).map((conflict) => [
+      conflict.leftBindingId,
+      conflict.rightBindingId,
+    ]),
+    [
+      ["empty", "a"],
+      ["empty", "ab"],
+      ["empty", "a2"],
+      ["a", "ab"],
+      ["a", "a2"],
+      ["ab", "a2"],
+    ],
+  );
+});
+
 test("generated profiles are deterministic and canonical persistence is idempotent", () => {
   for (let seed = 1; seed <= 128; seed += 1) {
     const rng = new DeterministicRng(seed);
