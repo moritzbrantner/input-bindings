@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use serde::{Deserialize, Serialize};
 
@@ -44,48 +44,115 @@ pub struct Conflict {
 pub fn analyze_conflicts(bindings: &[Binding]) -> Vec<Conflict> {
     let mut conflicts = Vec::new();
 
-    for (left_index, left) in bindings.iter().enumerate() {
-        for right in &bindings[left_index + 1..] {
-            let relation = sequence_relation(left, right);
-            if relation == SequenceRelation::Separate {
-                continue;
-            }
-
-            let overlap = context_overlap(&left.when, &right.when);
-            let (known_overlap, witness_contexts) = match overlap {
-                ContextOverlap::Disjoint => continue,
-                ContextOverlap::Overlap { witness_contexts } => (true, witness_contexts),
-                ContextOverlap::Unknown { .. } => (false, Vec::new()),
-            };
-
-            let kind = match (relation, known_overlap) {
-                (SequenceRelation::Exact, false) => ConflictKind::PotentialExact,
-                (SequenceRelation::Prefix, false) => ConflictKind::PotentialPrefix,
-                (SequenceRelation::Prefix, true) => ConflictKind::ChordPrefix,
-                (SequenceRelation::Exact, true)
-                    if left.action == right.action
-                        && left.when == right.when
-                        && left.priority == right.priority =>
-                {
-                    ConflictKind::Duplicate
-                }
-                (SequenceRelation::Exact, true) if left.rank() == right.rank() => {
-                    ConflictKind::AmbiguousExact
-                }
-                (SequenceRelation::Exact, true) => ConflictKind::OverrideExact,
-                (SequenceRelation::Separate, _) => unreachable!(),
-            };
-
-            conflicts.push(Conflict {
-                left_binding_id: left.id.clone(),
-                right_binding_id: right.id.clone(),
-                kind,
-                witness_contexts,
-            });
+    for (left_index, right_index) in conflict_candidate_pairs(bindings) {
+        let left = &bindings[left_index];
+        let right = &bindings[right_index];
+        let relation = sequence_relation(left, right);
+        if relation == SequenceRelation::Separate {
+            continue;
         }
+
+        let overlap = context_overlap(&left.when, &right.when);
+        let (known_overlap, witness_contexts) = match overlap {
+            ContextOverlap::Disjoint => continue,
+            ContextOverlap::Overlap { witness_contexts } => (true, witness_contexts),
+            ContextOverlap::Unknown { .. } => (false, Vec::new()),
+        };
+
+        let kind = match (relation, known_overlap) {
+            (SequenceRelation::Exact, false) => ConflictKind::PotentialExact,
+            (SequenceRelation::Prefix, false) => ConflictKind::PotentialPrefix,
+            (SequenceRelation::Prefix, true) => ConflictKind::ChordPrefix,
+            (SequenceRelation::Exact, true)
+                if left.action == right.action
+                    && left.when == right.when
+                    && left.priority == right.priority =>
+            {
+                ConflictKind::Duplicate
+            }
+            (SequenceRelation::Exact, true) if left.rank() == right.rank() => {
+                ConflictKind::AmbiguousExact
+            }
+            (SequenceRelation::Exact, true) => ConflictKind::OverrideExact,
+            (SequenceRelation::Separate, _) => unreachable!(),
+        };
+
+        conflicts.push(Conflict {
+            left_binding_id: left.id.clone(),
+            right_binding_id: right.id.clone(),
+            kind,
+            witness_contexts,
+        });
     }
 
     conflicts
+}
+
+#[derive(Default)]
+struct ConflictSequenceTrieNode {
+    children: HashMap<crate::InputStroke, ConflictSequenceTrieNode>,
+    terminal_indices: Vec<usize>,
+    subtree_indices: Vec<usize>,
+}
+
+fn conflict_candidate_pairs(bindings: &[Binding]) -> BTreeSet<(usize, usize)> {
+    let mut root = ConflictSequenceTrieNode::default();
+    let mut pairs = BTreeSet::new();
+
+    for (right_index, binding) in bindings.iter().enumerate() {
+        for left_index in conflict_candidate_indices(&root, &binding.sequence) {
+            pairs.insert((left_index, right_index));
+        }
+        insert_conflict_sequence(&mut root, &binding.sequence, right_index);
+    }
+
+    pairs
+}
+
+fn conflict_candidate_indices(
+    root: &ConflictSequenceTrieNode,
+    sequence: &[crate::InputStroke],
+) -> BTreeSet<usize> {
+    let mut result = BTreeSet::new();
+    let mut node = root;
+
+    if sequence.is_empty() {
+        result.extend(root.subtree_indices.iter().copied());
+        return result;
+    }
+
+    result.extend(root.terminal_indices.iter().copied());
+
+    for (stroke_index, stroke) in sequence.iter().enumerate() {
+        let Some(child) = node.children.get(stroke) else {
+            return result;
+        };
+        node = child;
+
+        if stroke_index + 1 == sequence.len() {
+            result.extend(node.subtree_indices.iter().copied());
+        } else {
+            result.extend(node.terminal_indices.iter().copied());
+        }
+    }
+
+    result
+}
+
+fn insert_conflict_sequence(
+    root: &mut ConflictSequenceTrieNode,
+    sequence: &[crate::InputStroke],
+    binding_index: usize,
+) {
+    let mut node = root;
+    node.subtree_indices.push(binding_index);
+
+    for stroke in sequence {
+        node = node.children.entry(stroke.clone()).or_default();
+        node.subtree_indices.push(binding_index);
+    }
+
+    node.terminal_indices.push(binding_index);
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
