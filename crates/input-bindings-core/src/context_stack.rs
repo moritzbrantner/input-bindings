@@ -85,26 +85,35 @@ pub fn resolve_with_context_stack(
         .resolution
 }
 
+pub fn reachable_bindings_with_context_stack<'a>(
+    bindings: &'a [Binding],
+    active_contexts: &BTreeSet<String>,
+    context_stack: &[ContextLayer],
+) -> Vec<&'a Binding> {
+    let (contexts, depth_by_context, barrier) =
+        prepare_context_stack_state(active_contexts, context_stack);
+
+    bindings
+        .iter()
+        .filter(|binding| {
+            if binding.sequence.is_empty() || !binding.when.evaluate(&contexts) {
+                return false;
+            }
+            barrier.as_ref().is_none_or(|entry| {
+                owner_depth(&binding.when, &depth_by_context, true) >= entry.depth
+            })
+        })
+        .collect()
+}
+
 pub fn explain_resolution_with_context_stack(
     bindings: &[Binding],
     sequence: &[InputStroke],
     active_contexts: &BTreeSet<String>,
     context_stack: &[ContextLayer],
 ) -> ResolutionTrace {
-    let mut contexts = active_contexts.clone();
-    let mut depth_by_context = BTreeMap::<&str, isize>::new();
-    let mut barrier = None;
-
-    for (index, layer) in context_stack.iter().enumerate() {
-        contexts.insert(layer.id.clone());
-        depth_by_context.insert(layer.id.as_str(), index as isize);
-        if layer.blocks_lower {
-            barrier = Some(ResolutionBarrierTrace {
-                id: layer.id.clone(),
-                depth: index as isize,
-            });
-        }
-    }
+    let (contexts, depth_by_context, barrier) =
+        prepare_context_stack_state(active_contexts, context_stack);
 
     if sequence.is_empty() {
         return ResolutionTrace {
@@ -262,6 +271,32 @@ pub fn explain_resolution_with_context_stack(
         barrier,
         candidates,
     }
+}
+
+fn prepare_context_stack_state<'a>(
+    active_contexts: &BTreeSet<String>,
+    context_stack: &'a [ContextLayer],
+) -> (
+    BTreeSet<String>,
+    BTreeMap<&'a str, isize>,
+    Option<ResolutionBarrierTrace>,
+) {
+    let mut contexts = active_contexts.clone();
+    let mut depth_by_context = BTreeMap::<&str, isize>::new();
+    let mut barrier = None;
+
+    for (index, layer) in context_stack.iter().enumerate() {
+        contexts.insert(layer.id.clone());
+        depth_by_context.insert(layer.id.as_str(), index as isize);
+        if layer.blocks_lower {
+            barrier = Some(ResolutionBarrierTrace {
+                id: layer.id.clone(),
+                depth: index as isize,
+            });
+        }
+    }
+
+    (contexts, depth_by_context, barrier)
 }
 
 fn owner_depth(

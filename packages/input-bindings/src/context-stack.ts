@@ -137,6 +137,29 @@ export function resolveWithContextStack(
 }
 
 /**
+ * Returns the bindings that are individually reachable in the supplied application context state.
+ *
+ * This prepares stack facts and modal barriers once for the whole batch. It intentionally does not
+ * apply binding-vs-binding precedence: it answers whether each binding can participate at all.
+ */
+export function reachableBindingsWithContextStack(
+  bindings: readonly Binding[],
+  activeContexts: ReadonlySet<string>,
+  contextStack: readonly ContextLayer[],
+): Binding[] {
+  const { contexts, depthByContext, barrier } = prepareContextStackState(
+    activeContexts,
+    contextStack,
+  );
+
+  return bindings.filter((binding) => {
+    if (binding.sequence.length === 0 || !evaluateWhen(binding.when, contexts)) return false;
+    if (!barrier) return true;
+    return ownerDepth(binding.when, depthByContext) >= barrier.depth;
+  });
+}
+
+/**
  * Produces deterministic resolution evidence without changing the resolver's decision rules.
  * Candidate rows are sorted by binding id so the same state produces byte-stable inspector output.
  */
@@ -146,15 +169,10 @@ export function explainResolutionWithContextStack(
   activeContexts: ReadonlySet<string>,
   contextStack: readonly ContextLayer[],
 ): ResolutionTrace {
-  const contexts = new Set(activeContexts);
-  const depthByContext = new Map<string, number>();
-  let barrier: ResolutionBarrierTrace | undefined;
-
-  contextStack.forEach((layer, index) => {
-    contexts.add(layer.id);
-    depthByContext.set(layer.id, index);
-    if (layer.blocksLower) barrier = { id: layer.id, depth: index };
-  });
+  const { contexts, depthByContext, barrier } = prepareContextStackState(
+    activeContexts,
+    contextStack,
+  );
 
   const baseTrace = {
     activeContexts: [...contexts].sort(),
@@ -251,6 +269,29 @@ export function explainResolutionWithContextStack(
   }
 
   return { resolution, ...baseTrace, candidates };
+}
+
+interface PreparedContextStackState {
+  contexts: Set<string>;
+  depthByContext: Map<string, number>;
+  barrier?: ResolutionBarrierTrace;
+}
+
+function prepareContextStackState(
+  activeContexts: ReadonlySet<string>,
+  contextStack: readonly ContextLayer[],
+): PreparedContextStackState {
+  const contexts = new Set(activeContexts);
+  const depthByContext = new Map<string, number>();
+  let barrier: ResolutionBarrierTrace | undefined;
+
+  contextStack.forEach((layer, index) => {
+    contexts.add(layer.id);
+    depthByContext.set(layer.id, index);
+    if (layer.blocksLower) barrier = { id: layer.id, depth: index };
+  });
+
+  return { contexts, depthByContext, ...(barrier ? { barrier } : {}) };
 }
 
 function sameRank(left: Binding, right: Binding): boolean {

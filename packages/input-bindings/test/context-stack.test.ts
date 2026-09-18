@@ -5,6 +5,7 @@ import { test } from "node:test";
 import {
   ContextStack,
   explainResolutionWithContextStack,
+  reachableBindingsWithContextStack,
   resolveWithContextStack,
   type ContextLayer,
 } from "../src/context-stack.ts";
@@ -47,6 +48,19 @@ test("context stack resolution and trace match the shared Rust/TypeScript fixtur
       `${entry.name} trace`,
     );
   }
+});
+
+test("batch reachability matches modal and fallback stack semantics", () => {
+  const reachable = reachableBindingsWithContextStack(
+    fixture.bindings,
+    new Set(),
+    [{ id: "gameplay" }, { id: "menu", blocksLower: true }],
+  );
+
+  assert.deepEqual(
+    reachable.map((binding) => binding.id),
+    ["menu.primary", "menu.delete", "menu.chord"],
+  );
 });
 
 test("resolution trace exposes modal blocking and the actual winning layer", () => {

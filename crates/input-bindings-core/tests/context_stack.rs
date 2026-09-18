@@ -2,7 +2,8 @@ use std::{collections::BTreeSet, fs, path::PathBuf};
 
 use input_bindings_core::{
     Binding, ContextLayer, InputStroke, ResolutionCandidateStatus,
-    explain_resolution_with_context_stack, resolve_with_context_stack,
+    explain_resolution_with_context_stack, reachable_bindings_with_context_stack,
+    resolve_with_context_stack,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -49,6 +50,33 @@ fn context_stack_resolution_and_trace_match_shared_fixture() {
             serde_json::to_value(trace.resolution).expect("trace resolution should serialize");
         assert_eq!(traced, case.expected, "trace case: {}", case.name);
     }
+}
+
+#[test]
+fn batch_reachability_matches_modal_and_fallback_stack_semantics() {
+    let fixture = load_fixture();
+    let reachable = reachable_bindings_with_context_stack(
+        &fixture.bindings,
+        &BTreeSet::new(),
+        &[
+            ContextLayer {
+                id: "gameplay".to_owned(),
+                blocks_lower: false,
+            },
+            ContextLayer {
+                id: "menu".to_owned(),
+                blocks_lower: true,
+            },
+        ],
+    );
+
+    assert_eq!(
+        reachable
+            .iter()
+            .map(|binding| binding.id.as_str())
+            .collect::<Vec<_>>(),
+        vec!["menu.primary", "menu.delete", "menu.chord"]
+    );
 }
 
 #[test]
