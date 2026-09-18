@@ -12,10 +12,16 @@
     "build:pages": "npm run build:packages && npm run build --workspace @moritzbrantner/input-bindings-demo",
     "bench:ts": "node --experimental-strip-types packages/input-bindings/benchmark/run.ts",
     "bench:rust": "cargo run --locked --release -p input-bindings-core --example benchmark --",
-    "release:artifacts": "node scripts/build-release-artifacts.mjs"
+    "release:artifacts": "node scripts/build-release-artifacts.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build:storybook": "storybook build --output-dir storybook-static",
+    "test:storybook": "playwright test -c playwright.storybook.config.ts"
   },
   "devDependencies": {
+    "@playwright/test": "1.60.0",
+    "@storybook/react-vite": "10.4.1",
     "@types/react": "19.3.0",
+    "storybook": "10.4.1",
     "typescript": "7.0.2"
   },
   "engines": {
