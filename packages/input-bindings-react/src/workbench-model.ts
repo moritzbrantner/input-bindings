@@ -4,6 +4,7 @@ import {
   type Binding,
   type Conflict,
   type ContextLayer,
+  type ResolutionTrace,
 } from "@moritzbrantner/input-bindings";
 
 import { contextsForWhen } from "./model.ts";
@@ -84,48 +85,80 @@ export function assessConflictInScenarios(
   conflict: Conflict,
   scenarios: readonly InputBindingsContextScenario[],
 ): ConflictScenarioAssessment[] {
-  const left = bindings.find((binding) => binding.id === conflict.leftBindingId);
-  const right = bindings.find((binding) => binding.id === conflict.rightBindingId);
-  if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) return [];
+  return assessConflictsInScenarios(bindings, [conflict], scenarios)[0] ?? [];
+}
 
-  const sequence = left.sequence.length <= right.sequence.length ? left.sequence : right.sequence;
-  return scenarios.map((scenario) => {
-    const trace = explainResolutionWithContextStack(
-      bindings,
-      sequence,
-      new Set(scenario.activeContexts ?? []),
-      scenario.stack ?? [],
-    );
-    const leftTrace = trace.candidates.find((candidate) => candidate.bindingId === left.id);
-    const rightTrace = trace.candidates.find((candidate) => candidate.bindingId === right.id);
-    let outcome: ConflictScenarioOutcome = "notSimultaneouslyActive";
+/**
+ * Assesses every conflict against the declared scenarios while sharing resolver traces for identical
+ * input prefixes. Conflict order and scenario order are preserved exactly.
+ */
+export function assessConflictsInScenarios(
+  bindings: readonly Binding[],
+  conflicts: readonly Conflict[],
+  scenarios: readonly InputBindingsContextScenario[],
+): ConflictScenarioAssessment[][] {
+  const bindingById = new Map(bindings.map((binding) => [binding.id, binding]));
+  const scenarioStates = scenarios.map((scenario) => ({
+    scenario,
+    activeContexts: new Set(scenario.activeContexts ?? []),
+    stack: scenario.stack ?? [],
+    traces: new Map<string, ResolutionTrace>(),
+  }));
 
-    if (leftTrace && rightTrace && leftTrace.match !== "none" && rightTrace.match !== "none") {
-      if (
-        [leftTrace.status, rightTrace.status].some(
-          (status) => status === "blockedByModal" || status === "lowerContextLayer",
-        )
-      ) {
-        outcome = "orderedByStack";
-      } else if (
-        trace.resolution.kind === "ambiguous" &&
-        trace.resolution.bindingIds.includes(left.id) &&
-        trace.resolution.bindingIds.includes(right.id)
-      ) {
-        outcome = "ambiguous";
-      } else if (trace.resolution.kind === "pending") {
-        outcome = "chordWait";
-      } else if (trace.resolution.kind === "resolved") {
-        outcome = "orderedByRank";
+  return conflicts.map((conflict) => {
+    const left = bindingById.get(conflict.leftBindingId);
+    const right = bindingById.get(conflict.rightBindingId);
+    if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) return [];
+
+    const sequence = left.sequence.length <= right.sequence.length ? left.sequence : right.sequence;
+    const sequenceKey = JSON.stringify(sequence);
+
+    return scenarioStates.map(({ scenario, activeContexts, stack, traces }) => {
+      let trace = traces.get(sequenceKey);
+      if (!trace) {
+        trace = explainResolutionWithContextStack(bindings, sequence, activeContexts, stack);
+        traces.set(sequenceKey, trace);
       }
-    }
-
-    return {
-      scenarioId: scenario.id,
-      scenarioLabel: scenario.label,
-      outcome,
-    };
+      return assessConflictTrace(left, right, scenario, trace);
+    });
   });
+}
+
+function assessConflictTrace(
+  left: Binding,
+  right: Binding,
+  scenario: InputBindingsContextScenario,
+  trace: ResolutionTrace,
+): ConflictScenarioAssessment {
+  const leftTrace = trace.candidates.find((candidate) => candidate.bindingId === left.id);
+  const rightTrace = trace.candidates.find((candidate) => candidate.bindingId === right.id);
+  let outcome: ConflictScenarioOutcome = "notSimultaneouslyActive";
+
+  if (leftTrace && rightTrace && leftTrace.match !== "none" && rightTrace.match !== "none") {
+    if (
+      [leftTrace.status, rightTrace.status].some(
+        (status) => status === "blockedByModal" || status === "lowerContextLayer",
+      )
+    ) {
+      outcome = "orderedByStack";
+    } else if (
+      trace.resolution.kind === "ambiguous" &&
+      trace.resolution.bindingIds.includes(left.id) &&
+      trace.resolution.bindingIds.includes(right.id)
+    ) {
+      outcome = "ambiguous";
+    } else if (trace.resolution.kind === "pending") {
+      outcome = "chordWait";
+    } else if (trace.resolution.kind === "resolved") {
+      outcome = "orderedByRank";
+    }
+  }
+
+  return {
+    scenarioId: scenario.id,
+    scenarioLabel: scenario.label,
+    outcome,
+  };
 }
 
 export function prettyContextLabel(value: string): string {
