@@ -45,7 +45,7 @@ test("Dvorak and Colemak expose distinct logical label positions", async ({ page
 test("keyboard inspection is operable without a pointer", async ({ page }) => {
   await openStory(page, `${storyBase}--qwertz`);
 
-  const logicalZ = key(page, "KeyY");
+  const logicalZ = interactiveKey(page, "KeyY");
   await logicalZ.focus();
   await expect(logicalZ).toBeFocused();
   await expect(logicalZ).toHaveAccessibleName("Z, 1 binding");
@@ -53,7 +53,7 @@ test("keyboard inspection is operable without a pointer", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("inspection")).toHaveText("KeyY · undo.logical");
 
-  await key(page, "KeyZ").focus();
+  await interactiveKey(page, "KeyZ").focus();
   await page.keyboard.press("Space");
   await expect(page.getByTestId("inspection")).toHaveText("KeyZ · physical.z");
 });
@@ -76,6 +76,7 @@ test("layout comparison renders the same physical keyboard under every fixture",
     await expect(card).toBeVisible();
     await expect(card.locator(".ib-keyboard-row")).toHaveCount(6);
   }
+  await expect(page.locator("[data-layout] button.ib-key")).toHaveCount(0);
 
   await expect(layoutKey(page, "qwertz", "KeyY").locator(".ib-key-label")).toHaveText("Z");
   await expect(layoutKey(page, "azerty", "KeyQ").locator(".ib-key-label")).toHaveText("A");
@@ -116,11 +117,15 @@ test("all keyboard layout stories render without browser errors", async ({ page 
 });
 
 function key(page: Page, code: string): Locator {
-  return page.locator(`button[title^="${code}:"]`);
+  return page.locator(`[data-key-code="${code}"]`);
+}
+
+function interactiveKey(page: Page, code: string): Locator {
+  return page.locator(`button[data-key-code="${code}"]`);
 }
 
 function layoutKey(page: Page, layout: string, code: string): Locator {
-  return page.locator(`[data-layout="${layout}"] button[title^="${code}:"]`);
+  return page.locator(`[data-layout="${layout}"] [data-key-code="${code}"]`);
 }
 
 async function openStory(page: Page, storyId: string, keyboardCount = 1) {

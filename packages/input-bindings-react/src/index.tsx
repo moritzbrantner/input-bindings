@@ -499,7 +499,7 @@ export function KeyboardView({ bindings, conflicts = [], selectedActionId, selec
   }, [bindings, layoutLabels, selectedBindingId]);
 
   return (
-    <div className="ib-keyboard" aria-label="Keyboard binding overview">
+    <div className="ib-keyboard" role="group" aria-label="Keyboard binding overview">
       {KEYBOARD_ROWS.map((row, rowIndex) => (
         <div className="ib-keyboard-row" key={rowIndex}>
           {row.map((key) => (
@@ -538,11 +538,39 @@ function KeyboardKey({ definition, scopedBindingIds, allBindingIds, conflictIds,
   const label = keyboardLabelForCode(definition.code, layoutLabels);
   const detail = allBindingIds.length === 0 ? "unused" : `${allBindingIds.length} binding${allBindingIds.length === 1 ? "" : "s"}`;
 
-  return (
-    <button type="button" className={classes} style={{ flex: definition.width ?? 1 }} title={`${definition.code}: ${detail}`} aria-label={`${label}, ${detail}${conflicting ? ", conflict" : ""}`} onClick={() => onInspect?.(definition.code, [...allBindingIds])}>
+  const content = (
+    <>
       <span className="ib-key-label">{label}</span>
       {allBindingIds.length > 0 && <span className="ib-key-count">{allBindingIds.length}</span>}
-    </button>
+    </>
+  );
+
+  if (onInspect) {
+    return (
+      <button
+        type="button"
+        className={classes}
+        data-key-code={definition.code}
+        style={{ flex: definition.width ?? 1 }}
+        title={`${definition.code}: ${detail}`}
+        aria-label={`${label}, ${detail}${conflicting ? ", conflict" : ""}`}
+        onClick={() => onInspect(definition.code, [...allBindingIds])}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={classes}
+      data-key-code={definition.code}
+      style={{ flex: definition.width ?? 1 }}
+      title={`${definition.code}: ${detail}`}
+      aria-hidden="true"
+    >
+      {content}
+    </div>
   );
 }
 

@@ -122,3 +122,24 @@ test("keyboard view indexes logical strokes once instead of rescanning bindings 
     "default keyboard rendering should build one binding-code index, not rescan bindings for every key",
   );
 });
+
+test("keyboard view only exposes keys as controls when inspection is enabled", () => {
+  const staticMarkup = renderToStaticMarkup(
+    createElement(KeyboardView, {
+      bindings: [],
+    }),
+  );
+  assert.match(staticMarkup, /role="group"/u);
+  assert.match(staticMarkup, /data-key-code="KeyA"/u);
+  assert.doesNotMatch(staticMarkup, /<button[^>]+class="ib-key/u);
+
+  const interactiveMarkup = renderToStaticMarkup(
+    createElement(KeyboardView, {
+      bindings: [],
+      onKeyInspect: () => {},
+    }),
+  );
+  assert.match(interactiveMarkup, /<button[^>]+class="ib-key/u);
+  assert.match(interactiveMarkup, /data-key-code="KeyA"/u);
+});
+
