@@ -40,6 +40,7 @@ for (const packagePath of packages) {
   const absolute = resolve(root, packagePath);
   verifyExports(absolute);
   verifyNoSourceExtensions(resolve(absolute, "dist"));
+  verifyNoStorybookFiles(resolve(absolute, "dist"));
 }
 
 console.log(`Built ${packages.length} compiled npm workspaces.`);
@@ -88,6 +89,14 @@ function collectExportTargets(value, targets) {
   }
   if (!value || typeof value !== "object") return;
   for (const nested of Object.values(value)) collectExportTargets(nested, targets);
+}
+
+function verifyNoStorybookFiles(directory) {
+  for (const path of walk(directory)) {
+    if (/\.stories\.(?:js|d\.ts)$/u.test(path)) {
+      throw new Error(`Published package contains a Storybook story: ${path}`);
+    }
+  }
 }
 
 function verifyNoSourceExtensions(directory) {
