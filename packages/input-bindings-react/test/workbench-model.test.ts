@@ -4,6 +4,7 @@ import { test } from "node:test";
 import type { Binding, Conflict } from "@moritzbrantner/input-bindings";
 import {
   assessConflictInScenarios,
+  assessConflictsInScenarios,
   bindingsForScenario,
   deriveContextScenarios,
   scenarioContextFacts,
@@ -116,4 +117,52 @@ test("conflict review distinguishes declared stack precedence from a genuinely a
     { scenarioId: "pause-menu", scenarioLabel: "Pause menu", outcome: "orderedByStack" },
     { scenarioId: "flat-overlap", scenarioLabel: "Flat overlap", outcome: "ambiguous" },
   ]);
+});
+
+
+test("bulk conflict review preserves per-conflict scenario semantics for shared input sequences", () => {
+  const denseBindings: Binding[] = [
+    ...bindings,
+    {
+      id: "editor.escape",
+      action: "editor.escape",
+      sequence: [{ key: { kind: "logical", value: "Escape" } }],
+      when: { op: "context", id: "editorFocused" },
+    },
+  ];
+  const conflicts: Conflict[] = [
+    {
+      leftBindingId: "game.pause",
+      rightBindingId: "menu.close",
+      kind: "ambiguousExact",
+      witnessContexts: ["gameplay", "menuOpen"],
+    },
+    {
+      leftBindingId: "game.pause",
+      rightBindingId: "editor.escape",
+      kind: "ambiguousExact",
+      witnessContexts: ["editorFocused", "gameplay"],
+    },
+  ];
+  const scenarios = [
+    {
+      id: "pause-menu",
+      label: "Pause menu",
+      activeContexts: ["gameplay", "menuOpen"],
+      stack: [{ id: "gameplay" }, { id: "menuOpen", blocksLower: true }],
+    },
+    {
+      id: "flat-overlap",
+      label: "Flat overlap",
+      activeContexts: ["editorFocused", "gameplay", "menuOpen"],
+      stack: [],
+    },
+  ] as const;
+
+  assert.deepEqual(
+    assessConflictsInScenarios(denseBindings, conflicts, scenarios),
+    conflicts.map((conflict) =>
+      assessConflictInScenarios(denseBindings, conflict, scenarios),
+    ),
+  );
 });
