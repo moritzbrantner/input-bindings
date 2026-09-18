@@ -70,15 +70,22 @@ export interface RegistryValidationReport {
   conflicts: Conflict[];
 }
 
-export function validateRegistry(
-  registry: ActionRegistry,
-  profile?: Profile,
-): RegistryValidationReport {
+export interface CompiledActionRegistry {
+  readonly baseBindings: readonly Binding[];
+  readonly diagnostics: readonly ValidationDiagnostic[];
+  readonly conflicts: readonly Conflict[];
+  readonly knownActions: ReadonlySet<string>;
+  readonly allowedDevicesByAction: ReadonlyMap<string, readonly DeviceClass[]>;
+}
+
+export function compileActionRegistry(registry: ActionRegistry): CompiledActionRegistry {
   const actions = registry.actions
     .map((action) => structuredClone(action))
     .sort((left, right) => compareText(left.id, right.id) || compareText(left.title, right.title));
   const knownActions = new Set(actions.map((action) => action.id));
-  const actionById = new Map(actions.map((action) => [action.id, action]));
+  const allowedDevicesByAction = new Map(
+    actions.map((action) => [action.id, [...(action.allowedDevices ?? [])] as readonly DeviceClass[]]),
+  );
   const diagnostics: ValidationDiagnostic[] = [];
 
   for (const [actionId, count] of counts(actions.map((action) => action.id))) {
@@ -105,7 +112,13 @@ export function validateRegistry(
           bindingId: binding.id,
         });
       }
-      validateBinding(binding, knownActions, actionById, undefined, diagnostics);
+      validateBinding(
+        binding,
+        knownActions,
+        allowedDevicesByAction,
+        undefined,
+        diagnostics,
+      );
     }
   }
 
@@ -113,38 +126,77 @@ export function validateRegistry(
   for (const binding of flattenedDefaults) {
     if (!baseMap.has(binding.id)) baseMap.set(binding.id, structuredClone(binding));
   }
-  const base = [...baseMap.values()].sort((left, right) => compareText(left.id, right.id));
+  const baseBindings = [...baseMap.values()].sort((left, right) => compareText(left.id, right.id));
+  const conflicts = analyzeConflicts(
+    baseBindings.filter((binding) => bindingIsResolvable(binding, knownActions)),
+  );
 
-  let effectiveBindings = base;
-  if (profile) {
-    const application = applyProfile(base, profile);
-    effectiveBindings = application.bindings;
+  return {
+    baseBindings,
+    diagnostics,
+    conflicts,
+    knownActions,
+    allowedDevicesByAction,
+  };
+}
 
-    const profileDiagnostics: ValidationDiagnostic[] = application.diagnostics.map((entry) => ({
-      kind: profileDiagnosticKind(entry.kind),
-      bindingId: entry.bindingId,
-      patchIndex: entry.patchIndex,
-    }));
+export function validateCompiledRegistry(
+  compiled: CompiledActionRegistry,
+  profile?: Profile,
+): RegistryValidationReport {
+  const diagnostics = compiled.diagnostics.map(cloneDiagnostic);
 
-    profile.patches.forEach((patch, patchIndex) => {
-      if (patch.op === "add" || patch.op === "replace") {
-        validateBinding(patch.binding, knownActions, actionById, patchIndex, profileDiagnostics);
-      }
-    });
-
-    profileDiagnostics.sort(
-      (left, right) =>
-        (left.patchIndex ?? Number.MAX_SAFE_INTEGER) -
-        (right.patchIndex ?? Number.MAX_SAFE_INTEGER),
-    );
-    diagnostics.push(...profileDiagnostics);
+  if (!profile || profile.patches.length === 0) {
+    const effectiveBindings = compiled.baseBindings.map((binding) => structuredClone(binding));
+    return {
+      valid: diagnostics.length === 0,
+      effectiveBindings,
+      diagnostics,
+      conflicts: compiled.conflicts.map(cloneConflict),
+    };
   }
 
+  const application = applyProfile(compiled.baseBindings, profile);
+  const effectiveBindings = application.bindings;
+  const profileDiagnostics: ValidationDiagnostic[] = application.diagnostics.map((entry) => ({
+    kind: profileDiagnosticKind(entry.kind),
+    bindingId: entry.bindingId,
+    patchIndex: entry.patchIndex,
+  }));
+
+  profile.patches.forEach((patch, patchIndex) => {
+    if (patch.op === "add" || patch.op === "replace") {
+      validateBinding(
+        patch.binding,
+        compiled.knownActions,
+        compiled.allowedDevicesByAction,
+        patchIndex,
+        profileDiagnostics,
+      );
+    }
+  });
+
+  profileDiagnostics.sort(
+    (left, right) =>
+      (left.patchIndex ?? Number.MAX_SAFE_INTEGER) -
+      (right.patchIndex ?? Number.MAX_SAFE_INTEGER),
+  );
+  diagnostics.push(...profileDiagnostics);
+
   const conflicts = analyzeConflicts(
-    effectiveBindings.filter((binding) => bindingIsResolvable(binding, knownActions)),
+    effectiveBindings.filter((binding) =>
+      bindingIsResolvable(binding, compiled.knownActions),
+    ),
   );
 
   return { valid: diagnostics.length === 0, effectiveBindings, diagnostics, conflicts };
+}
+
+export function validateRegistry(
+  registry: ActionRegistry,
+  profile?: Profile,
+): RegistryValidationReport {
+  return validateCompiledRegistry(compileActionRegistry(registry), profile);
 }
 
 function counts(values: readonly string[]): Array<[string, number]> {
@@ -156,7 +208,7 @@ function counts(values: readonly string[]): Array<[string, number]> {
 function validateBinding(
   binding: Binding,
   knownActions: ReadonlySet<string>,
-  actionById: ReadonlyMap<string, ActionDefinition>,
+  allowedDevicesByAction: ReadonlyMap<string, readonly DeviceClass[]>,
   patchIndex: number | undefined,
   diagnostics: ValidationDiagnostic[],
 ): void {
@@ -170,7 +222,7 @@ function validateBinding(
   if (!knownActions.has(binding.action)) diagnostics.push({ kind: "unknownAction", ...base });
   if (binding.sequence.length === 0) diagnostics.push({ kind: "emptySequence", ...base });
 
-  const allowed = actionById.get(binding.action)?.allowedDevices ?? [];
+  const allowed = allowedDevicesByAction.get(binding.action) ?? [];
   binding.sequence.forEach((stroke, strokeIndex) => {
     if (!allowed.includes(inputDeviceClass(stroke))) {
       diagnostics.push({ kind: "defaultDeviceNotAllowed", ...base, strokeIndex });
@@ -178,6 +230,16 @@ function validateBinding(
     const invalidKind = invalidStrokeKind(stroke);
     if (invalidKind) diagnostics.push({ kind: invalidKind, ...base, strokeIndex });
   });
+}
+
+function cloneDiagnostic(diagnostic: ValidationDiagnostic): ValidationDiagnostic {
+  return { ...diagnostic };
+}
+
+function cloneConflict(conflict: Conflict): Conflict {
+  return conflict.witnessContexts
+    ? { ...conflict, witnessContexts: [...conflict.witnessContexts] }
+    : { ...conflict };
 }
 
 function invalidStrokeKind(stroke: InputStroke): ValidationDiagnosticKind | undefined {
