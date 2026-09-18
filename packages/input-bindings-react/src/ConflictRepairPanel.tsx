@@ -11,7 +11,7 @@ import {
 
 import { describeWhen, formatSequence } from "./model.ts";
 import {
-  assessConflictInScenarios,
+  assessConflictsInScenarios,
   type ConflictScenarioAssessment,
   type InputBindingsContextScenario,
 } from "./workbench-model.ts";
@@ -40,7 +40,7 @@ export function ConflictRepairPanel({
     [bindings, conflicts],
   );
   const scenarioEvidence = useMemo(
-    () => conflicts.map((conflict) => assessConflictInScenarios(bindings, conflict, scenarios)),
+    () => assessConflictsInScenarios(bindings, conflicts, scenarios),
     [bindings, conflicts, scenarios],
   );
 
