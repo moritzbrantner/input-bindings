@@ -12,6 +12,7 @@ import {
   codesForSequence,
   createKeyboardBindingIndex,
   keyboardLabelForCode,
+  keyboardRowsForGeometry,
 } from "../src/keyboard.ts";
 
 const germanishLayout = new Map([
@@ -141,5 +142,27 @@ test("keyboard view only exposes keys as controls when inspection is enabled", (
   );
   assert.match(interactiveMarkup, /<button[^>]+class="ib-key/u);
   assert.match(interactiveMarkup, /data-key-code="KeyA"/u);
+});
+
+test("ANSI and ISO geometry differ only by explicit physical key structure", () => {
+  const ansiCodes = keyboardRowsForGeometry("ansi").flat().map((key) => key.code);
+  const isoCodes = keyboardRowsForGeometry("iso").flat().map((key) => key.code);
+
+  assert.equal(ansiCodes.includes("IntlBackslash"), false);
+  assert.equal(isoCodes.includes("IntlBackslash"), true);
+  assert.equal(keyboardLabelForCode("IntlBackslash"), "<>");
+  assert.equal(
+    keyboardLabelForCode("IntlBackslash", new Map([["IntlBackslash", "<"]])),
+    "<",
+  );
+
+  const ansiMarkup = renderToStaticMarkup(
+    createElement(KeyboardView, { bindings: [], geometry: "ansi" }),
+  );
+  const isoMarkup = renderToStaticMarkup(
+    createElement(KeyboardView, { bindings: [], geometry: "iso" }),
+  );
+  assert.doesNotMatch(ansiMarkup, /data-key-code="IntlBackslash"/u);
+  assert.match(isoMarkup, /data-key-code="IntlBackslash"/u);
 });
 
