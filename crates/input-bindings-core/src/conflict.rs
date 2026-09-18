@@ -208,3 +208,55 @@ fn context_overlap(left: &WhenExpr, right: &WhenExpr) -> ContextOverlap {
 
     ContextOverlap::Disjoint
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{InputStroke, KeyMatch, KeyStroke, Modifiers};
+
+    fn binding(id: &str, sequence: Vec<InputStroke>) -> Binding {
+        Binding {
+            id: id.to_owned(),
+            action: id.to_owned(),
+            sequence,
+            when: WhenExpr::Always,
+            priority: 0,
+        }
+    }
+
+    fn physical(code: String) -> InputStroke {
+        InputStroke::Keyboard(KeyStroke {
+            key: KeyMatch::Physical { value: code },
+            modifiers: Modifiers::default(),
+        })
+    }
+
+    #[test]
+    fn sparse_sequences_produce_no_conflict_candidates() {
+        let bindings = (0..128)
+            .map(|index| binding(&format!("sparse.{index}"), vec![physical(format!("Code{index}"))]))
+            .collect::<Vec<_>>();
+
+        assert!(conflict_candidate_pairs(&bindings).is_empty());
+    }
+
+    #[test]
+    fn candidate_pairs_cover_empty_exact_and_prefix_relations_in_left_major_order() {
+        let a = physical("KeyA".to_owned());
+        let b = physical("KeyB".to_owned());
+        let bindings = vec![
+            binding("empty", vec![]),
+            binding("a", vec![a.clone()]),
+            binding("ab", vec![a.clone(), b]),
+            binding("a2", vec![a]),
+        ];
+
+        assert_eq!(
+            conflict_candidate_pairs(&bindings)
+                .into_iter()
+                .collect::<Vec<_>>(),
+            vec![(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+        );
+    }
+}
