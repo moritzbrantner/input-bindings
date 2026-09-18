@@ -209,7 +209,6 @@ fn context_overlap(left: &WhenExpr, right: &WhenExpr) -> ContextOverlap {
     ContextOverlap::Disjoint
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -235,7 +234,12 @@ mod tests {
     #[test]
     fn sparse_sequences_produce_no_conflict_candidates() {
         let bindings = (0..128)
-            .map(|index| binding(&format!("sparse.{index}"), vec![physical(format!("Code{index}"))]))
+            .map(|index| {
+                binding(
+                    &format!("sparse.{index}"),
+                    vec![physical(format!("Code{index}"))],
+                )
+            })
             .collect::<Vec<_>>();
 
         assert!(conflict_candidate_pairs(&bindings).is_empty());
