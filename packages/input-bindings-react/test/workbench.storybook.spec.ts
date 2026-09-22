@@ -9,9 +9,9 @@ test("shortcut task exposes list and keyboard as presentations, not peer tasks",
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
   await expect(taskTabs.getByRole("tab")).toHaveCount(3);
-  await expect(taskTabs.getByRole("tab", { name: "Shortcuts" })).toHaveAttribute("aria-selected", "true");
-  await expect(taskTabs.getByRole("tab", { name: "Conflicts" })).toHaveAttribute("aria-selected", "false");
-  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts" })).toHaveAttribute("aria-selected", "false");
+  await expect(taskTabs.getByRole("tab", { name: "Shortcuts", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toHaveAttribute("aria-selected", "false");
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveAttribute("aria-selected", "false");
 
   const panel = page.getByRole("tabpanel");
   await expect(panel).toHaveAttribute("id", "ib-workbench-panel-shortcuts");
@@ -49,18 +49,18 @@ test("keyboard presentation keeps ordinary shortcut editing available", async ({
 test("task tabs implement automatic keyboard activation and roving focus", async ({ page }) => {
   await openStory(page, "list");
 
-  const shortcuts = page.getByRole("tab", { name: "Shortcuts" });
+  const shortcuts = page.getByRole("tab", { name: "Shortcuts", exact: true });
   await shortcuts.focus();
   await page.keyboard.press("ArrowRight");
 
-  const conflicts = page.getByRole("tab", { name: "Conflicts" });
+  const conflicts = page.getByRole("tab", { name: "Conflicts", exact: true });
   await expect(conflicts).toBeFocused();
   await expect(conflicts).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("tabpanel")).toHaveAttribute("id", "ib-workbench-panel-conflicts");
   await expect(page.getByRole("heading", { name: "Conflict review" })).toBeVisible();
 
   await page.keyboard.press("End");
-  const preview = page.getByRole("tab", { name: "Try shortcuts" });
+  const preview = page.getByRole("tab", { name: "Try shortcuts", exact: true });
   await expect(preview).toBeFocused();
   await expect(preview).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("tabpanel")).toHaveAttribute("id", "ib-workbench-panel-preview");
@@ -98,7 +98,7 @@ test("live preview is explicitly activated and announces the resolution", async 
   await expect(previewSurface).toBeFocused();
 
   await page.keyboard.press("Control+Shift+P");
-  await expect(page.getByText("Command palette", { exact: true })).toBeVisible();
+  await expect(page.locator(".ib-resolution > strong")).toHaveText("Command palette");
   await expect(page.getByText(/resolves to global\.commandPalette/)).toBeVisible();
 
   await page.getByRole("button", { name: "Stop preview" }).click();
@@ -112,7 +112,7 @@ test("workbench stories keep controls named and avoid page-level overflow on nar
   const tabs = page.getByRole("tablist", { name: "Input settings tasks" }).getByRole("tab");
   await expect(tabs).toHaveCount(3);
   for (const name of ["Shortcuts", "Conflicts", "Try shortcuts"]) {
-    const tab = page.getByRole("tab", { name });
+    const tab = page.getByRole("tab", { name, exact: true });
     await expect(tab).toHaveAttribute("aria-controls", /ib-workbench-panel-/);
   }
 
