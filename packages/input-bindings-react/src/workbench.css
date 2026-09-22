@@ -17,6 +17,7 @@
 }
 
 .ib-workbench-header h1,
+.ib-presentation-toolbar h2,
 .ib-section-heading h2 {
   margin: 0;
 }
@@ -64,6 +65,27 @@
   border-color: var(--ib-border, #d6d9de);
   background: var(--ib-surface, #ffffff);
   box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.ib-presentation-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--ib-border, #d6d9de);
+  border-radius: 0.9rem;
+  background: var(--ib-surface, #ffffff);
+}
+
+.ib-presentation-toolbar p {
+  max-width: 60rem;
+  margin: 0.35rem 0 0;
+  color: var(--ib-muted, #606774);
+}
+
+.ib-presentation-toolbar .ib-mode-switch {
+  flex: 0 0 auto;
 }
 
 .ib-scenario-toolbar {
@@ -550,6 +572,7 @@
 
 @media (max-width: 980px) {
   .ib-workbench-header,
+  .ib-presentation-toolbar,
   .ib-section-heading,
   .ib-key-inspection-heading {
     align-items: stretch;
@@ -587,6 +610,7 @@
 
 @media (max-width: 620px) {
   .ib-workbench-header,
+  .ib-presentation-toolbar,
   .ib-reference-keyboard,
   .ib-preview-surface,
   .ib-scenario-toolbar,
