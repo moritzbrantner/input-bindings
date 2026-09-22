@@ -153,50 +153,65 @@ export function InputBindingsWorkbench({
       </header>
 
       {mode === "shortcuts" && (
-        <PresentationToolbar presentation={presentation} onChange={setPresentation} />
-      )}
-
-      {mode === "preview" && (
-        <ScenarioToolbar
-          scenarios={scenarios}
-          scenario={scenario}
-          onScenarioChange={setScenarioId}
-          keyboardMode={keyboardMode}
-          onKeyboardModeChange={setKeyboardMode}
-        />
-      )}
-
-      {mode === "shortcuts" && (
-        <KeybindingEditor
-          registry={registry}
-          profile={profile}
-          onProfileChange={onProfileChange}
-          compiledRegistry={compiledRegistry}
-          presentation={presentation}
-        />
+        <div
+          id="ib-workbench-panel-shortcuts"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-shortcuts"
+          className="ib-workbench-panel"
+        >
+          <PresentationToolbar presentation={presentation} onChange={setPresentation} />
+          <KeybindingEditor
+            registry={registry}
+            profile={profile}
+            onProfileChange={onProfileChange}
+            compiledRegistry={compiledRegistry}
+            presentation={presentation}
+          />
+        </div>
       )}
 
       {mode === "conflicts" && (
-        <ConflictRepairPanel
-          bindings={effectiveBindings}
-          conflicts={report.conflicts}
-          actions={actionById}
-          scenarios={scenarios}
-          onApplyRepair={applyRepair}
-        />
+        <div
+          id="ib-workbench-panel-conflicts"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-conflicts"
+          className="ib-workbench-panel"
+        >
+          <ConflictRepairPanel
+            bindings={effectiveBindings}
+            conflicts={report.conflicts}
+            actions={actionById}
+            scenarios={scenarios}
+            onApplyRepair={applyRepair}
+          />
+        </div>
       )}
 
       {mode === "preview" && (
-        <PreviewMode
-          bindings={effectiveBindings}
-          activeBindings={activeBindings}
-          actions={actionById}
-          bindingById={bindingById}
-          conflicts={report.conflicts}
-          activeContexts={activeContexts}
-          scenario={scenario}
-          keyboardMode={keyboardMode}
-        />
+        <div
+          id="ib-workbench-panel-preview"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-preview"
+          className="ib-workbench-panel"
+        >
+          <ScenarioToolbar
+            scenarios={scenarios}
+            scenario={scenario}
+            onScenarioChange={setScenarioId}
+            keyboardMode={keyboardMode}
+            onKeyboardModeChange={setKeyboardMode}
+          />
+          <PreviewMode
+            bindings={effectiveBindings}
+            activeBindings={activeBindings}
+            actions={actionById}
+            bindingById={bindingById}
+            conflicts={report.conflicts}
+            activeContexts={activeContexts}
+            scenario={scenario}
+            keyboardMode={keyboardMode}
+          />
+        </div>
       )}
     </section>
   );
@@ -214,18 +229,53 @@ function WorkbenchTabs({
     { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
     { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
   ];
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const activate = (index: number) => {
+    const normalizedIndex = (index + tabs.length) % tabs.length;
+    const tab = tabs[normalizedIndex];
+    if (!tab) return;
+    onChange(tab.id);
+    queueMicrotask(() => tabRefs.current[normalizedIndex]?.focus());
+  };
 
   return (
     <div className="ib-workbench-tabs" role="tablist" aria-label="Input settings tasks">
-      {tabs.map((tab) => (
+      {tabs.map((tab, index) => (
         <button
           key={tab.id}
+          ref={(element) => {
+            tabRefs.current[index] = element;
+          }}
+          id={`ib-workbench-tab-${tab.id}`}
           type="button"
           role="tab"
           aria-selected={mode === tab.id}
+          aria-controls={`ib-workbench-panel-${tab.id}`}
+          tabIndex={mode === tab.id ? 0 : -1}
           className={mode === tab.id ? "is-active" : undefined}
           title={tab.description}
           onClick={() => onChange(tab.id)}
+          onKeyDown={(event) => {
+            switch (event.key) {
+              case "ArrowRight":
+                event.preventDefault();
+                activate(index + 1);
+                break;
+              case "ArrowLeft":
+                event.preventDefault();
+                activate(index - 1);
+                break;
+              case "Home":
+                event.preventDefault();
+                activate(0);
+                break;
+              case "End":
+                event.preventDefault();
+                activate(tabs.length - 1);
+                break;
+            }
+          }}
         >
           {tab.label}
         </button>
