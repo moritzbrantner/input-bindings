@@ -320,13 +320,13 @@ function App() {
           <p className="site-eyebrow">input-bindings / GitHub Pages dogfood</p>
           <h1>Reusable controls settings workbench</h1>
           <p>
-            A default settings surface for editors, games, tables, and web applications: browse and edit every shortcut, inspect a spatial keyboard map, then test real key presses against application-owned contexts.
+            A default settings surface for editors, games, tables, and web applications: manage the same shortcuts as a list or keyboard map, resolve conflicts as a separate task, then test real key presses against application-owned contexts.
           </p>
         </div>
         <a href="https://github.com/moritzbrantner/input-bindings">Repository</a>
       </header>
       <p className="site-note">
-        Switch between editor, timeline, table, gameplay, and a modal pause-menu scenario. The pause menu uses the real ordered-context resolver and blocks lower gameplay controls rather than hiding them only in the UI.
+        List and keyboard are two presentations of the same shortcut workspace. Conflict repair is a separate task. Try shortcuts switches between editor, timeline, table, gameplay, and a modal pause-menu scenario using the real ordered-context resolver.
       </p>
       <InputBindingsWorkbench
         registry={registry}
