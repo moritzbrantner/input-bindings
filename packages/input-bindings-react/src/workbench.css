@@ -5,6 +5,12 @@
   gap: 1rem;
 }
 
+.ib-workbench-panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
 .ib-workbench-header {
   display: flex;
   align-items: end;
