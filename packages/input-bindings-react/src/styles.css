@@ -190,6 +190,15 @@
   align-items: start;
 }
 
+.ib-editor-list .ib-workspace,
+.ib-editor-keyboard .ib-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ib-editor-keyboard .ib-keyboard-panel {
+  position: static;
+}
+
 .ib-table {
   min-width: 0;
   border: 1px solid var(--ib-border);
@@ -273,6 +282,12 @@
   border-radius: 6px;
   background: var(--ib-subtle);
   font-size: 0.82rem;
+}
+.ib-keyboard-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
 }
 .ib-keyboard { width: 100%; overflow-x: auto; padding: 0.2rem 0 0.5rem; }
 .ib-keyboard-row { min-width: 620px; display: flex; gap: 0.28rem; margin-bottom: 0.28rem; }
