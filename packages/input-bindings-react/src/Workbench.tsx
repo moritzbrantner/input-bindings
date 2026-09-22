@@ -44,6 +44,8 @@ import {
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
 
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
+export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
 
 export interface InputBindingsWorkbenchProps {
   registry: ActionRegistry;
@@ -53,6 +55,8 @@ export interface InputBindingsWorkbenchProps {
   title?: string;
   description?: string;
   initialView?: InputBindingsWorkbenchView;
+  initialMode?: InputBindingsWorkbenchMode;
+  initialPresentation?: InputBindingsWorkbenchPresentation;
   className?: string;
 }
 
@@ -72,6 +76,8 @@ export function InputBindingsWorkbench({
   title = "Keyboard & controls",
   description = "Browse, customize, and test application shortcuts from one reusable settings surface.",
   initialView = "bindings",
+  initialMode,
+  initialPresentation,
   className,
 }: InputBindingsWorkbenchProps) {
   const compiledRegistry = useMemo(() => compileActionRegistry(registry), [registry]);
@@ -96,7 +102,17 @@ export function InputBindingsWorkbench({
     [contextScenarios, effectiveBindings],
   );
 
-  const [view, setView] = useState<InputBindingsWorkbenchView>(initialView);
+  const [mode, setMode] = useState<InputBindingsWorkbenchMode>(
+    initialMode ??
+      (initialView === "conflicts"
+        ? "conflicts"
+        : initialView === "preview"
+          ? "preview"
+          : "shortcuts"),
+  );
+  const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
+    initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
+  );
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
   const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
   const [keyboardMode, setKeyboardMode] = useState<InputBindingsKeyboardMode>(
@@ -135,10 +151,14 @@ export function InputBindingsWorkbench({
             {registry.actions.length} actions · {effectiveBindings.length} bindings · {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
           </p>
         </div>
-        <WorkbenchTabs view={view} onChange={setView} />
+        <WorkbenchTabs mode={mode} onChange={setMode} />
       </header>
 
-      {(view === "keyboard" || view === "preview") && (
+      {mode === "shortcuts" && (
+        <PresentationToolbar presentation={presentation} onChange={setPresentation} />
+      )}
+
+      {mode === "preview" && (
         <ScenarioToolbar
           scenarios={scenarios}
           scenario={scenario}
@@ -148,17 +168,17 @@ export function InputBindingsWorkbench({
         />
       )}
 
-      {view === "bindings" && (
+      {mode === "shortcuts" && (
         <KeybindingEditor
           registry={registry}
           profile={profile}
           onProfileChange={onProfileChange}
           compiledRegistry={compiledRegistry}
-          className="ib-workbench-list-only"
+          presentation={presentation}
         />
       )}
 
-      {view === "conflicts" && (
+      {mode === "conflicts" && (
         <ConflictRepairPanel
           bindings={effectiveBindings}
           conflicts={report.conflicts}
@@ -168,16 +188,7 @@ export function InputBindingsWorkbench({
         />
       )}
 
-      {view === "keyboard" && (
-        <KeyboardReference
-          bindings={activeBindings}
-          actions={actionById}
-          conflicts={report.conflicts}
-          scenario={scenario}
-        />
-      )}
-
-      {view === "preview" && (
+      {mode === "preview" && (
         <PreviewMode
           bindings={effectiveBindings}
           activeBindings={activeBindings}
@@ -194,28 +205,27 @@ export function InputBindingsWorkbench({
 }
 
 function WorkbenchTabs({
-  view,
+  mode,
   onChange,
 }: {
-  view: InputBindingsWorkbenchView;
-  onChange: (view: InputBindingsWorkbenchView) => void;
+  mode: InputBindingsWorkbenchMode;
+  onChange: (mode: InputBindingsWorkbenchMode) => void;
 }) {
-  const tabs: readonly { id: InputBindingsWorkbenchView; label: string; description: string }[] = [
-    { id: "bindings", label: "All shortcuts", description: "Search, edit, disable, reset, import, and export bindings." },
+  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] = [
+    { id: "shortcuts", label: "Shortcuts", description: "Browse and edit shortcuts in either list or keyboard presentation." },
     { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
-    { id: "keyboard", label: "Keyboard map", description: "Inspect the keyboard spatially, then select one key for its shortcuts." },
     { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
   ];
 
   return (
-    <div className="ib-workbench-tabs" role="tablist" aria-label="Input settings views">
+    <div className="ib-workbench-tabs" role="tablist" aria-label="Input settings tasks">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
           role="tab"
-          aria-selected={view === tab.id}
-          className={view === tab.id ? "is-active" : undefined}
+          aria-selected={mode === tab.id}
+          className={mode === tab.id ? "is-active" : undefined}
           title={tab.description}
           onClick={() => onChange(tab.id)}
         >
@@ -223,6 +233,43 @@ function WorkbenchTabs({
         </button>
       ))}
     </div>
+  );
+}
+
+function PresentationToolbar({
+  presentation,
+  onChange,
+}: {
+  presentation: InputBindingsWorkbenchPresentation;
+  onChange: (presentation: InputBindingsWorkbenchPresentation) => void;
+}) {
+  return (
+    <section className="ib-presentation-toolbar" aria-label="Shortcut presentation">
+      <div>
+        <p className="ib-workbench-eyebrow">Presentation</p>
+        <h2>Choose how to view the same shortcuts</h2>
+        <p>Selection and editing stay in the shortcuts task; only the spatial representation changes.</p>
+      </div>
+      <fieldset className="ib-mode-switch">
+        <legend>View</legend>
+        <button
+          type="button"
+          aria-pressed={presentation === "list"}
+          className={presentation === "list" ? "is-active" : undefined}
+          onClick={() => onChange("list")}
+        >
+          List
+        </button>
+        <button
+          type="button"
+          aria-pressed={presentation === "keyboard"}
+          className={presentation === "keyboard" ? "is-active" : undefined}
+          onClick={() => onChange("keyboard")}
+        >
+          Keyboard
+        </button>
+      </fieldset>
+    </section>
   );
 }
 
