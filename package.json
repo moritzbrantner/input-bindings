@@ -19,7 +19,7 @@
     "test:storybook:built": "playwright test -c playwright.storybook.config.ts"
   },
   "devDependencies": {
-    "@playwright/test": "1.60.0",
+    "@playwright/test": "1.63.0",
     "@storybook/react-vite": "10.4.1",
     "@testing-library/dom": "10.4.1",
     "@types/react": "19.3.0",
