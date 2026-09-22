@@ -15,7 +15,6 @@ import {
   type ActionRegistry,
   type Binding,
   type ConflictRepair,
-  type KeyStroke,
   type Profile,
   type RegistryValidationReport,
   type ResolutionTrace,
@@ -26,7 +25,6 @@ import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
 import {
   KeyboardView,
   KeybindingEditor,
-  keyboardLabelForCode,
 } from "./index.tsx";
 import { describeWhen, formatSequence, profileFromBindings } from "./model.ts";
 import {
@@ -343,139 +341,6 @@ function ContextStackSummary({ scenario }: { scenario: InputBindingsContextScena
       )}
       {facts.length > 0 && <span>Facts: {facts.join(", ")}</span>}
     </small>
-  );
-}
-
-interface KeyInspectionSelection {
-  code: string;
-  bindingIds: string[];
-}
-
-function KeyboardReference({
-  bindings,
-  actions,
-  conflicts,
-  scenario,
-}: {
-  bindings: readonly Binding[];
-  actions: ReadonlyMap<string, ActionDefinition>;
-  conflicts: RegistryValidationReport["conflicts"];
-  scenario: InputBindingsContextScenario;
-}) {
-  const [selection, setSelection] = useState<KeyInspectionSelection | null>(null);
-
-  useEffect(() => {
-    setSelection(null);
-  }, [scenario.id]);
-
-  const highlightedSequence = useMemo<KeyStroke[]>(
-    () => selection
-      ? [{ key: { kind: "physical", value: selection.code } }]
-      : [],
-    [selection],
-  );
-
-  return (
-    <div className="ib-reference-layout">
-      <section className="ib-reference-keyboard" aria-labelledby="ib-reference-keyboard-title">
-        <div className="ib-section-heading">
-          <div>
-            <p className="ib-workbench-eyebrow">Spatial reference</p>
-            <h2 id="ib-reference-keyboard-title">{scenario.label} keyboard</h2>
-          </div>
-          <span>{bindings.length} active binding{bindings.length === 1 ? "" : "s"}</span>
-        </div>
-        <KeyboardView
-          bindings={bindings}
-          conflicts={conflicts}
-          highlightedSequence={highlightedSequence}
-          onKeyInspect={(code, bindingIds) => setSelection({ code, bindingIds })}
-        />
-        <p className="ib-reference-help">
-          Click a key to inspect only the shortcuts on that key. Switch application contexts above to see which shortcuts are actually reachable.
-        </p>
-        <KeyInspectionDetails
-          selection={selection}
-          bindings={bindings}
-          actions={actions}
-          conflicts={conflicts}
-          scenario={scenario}
-        />
-      </section>
-    </div>
-  );
-}
-
-function KeyInspectionDetails({
-  selection,
-  bindings,
-  actions,
-  conflicts,
-  scenario,
-}: {
-  selection: KeyInspectionSelection | null;
-  bindings: readonly Binding[];
-  actions: ReadonlyMap<string, ActionDefinition>;
-  conflicts: RegistryValidationReport["conflicts"];
-  scenario: InputBindingsContextScenario;
-}) {
-  const bindingById = useMemo(
-    () => new Map(bindings.map((binding) => [binding.id, binding])),
-    [bindings],
-  );
-  const conflictIds = useMemo(
-    () => new Set(conflicts.flatMap((conflict) => [conflict.leftBindingId, conflict.rightBindingId])),
-    [conflicts],
-  );
-
-  if (!selection) {
-    return (
-      <div className="ib-key-inspection is-empty" aria-live="polite">
-        <strong>Select a key to inspect its shortcuts.</strong>
-        <span>No complete shortcut list is shown in keyboard mode.</span>
-      </div>
-    );
-  }
-
-  const selectedBindings = selection.bindingIds
-    .map((bindingId) => bindingById.get(bindingId))
-    .filter((binding): binding is Binding => Boolean(binding));
-  const keyLabel = keyboardLabelForCode(selection.code);
-
-  return (
-    <section className="ib-key-inspection" aria-live="polite" aria-label={`Shortcuts on ${keyLabel}`}>
-      <div className="ib-key-inspection-heading">
-        <div>
-          <span className="ib-workbench-eyebrow">Selected key</span>
-          <strong>{keyLabel}</strong>
-          <code>{selection.code}</code>
-        </div>
-        <span>
-          {selectedBindings.length} active binding{selectedBindings.length === 1 ? "" : "s"} in {scenario.label}
-        </span>
-      </div>
-
-      {selectedBindings.length === 0 ? (
-        <p className="ib-key-inspection-empty">No active shortcut uses this key in the selected application context.</p>
-      ) : (
-        <div className="ib-key-inspection-bindings">
-          {selectedBindings.map((binding) => {
-            const action = actions.get(binding.action);
-            return (
-              <div className="ib-key-inspection-binding" key={binding.id}>
-                <div>
-                  <strong>{action?.title ?? binding.action}</strong>
-                  <span>{action?.categoryPath?.join(" / ") ?? "Uncategorized"}</span>
-                </div>
-                <kbd>{formatSequence(binding.sequence)}</kbd>
-                <small>{describeWhen(binding.when)}</small>
-                {conflictIds.has(binding.id) && <small className="is-conflict">Conflict reported for this binding</small>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </section>
   );
 }
 
