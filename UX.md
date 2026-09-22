@@ -4,21 +4,32 @@
 
 ## Default information architecture
 
-The reusable workbench has four primary views.
+The reusable workbench has three primary tasks: **Shortcuts**, **Conflicts**, and **Try shortcuts**. Presentation is a separate axis inside the Shortcuts task.
 
-### All shortcuts
+### Shortcuts
 
-This is the configuration view and the default landing surface.
+This is the configuration task and the default landing surface. It owns ordinary browsing, selection, and editing regardless of presentation.
+
+A **List / Keyboard** toggle changes only how the same shortcut set is presented. It must not imply a different use case, persistence model, or editing authority.
+
+#### List presentation
 
 - Search by action name, id, description, provenance, or shortcut.
 - Filter by category, context, device, customization state, conflict state, or a recorded shortcut.
 - Inspect and edit multiple bindings per action.
 - Disable and reset individual actions or reset the complete profile.
-- Explain internal conflicts next to the affected bindings.
+- Explain internal conflicts next to affected bindings without turning conflict repair into the browsing task.
 - Keep import/export and migration diagnostics visible rather than silently reinterpreting configuration.
-- Keep this view list-only; the keyboard map is a separate primary view rather than a permanent sidebar competing for space.
 
-Applications should not need to build their own keybinding form for the ordinary case.
+#### Keyboard presentation
+
+- Show the same shortcut configuration spatially on a keyboard.
+- Let the user select an occupied key and preserve the corresponding action/binding selection.
+- Expose ordinary edit, disable, add, and reset controls for the selected shortcut instead of making the keyboard a read-only dead end.
+- Let filters and keyboard scope narrow what is emphasized without changing binding authority.
+- Distinguish logical bindings from physical-position bindings in the underlying semantics.
+
+The List and Keyboard presentations are peers within one Shortcuts task. Applications should not need to build separate editing flows for the two representations.
 
 ### Conflicts
 
@@ -33,20 +44,6 @@ This is the explicit review-and-repair surface.
 - Make modal or higher-layer ordering visible rather than encouraging users to "repair" an overlap the application already resolves intentionally.
 
 The conflict analyzer remains conservative when no runtime stack is known; application scenarios add evidence without becoming a global assumption in core semantics.
-
-### Keyboard map
-
-This is the spatial reference view.
-
-- Show which keys are occupied in the selected application context.
-- Do not render a complete action list beside the keyboard.
-- Let the user select any key and show only the bindings/actions attached to that key in the current scenario.
-- Keep the selected key visually highlighted, including unused keys, so inspection has a persistent spatial anchor.
-- For an unused selected key, say explicitly that no active shortcut uses it in the current application context.
-- Allow consumers to provide realistic context scenarios such as Editor, Timeline, Gameplay, or Modal menu.
-- Distinguish logical key matching from physical-position matching instead of pretending they are interchangeable.
-
-This preserves two complementary modes without duplicating them on screen: **All shortcuts** is for exhaustive list-based editing, while **Keyboard map** is for spatial, key-by-key inspection. The keyboard diagram remains a reference aid; semantic bindings remain authoritative.
 
 ### Try shortcuts
 
@@ -71,7 +68,7 @@ A normal application should need to provide only:
 
 1. Its `ActionRegistry` with semantic actions and defaults.
 2. The current `Profile` and an `onProfileChange` persistence callback.
-3. Optional `InputBindingsContextScenario[]` entries that describe meaningful application states for the keyboard/reference preview and conflict evidence.
+3. Optional `InputBindingsContextScenario[]` entries that describe meaningful application states for live shortcut preview and conflict evidence.
 
 A context scenario may supply:
 
@@ -93,17 +90,17 @@ If no scenarios are supplied, the React package derives a useful global scenario
 
 ## Usability requirements
 
-- Every keyboard-only visualization exposes textual details for the selected key; the entire shortcut list is available separately in **All shortcuts**.
+- The Shortcuts task exposes both List and Keyboard presentations; changing presentation must not remove ordinary editing authority.
 - All editing and repair operations remain normal focusable controls; color is never the sole conflict/selection signal.
 - Repair choices explain their effect before application and never mutate the profile merely because the panel was opened.
 - Preview capture requires explicit activation and provides a visible stop action.
-- Responsive layouts keep each primary view usable without forcing list and keyboard content into a simultaneous split layout.
+- Responsive layouts keep each task and presentation usable without forcing list and keyboard content into a simultaneous split layout.
 - Keyboard-layout labels are presentation metadata; physical bindings continue to preserve exact positions.
 - User overrides remain deltas over application defaults, so applications can evolve defaults without overwriting user intent.
 
 ## Next UX slices
 
-The workbench now covers ordinary editing, conflict repair, spatial reference, and explainable keyboard preview. The next product-level additions should build on this one surface rather than creating separate demos:
+The workbench now covers ordinary editing with orthogonal list/keyboard presentation, conflict repair, and explainable keyboard preview. The next product-level additions should build on this one surface rather than creating separate demos:
 
 - richer conflict repair operations where useful, such as swapping shortcuts or replacing one binding directly from another action;
 - command-oriented search such as “show everything bound to Space” and “show everything reachable in this modal context”;
