@@ -126,6 +126,19 @@ test("workbench stories keep controls named and avoid page-level overflow on nar
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 });
 
+test("keyboard presentation produces inspectable visual evidence", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openStory(page, "keyboard");
+
+  await page.locator('button[data-key-code="Escape"]').click();
+  await expect(page.getByLabel("Selected shortcut actions")).toBeVisible();
+
+  await page.screenshot({
+    path: "test-results/storybook/workbench-keyboard.png",
+    fullPage: true,
+  });
+});
+
 test("all workbench stories render without browser errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => {
