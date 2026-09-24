@@ -39,11 +39,14 @@ import {
 export * from "./keyboard.ts";
 export * from "./model.ts";
 
+export type KeybindingEditorPresentation = "split" | "list" | "keyboard";
+
 export interface KeybindingEditorProps {
   registry: ActionRegistry;
   profile: Profile;
   onProfileChange: (profile: Profile) => void;
   compiledRegistry?: CompiledActionRegistry;
+  presentation?: KeybindingEditorPresentation;
   className?: string;
 }
 
@@ -57,6 +60,7 @@ export function KeybindingEditor({
   profile,
   onProfileChange,
   compiledRegistry,
+  presentation = "split",
   className,
 }: KeybindingEditorProps) {
   const compiled = useMemo(
@@ -237,9 +241,22 @@ export function KeybindingEditor({
   const editingBinding = editing?.bindingId ? bindingById.get(editing.bindingId) : undefined;
   const editingSequence = editingBinding?.sequence.filter(isKeyStroke) ?? [];
   const selectedAction = selectedActionId ? actionById.get(selectedActionId) : undefined;
+  const selectedBinding = selectedBindingId ? bindingById.get(selectedBindingId) : undefined;
+  const selectedActionChanged = selectedAction
+    ? actionIndex.get(selectedAction.id)?.changed ?? false
+    : false;
+  const selectedActionSupportsKeyboard = selectedAction
+    ? (selectedAction.allowedDevices ?? []).includes("keyboard")
+    : false;
 
   return (
-    <div className={["ib-editor", className].filter(Boolean).join(" ")}>
+    <div
+      className={[
+        "ib-editor",
+        presentation !== "split" ? `ib-editor-${presentation}` : "",
+        className,
+      ].filter(Boolean).join(" ")}
+    >
       <div className="ib-toolbar" aria-label="Keybinding filters">
         <label className="ib-search">
           <span>Search actions or shortcuts</span>
@@ -320,6 +337,7 @@ export function KeybindingEditor({
       )}
 
       <div className="ib-workspace">
+        {presentation !== "keyboard" && (
         <div className="ib-table" role="table" aria-label="Keybindings">
           <div className="ib-table-head" role="row">
             <span role="columnheader">Action</span>
@@ -378,7 +396,9 @@ export function KeybindingEditor({
           })}
           {filteredActions.length === 0 && <p className="ib-empty">No actions match the current filters.</p>}
         </div>
+        )}
 
+        {presentation !== "list" && (
         <aside className="ib-keyboard-panel" aria-labelledby="ib-keyboard-heading">
           <div className="ib-keyboard-panel-heading">
             <div>
@@ -398,7 +418,36 @@ export function KeybindingEditor({
           <div className="ib-keyboard-selection" aria-live="polite">
             <strong>{selectedAction?.title ?? "No action selected"}</strong>
             {selectedBindingId && <span>Binding: {selectedBindingId}</span>}
-            {keyboardFilter && <span>Table filtered to {keyboardLabelForCode(keyboardFilter.code, layoutLabels)} · {keyboardFilter.bindingIds.length} binding(s)</span>}
+            {keyboardFilter && <span>Keyboard selection: {keyboardLabelForCode(keyboardFilter.code, layoutLabels)} · {keyboardFilter.bindingIds.length} binding(s)</span>}
+            {selectedAction && (
+              <div className="ib-keyboard-selection-actions" aria-label="Selected shortcut actions">
+                {selectedBinding?.sequence.every(isKeyStroke) && (
+                  <button
+                    type="button"
+                    onClick={() => setEditing({ actionId: selectedAction.id, bindingId: selectedBinding.id })}
+                  >
+                    Edit binding
+                  </button>
+                )}
+                {selectedBinding && (
+                  <button type="button" onClick={() => removeBinding(selectedBinding.id)}>
+                    Disable binding
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={!selectedActionSupportsKeyboard}
+                  onClick={() => setEditing({ actionId: selectedAction.id })}
+                >
+                  Add binding
+                </button>
+                {selectedActionChanged && (
+                  <button type="button" onClick={() => resetAction(selectedAction)}>
+                    Reset action
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <KeyboardView
             bindings={effectiveBindings}
@@ -412,11 +461,18 @@ export function KeybindingEditor({
             onKeyInspect={(code, bindingIds) => {
               setKeyboardFilter(bindingIds.length ? { code, bindingIds } : null);
               const first = bindingIds[0] ? bindingById.get(bindingIds[0]) : undefined;
-              if (first) { setSelectedBindingId(first.id); setSelectedActionId(first.action); }
+              if (first) {
+                setSelectedBindingId(first.id);
+                setSelectedActionId(first.action);
+              } else {
+                setSelectedBindingId(undefined);
+                setSelectedActionId(undefined);
+              }
             }}
           />
           <KeyboardLegend />
         </aside>
+        )}
       </div>
     </div>
   );

@@ -15,7 +15,6 @@ import {
   type ActionRegistry,
   type Binding,
   type ConflictRepair,
-  type KeyStroke,
   type Profile,
   type RegistryValidationReport,
   type ResolutionTrace,
@@ -26,7 +25,6 @@ import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
 import {
   KeyboardView,
   KeybindingEditor,
-  keyboardLabelForCode,
 } from "./index.tsx";
 import { describeWhen, formatSequence, profileFromBindings } from "./model.ts";
 import {
@@ -44,6 +42,8 @@ import {
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
 
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
+export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
 
 export interface InputBindingsWorkbenchProps {
   registry: ActionRegistry;
@@ -53,6 +53,8 @@ export interface InputBindingsWorkbenchProps {
   title?: string;
   description?: string;
   initialView?: InputBindingsWorkbenchView;
+  initialMode?: InputBindingsWorkbenchMode;
+  initialPresentation?: InputBindingsWorkbenchPresentation;
   className?: string;
 }
 
@@ -72,6 +74,8 @@ export function InputBindingsWorkbench({
   title = "Keyboard & controls",
   description = "Browse, customize, and test application shortcuts from one reusable settings surface.",
   initialView = "bindings",
+  initialMode,
+  initialPresentation,
   className,
 }: InputBindingsWorkbenchProps) {
   const compiledRegistry = useMemo(() => compileActionRegistry(registry), [registry]);
@@ -96,7 +100,17 @@ export function InputBindingsWorkbench({
     [contextScenarios, effectiveBindings],
   );
 
-  const [view, setView] = useState<InputBindingsWorkbenchView>(initialView);
+  const [mode, setMode] = useState<InputBindingsWorkbenchMode>(
+    initialMode ??
+      (initialView === "conflicts"
+        ? "conflicts"
+        : initialView === "preview"
+          ? "preview"
+          : "shortcuts"),
+  );
+  const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
+    initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
+  );
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
   const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
   const [keyboardMode, setKeyboardMode] = useState<InputBindingsKeyboardMode>(
@@ -135,94 +149,175 @@ export function InputBindingsWorkbench({
             {registry.actions.length} actions · {effectiveBindings.length} bindings · {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
           </p>
         </div>
-        <WorkbenchTabs view={view} onChange={setView} />
+        <WorkbenchTabs mode={mode} onChange={setMode} />
       </header>
 
-      {(view === "keyboard" || view === "preview") && (
-        <ScenarioToolbar
-          scenarios={scenarios}
-          scenario={scenario}
-          onScenarioChange={setScenarioId}
-          keyboardMode={keyboardMode}
-          onKeyboardModeChange={setKeyboardMode}
-        />
+      {mode === "shortcuts" && (
+        <div
+          id="ib-workbench-panel-shortcuts"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-shortcuts"
+          className="ib-workbench-panel"
+        >
+          <PresentationToolbar presentation={presentation} onChange={setPresentation} />
+          <KeybindingEditor
+            registry={registry}
+            profile={profile}
+            onProfileChange={onProfileChange}
+            compiledRegistry={compiledRegistry}
+            presentation={presentation}
+          />
+        </div>
       )}
 
-      {view === "bindings" && (
-        <KeybindingEditor
-          registry={registry}
-          profile={profile}
-          onProfileChange={onProfileChange}
-          compiledRegistry={compiledRegistry}
-          className="ib-workbench-list-only"
-        />
+      {mode === "conflicts" && (
+        <div
+          id="ib-workbench-panel-conflicts"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-conflicts"
+          className="ib-workbench-panel"
+        >
+          <ConflictRepairPanel
+            bindings={effectiveBindings}
+            conflicts={report.conflicts}
+            actions={actionById}
+            scenarios={scenarios}
+            onApplyRepair={applyRepair}
+          />
+        </div>
       )}
 
-      {view === "conflicts" && (
-        <ConflictRepairPanel
-          bindings={effectiveBindings}
-          conflicts={report.conflicts}
-          actions={actionById}
-          scenarios={scenarios}
-          onApplyRepair={applyRepair}
-        />
-      )}
-
-      {view === "keyboard" && (
-        <KeyboardReference
-          bindings={activeBindings}
-          actions={actionById}
-          conflicts={report.conflicts}
-          scenario={scenario}
-        />
-      )}
-
-      {view === "preview" && (
-        <PreviewMode
-          bindings={effectiveBindings}
-          activeBindings={activeBindings}
-          actions={actionById}
-          bindingById={bindingById}
-          conflicts={report.conflicts}
-          activeContexts={activeContexts}
-          scenario={scenario}
-          keyboardMode={keyboardMode}
-        />
+      {mode === "preview" && (
+        <div
+          id="ib-workbench-panel-preview"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-preview"
+          className="ib-workbench-panel"
+        >
+          <ScenarioToolbar
+            scenarios={scenarios}
+            scenario={scenario}
+            onScenarioChange={setScenarioId}
+            keyboardMode={keyboardMode}
+            onKeyboardModeChange={setKeyboardMode}
+          />
+          <PreviewMode
+            bindings={effectiveBindings}
+            activeBindings={activeBindings}
+            actions={actionById}
+            bindingById={bindingById}
+            conflicts={report.conflicts}
+            activeContexts={activeContexts}
+            scenario={scenario}
+            keyboardMode={keyboardMode}
+          />
+        </div>
       )}
     </section>
   );
 }
 
 function WorkbenchTabs({
-  view,
+  mode,
   onChange,
 }: {
-  view: InputBindingsWorkbenchView;
-  onChange: (view: InputBindingsWorkbenchView) => void;
+  mode: InputBindingsWorkbenchMode;
+  onChange: (mode: InputBindingsWorkbenchMode) => void;
 }) {
-  const tabs: readonly { id: InputBindingsWorkbenchView; label: string; description: string }[] = [
-    { id: "bindings", label: "All shortcuts", description: "Search, edit, disable, reset, import, and export bindings." },
+  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] = [
+    { id: "shortcuts", label: "Shortcuts", description: "Browse and edit shortcuts in either list or keyboard presentation." },
     { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
-    { id: "keyboard", label: "Keyboard map", description: "Inspect the keyboard spatially, then select one key for its shortcuts." },
     { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
   ];
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const activate = (index: number) => {
+    const normalizedIndex = (index + tabs.length) % tabs.length;
+    const tab = tabs[normalizedIndex];
+    if (!tab) return;
+    onChange(tab.id);
+    queueMicrotask(() => tabRefs.current[normalizedIndex]?.focus());
+  };
 
   return (
-    <div className="ib-workbench-tabs" role="tablist" aria-label="Input settings views">
-      {tabs.map((tab) => (
+    <div className="ib-workbench-tabs" role="tablist" aria-label="Input settings tasks">
+      {tabs.map((tab, index) => (
         <button
           key={tab.id}
+          ref={(element) => {
+            tabRefs.current[index] = element;
+          }}
+          id={`ib-workbench-tab-${tab.id}`}
           type="button"
           role="tab"
-          aria-selected={view === tab.id}
-          className={view === tab.id ? "is-active" : undefined}
+          aria-selected={mode === tab.id}
+          aria-controls={`ib-workbench-panel-${tab.id}`}
+          tabIndex={mode === tab.id ? 0 : -1}
+          className={mode === tab.id ? "is-active" : undefined}
           title={tab.description}
           onClick={() => onChange(tab.id)}
+          onKeyDown={(event) => {
+            switch (event.key) {
+              case "ArrowRight":
+                event.preventDefault();
+                activate(index + 1);
+                break;
+              case "ArrowLeft":
+                event.preventDefault();
+                activate(index - 1);
+                break;
+              case "Home":
+                event.preventDefault();
+                activate(0);
+                break;
+              case "End":
+                event.preventDefault();
+                activate(tabs.length - 1);
+                break;
+            }
+          }}
         >
           {tab.label}
         </button>
       ))}
     </div>
+  );
+}
+
+function PresentationToolbar({
+  presentation,
+  onChange,
+}: {
+  presentation: InputBindingsWorkbenchPresentation;
+  onChange: (presentation: InputBindingsWorkbenchPresentation) => void;
+}) {
+  return (
+    <section className="ib-presentation-toolbar" aria-label="Shortcut presentation">
+      <div>
+        <p className="ib-workbench-eyebrow">Presentation</p>
+        <h2>Choose how to view the same shortcuts</h2>
+        <p>Selection and editing stay in the shortcuts task; only the spatial representation changes.</p>
+      </div>
+      <fieldset className="ib-mode-switch">
+        <legend>View</legend>
+        <button
+          type="button"
+          aria-pressed={presentation === "list"}
+          className={presentation === "list" ? "is-active" : undefined}
+          onClick={() => onChange("list")}
+        >
+          List
+        </button>
+        <button
+          type="button"
+          aria-pressed={presentation === "keyboard"}
+          className={presentation === "keyboard" ? "is-active" : undefined}
+          onClick={() => onChange("keyboard")}
+        >
+          Keyboard
+        </button>
+      </fieldset>
+    </section>
   );
 }
 
@@ -296,139 +391,6 @@ function ContextStackSummary({ scenario }: { scenario: InputBindingsContextScena
       )}
       {facts.length > 0 && <span>Facts: {facts.join(", ")}</span>}
     </small>
-  );
-}
-
-interface KeyInspectionSelection {
-  code: string;
-  bindingIds: string[];
-}
-
-function KeyboardReference({
-  bindings,
-  actions,
-  conflicts,
-  scenario,
-}: {
-  bindings: readonly Binding[];
-  actions: ReadonlyMap<string, ActionDefinition>;
-  conflicts: RegistryValidationReport["conflicts"];
-  scenario: InputBindingsContextScenario;
-}) {
-  const [selection, setSelection] = useState<KeyInspectionSelection | null>(null);
-
-  useEffect(() => {
-    setSelection(null);
-  }, [scenario.id]);
-
-  const highlightedSequence = useMemo<KeyStroke[]>(
-    () => selection
-      ? [{ key: { kind: "physical", value: selection.code } }]
-      : [],
-    [selection],
-  );
-
-  return (
-    <div className="ib-reference-layout">
-      <section className="ib-reference-keyboard" aria-labelledby="ib-reference-keyboard-title">
-        <div className="ib-section-heading">
-          <div>
-            <p className="ib-workbench-eyebrow">Spatial reference</p>
-            <h2 id="ib-reference-keyboard-title">{scenario.label} keyboard</h2>
-          </div>
-          <span>{bindings.length} active binding{bindings.length === 1 ? "" : "s"}</span>
-        </div>
-        <KeyboardView
-          bindings={bindings}
-          conflicts={conflicts}
-          highlightedSequence={highlightedSequence}
-          onKeyInspect={(code, bindingIds) => setSelection({ code, bindingIds })}
-        />
-        <p className="ib-reference-help">
-          Click a key to inspect only the shortcuts on that key. Switch application contexts above to see which shortcuts are actually reachable.
-        </p>
-        <KeyInspectionDetails
-          selection={selection}
-          bindings={bindings}
-          actions={actions}
-          conflicts={conflicts}
-          scenario={scenario}
-        />
-      </section>
-    </div>
-  );
-}
-
-function KeyInspectionDetails({
-  selection,
-  bindings,
-  actions,
-  conflicts,
-  scenario,
-}: {
-  selection: KeyInspectionSelection | null;
-  bindings: readonly Binding[];
-  actions: ReadonlyMap<string, ActionDefinition>;
-  conflicts: RegistryValidationReport["conflicts"];
-  scenario: InputBindingsContextScenario;
-}) {
-  const bindingById = useMemo(
-    () => new Map(bindings.map((binding) => [binding.id, binding])),
-    [bindings],
-  );
-  const conflictIds = useMemo(
-    () => new Set(conflicts.flatMap((conflict) => [conflict.leftBindingId, conflict.rightBindingId])),
-    [conflicts],
-  );
-
-  if (!selection) {
-    return (
-      <div className="ib-key-inspection is-empty" aria-live="polite">
-        <strong>Select a key to inspect its shortcuts.</strong>
-        <span>No complete shortcut list is shown in keyboard mode.</span>
-      </div>
-    );
-  }
-
-  const selectedBindings = selection.bindingIds
-    .map((bindingId) => bindingById.get(bindingId))
-    .filter((binding): binding is Binding => Boolean(binding));
-  const keyLabel = keyboardLabelForCode(selection.code);
-
-  return (
-    <section className="ib-key-inspection" aria-live="polite" aria-label={`Shortcuts on ${keyLabel}`}>
-      <div className="ib-key-inspection-heading">
-        <div>
-          <span className="ib-workbench-eyebrow">Selected key</span>
-          <strong>{keyLabel}</strong>
-          <code>{selection.code}</code>
-        </div>
-        <span>
-          {selectedBindings.length} active binding{selectedBindings.length === 1 ? "" : "s"} in {scenario.label}
-        </span>
-      </div>
-
-      {selectedBindings.length === 0 ? (
-        <p className="ib-key-inspection-empty">No active shortcut uses this key in the selected application context.</p>
-      ) : (
-        <div className="ib-key-inspection-bindings">
-          {selectedBindings.map((binding) => {
-            const action = actions.get(binding.action);
-            return (
-              <div className="ib-key-inspection-binding" key={binding.id}>
-                <div>
-                  <strong>{action?.title ?? binding.action}</strong>
-                  <span>{action?.categoryPath?.join(" / ") ?? "Uncategorized"}</span>
-                </div>
-                <kbd>{formatSequence(binding.sequence)}</kbd>
-                <small>{describeWhen(binding.when)}</small>
-                {conflictIds.has(binding.id) && <small className="is-conflict">Conflict reported for this binding</small>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </section>
   );
 }
 

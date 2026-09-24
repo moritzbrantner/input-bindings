@@ -1,0 +1,160 @@
+import { expect, test } from "@playwright/test";
+
+import type { Page } from "@playwright/test";
+
+const storyBase = "input-bindings-workbench";
+
+test("shortcut task exposes list and keyboard as presentations, not peer tasks", async ({ page }) => {
+  await openStory(page, "list");
+
+  const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
+  await expect(taskTabs.getByRole("tab")).toHaveCount(3);
+  await expect(taskTabs.getByRole("tab", { name: "Shortcuts", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toHaveAttribute("aria-selected", "false");
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveAttribute("aria-selected", "false");
+
+  const panel = page.getByRole("tabpanel");
+  await expect(panel).toHaveAttribute("id", "ib-workbench-panel-shortcuts");
+  await expect(panel).toHaveAttribute("aria-labelledby", "ib-workbench-tab-shortcuts");
+
+  const presentation = page.getByLabel("Shortcut presentation");
+  await expect(presentation.getByRole("button", { name: "List" })).toHaveAttribute("aria-pressed", "true");
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("table", { name: "Keybindings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keyboard overview" })).toHaveCount(0);
+});
+
+test("keyboard presentation keeps ordinary shortcut editing available", async ({ page }) => {
+  await openStory(page, "list");
+
+  await page.getByLabel("Shortcut presentation").getByRole("button", { name: "Keyboard" }).click();
+  await expect(page.getByRole("table", { name: "Keybindings" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Keyboard overview" })).toBeVisible();
+
+  const escape = page.locator('button[data-key-code="Escape"]');
+  await expect(escape).toHaveAccessibleName(/2 bindings, conflict/);
+  await escape.click();
+
+  await expect(page.getByText("Pause game", { exact: true })).toBeVisible();
+  const actions = page.getByLabel("Selected shortcut actions");
+  await expect(actions.getByRole("button", { name: "Edit binding" })).toBeVisible();
+  await expect(actions.getByRole("button", { name: "Disable binding" })).toBeVisible();
+  await expect(actions.getByRole("button", { name: "Add binding" })).toBeVisible();
+
+  await actions.getByRole("button", { name: "Edit binding" }).click();
+  await expect(page.getByRole("heading", { name: "Edit binding for Pause game" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+});
+
+test("task tabs implement automatic keyboard activation and roving focus", async ({ page }) => {
+  await openStory(page, "list");
+
+  const shortcuts = page.getByRole("tab", { name: "Shortcuts", exact: true });
+  await shortcuts.focus();
+  await page.keyboard.press("ArrowRight");
+
+  const conflicts = page.getByRole("tab", { name: "Conflicts", exact: true });
+  await expect(conflicts).toBeFocused();
+  await expect(conflicts).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel")).toHaveAttribute("id", "ib-workbench-panel-conflicts");
+  await expect(page.getByRole("heading", { name: "Conflict review" })).toBeVisible();
+
+  await page.keyboard.press("End");
+  const preview = page.getByRole("tab", { name: "Try shortcuts", exact: true });
+  await expect(preview).toBeFocused();
+  await expect(preview).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel")).toHaveAttribute("id", "ib-workbench-panel-preview");
+
+  await page.keyboard.press("Home");
+  await expect(shortcuts).toBeFocused();
+  await expect(shortcuts).toHaveAttribute("aria-selected", "true");
+});
+
+test("conflict repair is a separate keyboard-operable workflow", async ({ page }) => {
+  await openStory(page, "conflicts");
+
+  await expect(page.getByRole("heading", { name: "Conflict review" })).toBeVisible();
+  await expect(page.getByText("ordered by context stack", { exact: true })).toBeVisible();
+  await expect(page.getByText("still ambiguous", { exact: true })).toBeVisible();
+
+  const preferPause = page.getByRole("button", { name: /Prefer Pause game/ });
+  await preferPause.focus();
+  await expect(preferPause).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByTestId("profile-state")).toHaveText("Profile patches: 1");
+  await expect(page.getByText("Ordered override", { exact: true })).toBeVisible();
+});
+
+test("live preview is explicitly activated and announces the resolution", async ({ page }) => {
+  await openStory(page, "preview");
+
+  await expect(page.getByLabel("Preview context")).toBeVisible();
+  await expect(page.getByLabel("Application context")).toHaveValue("global");
+  await expect(page.getByLabel("Interactive keyboard shortcut preview")).toBeVisible();
+
+  await page.getByRole("button", { name: "Start preview" }).click();
+  const previewSurface = page.getByLabel("Interactive keyboard shortcut preview");
+  await expect(previewSurface).toBeFocused();
+
+  await page.keyboard.press("Control+Shift+P");
+  await expect(page.locator(".ib-resolution > strong")).toHaveText("Command palette");
+  await expect(page.getByText(/resolves to global\.commandPalette/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Stop preview" }).click();
+  await expect(page.getByRole("button", { name: "Start preview" })).toBeVisible();
+});
+
+test("workbench stories keep controls named and avoid page-level overflow on narrow screens", async ({ page }) => {
+  await page.setViewportSize({ width: 420, height: 900 });
+  await openStory(page, "keyboard");
+
+  const tabs = page.getByRole("tablist", { name: "Input settings tasks" }).getByRole("tab");
+  await expect(tabs).toHaveCount(3);
+  for (const name of ["Shortcuts", "Conflicts", "Try shortcuts"]) {
+    const tab = page.getByRole("tab", { name, exact: true });
+    await expect(tab).toHaveAttribute("aria-controls", /ib-workbench-panel-/);
+  }
+
+  const presentation = page.getByLabel("Shortcut presentation");
+  await expect(presentation.getByText("View", { exact: true })).toBeVisible();
+
+  const metrics = await page.locator("html").evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+});
+
+test("keyboard presentation produces inspectable visual evidence", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openStory(page, "keyboard");
+
+  await page.locator('button[data-key-code="Escape"]').click();
+  await expect(page.getByLabel("Selected shortcut actions")).toBeVisible();
+
+  await page.screenshot({
+    path: "test-results/storybook/workbench-keyboard.png",
+    fullPage: true,
+  });
+});
+
+test("all workbench stories render without browser errors", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  for (const story of ["list", "keyboard", "conflicts", "preview"]) {
+    await openStory(page, story);
+  }
+
+  expect(errors).toEqual([]);
+});
+
+async function openStory(page: Page, story: "list" | "keyboard" | "conflicts" | "preview") {
+  await page.goto(`/iframe.html?id=${storyBase}--${story}&viewMode=story`);
+  await expect(page.locator("#storybook-root")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keyboard & controls" })).toBeVisible();
+}

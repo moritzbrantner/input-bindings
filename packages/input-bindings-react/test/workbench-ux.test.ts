@@ -118,17 +118,21 @@ function renderWorkbench(initialView: InputBindingsWorkbenchView): string {
   );
 }
 
-test("default workbench exposes the complete navigation and marks shortcut editing as list-only", () => {
+test("shortcut task keeps presentation orthogonal to the workbench task navigation", () => {
   const html = renderWorkbench("bindings");
 
   assert.match(html, /Keyboard &amp; controls/);
-  assert.match(html, /All shortcuts/);
+  assert.match(html, /Shortcuts/);
   assert.match(html, /Conflicts/);
-  assert.match(html, /Keyboard map/);
   assert.match(html, /Try shortcuts/);
+  assert.match(html, /Presentation/);
+  assert.match(html, /Choose how to view the same shortcuts/);
+  assert.match(html, />List</);
+  assert.match(html, />Keyboard</);
+  assert.doesNotMatch(html, /Keyboard map/);
   assert.match(html, /3 actions · 3 bindings · 1 conflict/);
   assert.match(html, /Save document/);
-  assert.match(html, /ib-editor ib-workbench-list-only/);
+  assert.match(html, /ib-editor ib-editor-list/);
 });
 
 test("conflict review distinguishes stack-ordered and still-ambiguous application scenarios", () => {
@@ -146,14 +150,34 @@ test("conflict review distinguishes stack-ordered and still-ambiguous applicatio
   assert.match(html, /Unbind Close menu/);
 });
 
-test("keyboard reference is a single spatial surface with click-to-inspect guidance", () => {
+test("legacy keyboard view maps to the keyboard presentation inside the shortcuts task", () => {
   const html = renderWorkbench("keyboard");
 
-  assert.match(html, /Pause menu keyboard/);
-  assert.match(html, /Select a key to inspect its shortcuts/);
-  assert.match(html, /No complete shortcut list is shown in keyboard mode/);
-  assert.match(html, /Stack: gameplay → menuOpen \(modal\)/);
-  assert.doesNotMatch(html, /Active shortcuts/);
+  assert.match(html, /Shortcuts/);
+  assert.match(html, /Choose how to view the same shortcuts/);
+  assert.match(html, /Keyboard overview/);
+  assert.match(html, /No action selected/);
+  assert.match(html, /ib-editor ib-editor-keyboard/);
+  assert.doesNotMatch(html, /aria-label="Keybindings"/);
+  assert.doesNotMatch(html, /Conflict review/);
+});
+
+test("new workbench API can choose task and presentation independently", () => {
+  const html = renderToStaticMarkup(
+    createElement(InputBindingsWorkbench, {
+      registry,
+      profile,
+      onProfileChange: () => {},
+      contextScenarios: scenarios,
+      initialMode: "shortcuts",
+      initialPresentation: "keyboard",
+    }),
+  );
+
+  assert.match(html, /aria-label="Input settings tasks"/);
+  assert.match(html, /aria-label="Shortcut presentation"/);
+  assert.match(html, /ib-editor ib-editor-keyboard/);
+  assert.match(html, /Keyboard overview/);
 });
 
 test("clicked-key inspection is scoped to bindings reachable in the selected scenario", () => {
