@@ -80,6 +80,7 @@ export function KeybindingEditor({
   const [changedFilter, setChangedFilter] = useState<ChangedFilter>("all");
   const [conflictFilter, setConflictFilter] = useState<ConflictFilter>("all");
   const [shortcutFilter, setShortcutFilter] = useState<KeyStroke[]>([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [shortcutRecorderOpen, setShortcutRecorderOpen] = useState(false);
   const [editing, setEditing] = useState<{ actionId: string; bindingId?: string } | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -142,6 +143,13 @@ export function KeybindingEditor({
     () => [...new Set(report.conflicts.map((conflict) => conflict.kind))].sort(),
     [report.conflicts],
   );
+  const activeFilterCount = [
+    category !== "all",
+    context !== "all",
+    device !== "all",
+    changedFilter !== "all",
+    conflictFilter !== "all",
+  ].filter(Boolean).length;
 
   const filteredActions = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -275,11 +283,25 @@ export function KeybindingEditor({
             <button type="button" onClick={() => setShortcutFilter([])} aria-label="Clear shortcut filter">Clear</button>
           )}
         </div>
-        <FilterSelect label="Category" value={category} onChange={setCategory} options={categories} />
-        <FilterSelect label="Context" value={context} onChange={setContext} options={contexts} />
-        <FilterSelect label="Device" value={device} onChange={(value) => setDevice(value as "all" | DeviceClass)} options={devices} />
-        <FilterSelect label="Customization" value={changedFilter} onChange={(value) => setChangedFilter(value as ChangedFilter)} options={["changed", "default"]} />
-        <FilterSelect label="Conflict" value={conflictFilter} onChange={(value) => setConflictFilter(value as ConflictFilter)} options={["none", ...conflictKinds]} />
+        <button
+          type="button"
+          className="ib-mobile-filters-toggle"
+          aria-expanded={mobileFiltersOpen}
+          aria-controls="ib-advanced-filters"
+          onClick={() => setMobileFiltersOpen((open) => !open)}
+        >
+          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+        </button>
+        <div
+          id="ib-advanced-filters"
+          className={["ib-filter-grid", mobileFiltersOpen ? "is-open" : ""].filter(Boolean).join(" ")}
+        >
+          <FilterSelect label="Category" value={category} onChange={setCategory} options={categories} />
+          <FilterSelect label="Context" value={context} onChange={setContext} options={contexts} />
+          <FilterSelect label="Device" value={device} onChange={(value) => setDevice(value as "all" | DeviceClass)} options={devices} />
+          <FilterSelect label="Customization" value={changedFilter} onChange={(value) => setChangedFilter(value as ChangedFilter)} options={["changed", "default"]} />
+          <FilterSelect label="Conflict" value={conflictFilter} onChange={(value) => setConflictFilter(value as ConflictFilter)} options={["none", ...conflictKinds]} />
+        </div>
         <div className="ib-toolbar-actions">
           {keyboardFilter && (
             <button type="button" onClick={() => setKeyboardFilter(null)}>
