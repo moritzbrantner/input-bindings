@@ -157,6 +157,80 @@
   background: var(--ib-accent-soft);
   font-size: 0.85rem;
 }
+.ib-manual-binding {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0.75rem 0;
+  padding: 0.8rem;
+  border: 1px solid var(--ib-border);
+  border-radius: 8px;
+  background: var(--ib-surface);
+}
+.ib-manual-binding-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.ib-manual-binding-heading span {
+  color: var(--ib-muted);
+  font-size: 0.78rem;
+}
+.ib-manual-binding-grid {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(18rem, 1.3fr);
+  gap: 0.7rem;
+  align-items: end;
+}
+.ib-manual-key {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.ib-manual-key input {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.6rem;
+}
+.ib-manual-modifiers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ib-manual-modifiers legend {
+  grid-column: 1 / -1;
+  margin-bottom: 0.1rem;
+  color: var(--ib-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.ib-manual-modifiers label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--ib-border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.ib-manual-modifiers input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--ib-accent);
+}
+.ib-manual-binding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
 .ib-recorder-conflicts {
   margin: 0.75rem 0;
   padding: 0.7rem 0.8rem;
@@ -352,11 +426,163 @@
 }
 
 @media (max-width: 620px) {
-  .ib-toolbar,
-  .ib-recorder-facts { grid-template-columns: 1fr; }
-  .ib-toolbar > *,
+  .ib-editor button,
+  .ib-editor select,
+  .ib-editor input,
+  .ib-workbench button,
+  .ib-workbench select,
+  .ib-workbench input {
+    min-height: 2.75rem;
+  }
+
+  .ib-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 0.75rem;
+  }
+
   .ib-search,
-  .ib-shortcut-filter { grid-column: auto; }
+  .ib-shortcut-filter,
+  .ib-toolbar-actions {
+    grid-column: 1 / -1;
+  }
+
+  .ib-search input,
+  .ib-filter-select select {
+    min-height: 2.75rem;
+  }
+
+  .ib-shortcut-filter > button:first-child,
+  .ib-toolbar-actions > button {
+    flex: 1 1 auto;
+  }
+
+  .ib-toolbar-actions {
+    justify-content: stretch;
+  }
+
+  .ib-table {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .ib-row {
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+    padding: 0.85rem;
+    border: 1px solid var(--ib-border);
+    border-radius: 10px;
+    background: var(--ib-surface);
+  }
+
+  .ib-row:last-of-type {
+    border-bottom: 1px solid var(--ib-border);
+  }
+
+  .ib-row.is-selected {
+    box-shadow: inset 3px 0 0 var(--ib-accent);
+  }
+
+  .ib-action p,
+  .ib-action code,
+  .ib-details > span {
+    display: none;
+  }
+
+  .ib-action .ib-muted {
+    display: inline-block;
+    margin-top: 0.2rem;
+    font-size: 0.74rem;
+  }
+
+  .ib-binding-list {
+    justify-items: stretch;
+  }
+
+  .ib-binding {
+    padding: 0.65rem;
+    background: var(--ib-subtle);
+  }
+
+  .ib-binding.is-selected {
+    padding: 0.65rem;
+  }
+
+  .ib-binding-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.45rem;
+  }
+
+  .ib-binding-shortcut {
+    justify-self: start;
+  }
+
+  .ib-context {
+    grid-column: 1 / -1;
+  }
+
+  .ib-binding-main > button:not(.ib-binding-shortcut) {
+    min-width: 4.5rem;
+  }
+
+  .ib-details {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ib-recorder-grid,
+  .ib-recorder-facts,
+  .ib-manual-binding-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ib-recorder-keyboard {
+    display: none;
+  }
+
+  .ib-manual-binding-heading span {
+    display: none;
+  }
+
+  .ib-manual-modifiers {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .ib-manual-binding-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ib-recorder-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .ib-toolbar,
+  .ib-manual-modifiers {
+    grid-template-columns: 1fr;
+  }
+
+  .ib-filter-select {
+    grid-column: 1;
+  }
+
+  .ib-manual-binding-actions,
+  .ib-recorder-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .ib-binding-main {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ib-binding-main > button:not(.ib-binding-shortcut):last-of-type {
+    grid-column: 2;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
