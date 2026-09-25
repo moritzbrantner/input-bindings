@@ -239,3 +239,12 @@ export const Preview: Story = {
     initialPresentation: "keyboard",
   },
 };
+
+export const MobileSettings: Story = {
+  args: {
+    initialMode: "shortcuts",
+    initialPresentation: "list",
+    title: "Controls",
+    description: "Compact mobile settings with precise manual shortcut editing.",
+  },
+};
