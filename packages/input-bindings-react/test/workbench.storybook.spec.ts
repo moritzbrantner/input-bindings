@@ -148,7 +148,7 @@ test("mobile settings support precise editing without a hardware keyboard", asyn
   await manual.getByLabel("Manual key or code").fill("k");
   await manual.getByRole("button", { name: "Set shortcut" }).click();
 
-  const recorder = page.getByRole("heading", { name: "Edit binding for Save document" }).locator("..").locator("..");
+  const recorder = page.locator(".ib-recorder");
   await expect(recorder.getByRole("button", { name: "Save", exact: true })).toBeEnabled();
   await recorder.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByTestId("profile-state")).toHaveText("Profile patches: 1");
