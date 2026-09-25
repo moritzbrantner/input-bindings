@@ -14,6 +14,13 @@ test("mobile Pages settings stay compact, editable, and persistent", async ({ pa
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
 
+  await expect(page.getByLabel("Category")).toBeHidden();
+  const filters = page.getByRole("button", { name: "Filters", exact: true });
+  await filters.click();
+  await expect(page.getByLabel("Category")).toBeVisible();
+  await filters.click();
+  await expect(page.getByLabel("Category")).toBeHidden();
+
   await page.getByRole("searchbox", { name: "Search actions or shortcuts" }).fill("Save document");
   const saveRow = page.getByRole("row").filter({ hasText: "Save document" });
   await expect(saveRow).toBeVisible();
@@ -22,6 +29,10 @@ test("mobile Pages settings stay compact, editable, and persistent", async ({ pa
   const manual = page.getByLabel("Manual shortcut entry");
   await expect(manual).toBeVisible();
   await manual.getByLabel("Manual key or code").fill("k");
+  await page.screenshot({
+    path: "test-results/pages/mobile-input-settings-editor.png",
+    fullPage: true,
+  });
   await manual.getByRole("button", { name: "Set shortcut" }).click();
 
   const recorder = page.locator(".ib-recorder");
