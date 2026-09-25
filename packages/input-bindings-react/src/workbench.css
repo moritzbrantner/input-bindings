@@ -615,6 +615,10 @@
 }
 
 @media (max-width: 620px) {
+  .ib-workbench {
+    gap: 0.75rem;
+  }
+
   .ib-workbench-header,
   .ib-presentation-toolbar,
   .ib-reference-keyboard,
@@ -624,15 +628,57 @@
     padding: 0.8rem;
   }
 
+  .ib-workbench-header {
+    gap: 0.75rem;
+  }
+
+  .ib-workbench-header .ib-workbench-eyebrow,
+  .ib-workbench-header > div > p:not(.ib-workbench-summary),
+  .ib-workbench-summary {
+    display: none;
+  }
+
+  .ib-workbench-header h1 {
+    font-size: 1.2rem;
+  }
+
   .ib-workbench-tabs {
     display: grid;
     width: 100%;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .ib-workbench-tabs button {
+    min-width: 0;
+    padding-inline: 0.4rem;
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
+
+  .ib-presentation-toolbar > div {
+    display: none;
+  }
+
+  .ib-presentation-toolbar .ib-mode-switch {
+    width: 100%;
+  }
+
+  .ib-scenario-description > span,
+  .ib-scenario-description small {
+    display: none;
   }
 
   .ib-mode-switch {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .ib-preview-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
   }
 
   .ib-key-inspection-binding {
@@ -642,5 +688,15 @@
   .ib-key-inspection-binding kbd,
   .ib-key-inspection-binding small {
     grid-column: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .ib-workbench-tabs button {
+    font-size: 0.76rem;
+  }
+
+  .ib-preview-actions {
+    grid-template-columns: 1fr;
   }
 }
