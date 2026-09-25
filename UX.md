@@ -95,6 +95,9 @@ If no scenarios are supplied, the React package derives a useful global scenario
 - Repair choices explain their effect before application and never mutate the profile merely because the panel was opened.
 - Preview capture requires explicit activation and provides a visible stop action.
 - Responsive layouts keep each task and presentation usable without forcing list and keyboard content into a simultaneous split layout.
+- On narrow touch screens, task navigation stays compact, action rows become touch-friendly cards, and low-value descriptive metadata must not push the actual binding controls below the fold.
+- Shortcut editing must not require a hardware keyboard. The recorder provides exact manual key/code entry with explicit modifiers and chord-step control, feeding the same normalized `KeyStroke`/profile-delta path as captured input.
+- Mobile controls use practical touch targets while retaining ordinary focus/keyboard accessibility for attached keyboards and assistive input.
 - Keyboard-layout labels are presentation metadata; physical bindings continue to preserve exact positions.
 - User overrides remain deltas over application defaults, so applications can evolve defaults without overwriting user intent.
 
