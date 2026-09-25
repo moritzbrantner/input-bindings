@@ -126,6 +126,45 @@ test("workbench stories keep controls named and avoid page-level overflow on nar
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 });
 
+test("mobile settings support precise editing without a hardware keyboard", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStory(page, "mobile-settings");
+
+  const tabs = page.getByRole("tablist", { name: "Input settings tasks" }).getByRole("tab");
+  const firstBox = await tabs.nth(0).boundingBox();
+  const lastBox = await tabs.nth(2).boundingBox();
+  expect(firstBox).not.toBeNull();
+  expect(lastBox).not.toBeNull();
+  expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
+
+  await page.getByRole("searchbox", { name: "Search actions or shortcuts" }).fill("Save");
+  const saveRow = page.getByRole("row").filter({ hasText: "Save document" });
+  await expect(saveRow).toBeVisible();
+  await expect(saveRow.getByText("Save the active editor document.")).toBeHidden();
+
+  await saveRow.getByRole("button", { name: "Edit", exact: true }).click();
+  const manual = page.getByLabel("Manual shortcut entry");
+  await expect(manual).toBeVisible();
+  await manual.getByLabel("Manual key or code").fill("k");
+  await manual.getByRole("button", { name: "Set shortcut" }).click();
+
+  const recorder = page.getByRole("heading", { name: "Edit binding for Save document" }).locator("..").locator("..");
+  await expect(recorder.getByRole("button", { name: "Save", exact: true })).toBeEnabled();
+  await recorder.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByTestId("profile-state")).toHaveText("Profile patches: 1");
+
+  const metrics = await page.locator("html").evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+
+  await page.screenshot({
+    path: "test-results/storybook/workbench-mobile-settings.png",
+    fullPage: true,
+  });
+});
+
 test("keyboard presentation produces inspectable visual evidence", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openStory(page, "keyboard");
@@ -146,15 +185,15 @@ test("all workbench stories render without browser errors", async ({ page }) => 
   });
   page.on("pageerror", (error) => errors.push(error.message));
 
-  for (const story of ["list", "keyboard", "conflicts", "preview"]) {
+  for (const story of ["list", "keyboard", "conflicts", "preview", "mobile-settings"] as const) {
     await openStory(page, story);
   }
 
   expect(errors).toEqual([]);
 });
 
-async function openStory(page: Page, story: "list" | "keyboard" | "conflicts" | "preview") {
+async function openStory(page: Page, story: "list" | "keyboard" | "conflicts" | "preview" | "mobile-settings") {
   await page.goto(`/iframe.html?id=${storyBase}--${story}&viewMode=story`);
   await expect(page.locator("#storybook-root")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Keyboard & controls" })).toBeVisible();
+  await expect(page.locator(".ib-workbench")).toBeVisible();
 }
