@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import {
@@ -641,6 +641,19 @@ function KeyboardLegend() {
   );
 }
 
+function normalizeManualKeyValue(value: string, mode: "logical" | "physical"): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (mode === "logical") {
+    return trimmed.length === 1 ? trimmed.toLocaleLowerCase() : trimmed;
+  }
+
+  if (/^[a-z]$/i.test(trimmed)) return `Key${trimmed.toUpperCase()}`;
+  if (/^[0-9]$/.test(trimmed)) return `Digit${trimmed}`;
+  return trimmed;
+}
+
 function BindingRecorder({ title, initialSequence, allBindings, allConflicts, actionId, existingBinding, layoutLabels, onSave, onCancel }: {
   title: string;
   initialSequence: readonly KeyStroke[];
@@ -658,7 +671,10 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   const [pressedCodes, setPressedCodes] = useState<Set<string>>(() => new Set());
   const [lastAccepted, setLastAccepted] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("Focus the recorder, then press a non-modifier key.");
+  const [manualKey, setManualKey] = useState("");
+  const [manualModifiers, setManualModifiers] = useState<NonNullable<KeyStroke["modifiers"]>>({});
   const captureRef = useRef<HTMLDivElement>(null);
+  const manualKeyListId = useId();
 
   const previewBinding = useMemo<Binding | undefined>(() => {
     if (!actionId || sequence.length === 0) return undefined;
@@ -675,6 +691,28 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   }, [allBindings, existingBinding?.id, previewBinding]);
 
   const status = !focused ? "Idle" : previewConflicts.length > 0 ? "Conflict detected" : sequence.length > 0 ? "Captured · ready for next chord step" : "Listening";
+  const normalizedManualKey = normalizeManualKeyValue(manualKey, mode);
+  const manualStroke: KeyStroke | undefined = normalizedManualKey
+    ? {
+        key: { kind: mode, value: normalizedManualKey },
+        modifiers: { ...manualModifiers },
+      }
+    : undefined;
+
+  const applyManualStroke = (replace: boolean) => {
+    if (!manualStroke) return;
+    const nextSequence = replace
+      ? [manualStroke]
+      : [...sequence, manualStroke].slice(0, 4);
+    setSequence(nextSequence);
+    setLastAccepted(formatStroke(manualStroke));
+    setFeedback(
+      replace
+        ? `Set shortcut to ${formatStroke(manualStroke)}.`
+        : `Added ${formatStroke(manualStroke)} as chord step ${nextSequence.length}.`,
+    );
+    setManualKey("");
+  };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.code) setPressedCodes((current) => new Set([...current, event.code]));
@@ -712,6 +750,75 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
             <span className="ib-capture-status">{focused ? "Listening for keyboard input" : "Click or focus to start listening"}</span>
             <strong>{sequence.length > 0 ? formatSequence(sequence) : "No shortcut registered yet"}</strong>
           </div>
+
+          <section className="ib-manual-binding" aria-label="Manual shortcut entry">
+            <div className="ib-manual-binding-heading">
+              <strong>Enter shortcut manually</strong>
+              <span>Use this on touch devices or whenever hardware-key capture is inconvenient.</span>
+            </div>
+            <div className="ib-manual-binding-grid">
+              <label className="ib-manual-key">
+                <span>{mode === "physical" ? "Key code" : "Key"}</span>
+                <input
+                  type="text"
+                  value={manualKey}
+                  list={manualKeyListId}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder={mode === "physical" ? "KeyW, Space, ArrowLeft…" : "s, Escape, Enter…"}
+                  aria-label="Manual key or code"
+                  onChange={(event) => setManualKey(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && manualStroke) {
+                      event.preventDefault();
+                      applyManualStroke(true);
+                    }
+                  }}
+                />
+                <datalist id={manualKeyListId}>
+                  <option value="Escape" />
+                  <option value="Enter" />
+                  <option value="Tab" />
+                  <option value="Space" />
+                  <option value="Backspace" />
+                  <option value="Delete" />
+                  <option value="ArrowUp" />
+                  <option value="ArrowDown" />
+                  <option value="ArrowLeft" />
+                  <option value="ArrowRight" />
+                  <option value="Home" />
+                  <option value="End" />
+                </datalist>
+              </label>
+              <fieldset className="ib-manual-modifiers">
+                <legend>Modifiers</legend>
+                {(["ctrl", "alt", "shift", "meta"] as const).map((modifier) => (
+                  <label key={modifier}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(manualModifiers[modifier])}
+                      onChange={(event) =>
+                        setManualModifiers((current) => ({
+                          ...current,
+                          [modifier]: event.target.checked || undefined,
+                        }))
+                      }
+                    />
+                    <span>{modifier === "ctrl" ? "Ctrl" : modifier === "meta" ? "Meta" : modifier[0]!.toUpperCase() + modifier.slice(1)}</span>
+                  </label>
+                ))}
+              </fieldset>
+            </div>
+            <div className="ib-manual-binding-actions">
+              <button type="button" disabled={!manualStroke} onClick={() => applyManualStroke(true)}>
+                Set shortcut
+              </button>
+              <button type="button" disabled={!manualStroke || sequence.length >= 4} onClick={() => applyManualStroke(false)}>
+                Add chord step
+              </button>
+            </div>
+          </section>
 
           <dl className="ib-recorder-facts" aria-live="polite">
             <div><dt>Pressed now</dt><dd>{pressedCodes.size ? [...pressedCodes].map((code) => keyboardLabelForCode(code, layoutLabels)).join(" + ") : "None"}</dd></div>
