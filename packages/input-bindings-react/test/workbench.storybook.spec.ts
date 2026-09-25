@@ -152,12 +152,23 @@ test("mobile settings support precise editing without a hardware keyboard", asyn
   await saveRow.getByRole("button", { name: "Edit", exact: true }).click();
   const manual = page.getByLabel("Manual shortcut entry");
   await expect(manual).toBeVisible();
-  await manual.getByLabel("Manual key or code").fill("k");
+  const manualKey = manual.getByLabel("Manual key or code");
+  const setShortcut = manual.getByRole("button", { name: "Set shortcut" });
+
+  await manualKey.fill("Control");
+  await expect(setShortcut).toBeDisabled();
+
+  await manualKey.fill("Esc");
+  await expect(setShortcut).toBeEnabled();
+  await setShortcut.click();
+  await expect(page.locator(".ib-capture strong")).toHaveText("Escape");
+
+  await manualKey.fill("k");
   await page.screenshot({
     path: "test-results/storybook/workbench-mobile-editor.png",
     fullPage: true,
   });
-  await manual.getByRole("button", { name: "Set shortcut" }).click();
+  await setShortcut.click();
 
   const recorder = page.locator(".ib-recorder");
   await expect(recorder.getByRole("button", { name: "Save", exact: true })).toBeEnabled();
