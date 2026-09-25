@@ -16,7 +16,11 @@ import {
   type KeyStroke,
   type Profile,
 } from "@moritzbrantner/input-bindings";
-import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
+import {
+  isModifierOnlyKeyboardValue,
+  keyboardEventToStroke,
+  normalizeLogicalKey,
+} from "@moritzbrantner/input-bindings-web";
 
 import {
   contextsForWhen,
@@ -667,13 +671,16 @@ function normalizeManualKeyValue(value: string, mode: "logical" | "physical"): s
   const trimmed = value.trim();
   if (!trimmed) return undefined;
 
-  if (mode === "logical") {
-    return trimmed.length === 1 ? trimmed.toLocaleLowerCase() : trimmed;
-  }
+  const normalized =
+    mode === "logical"
+      ? normalizeLogicalKey(trimmed)
+      : /^[a-z]$/i.test(trimmed)
+        ? `Key${trimmed.toUpperCase()}`
+        : /^[0-9]$/.test(trimmed)
+          ? `Digit${trimmed}`
+          : trimmed;
 
-  if (/^[a-z]$/i.test(trimmed)) return `Key${trimmed.toUpperCase()}`;
-  if (/^[0-9]$/.test(trimmed)) return `Digit${trimmed}`;
-  return trimmed;
+  return isModifierOnlyKeyboardValue(normalized, mode) ? undefined : normalized;
 }
 
 function BindingRecorder({ title, initialSequence, allBindings, allConflicts, actionId, existingBinding, layoutLabels, onSave, onCancel }: {
