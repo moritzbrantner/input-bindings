@@ -190,7 +190,7 @@ export function attachGyroscopeAnalog(
   options: GyroscopeAnalogAdapterOptions,
 ): () => void {
   const globals = globalThis as unknown as {
-    window?: AnalogEventTargetLike;
+    window?: AnalogEventTargetLike & { orientation?: number };
     screen?: { orientation?: { angle?: number } };
   };
   const target = options.target ?? globals.window;
@@ -204,7 +204,7 @@ export function attachGyroscopeAnalog(
 
   const screenOrientationDegrees =
     options.getScreenOrientationDegrees ??
-    (() => globals.screen?.orientation?.angle ?? 0);
+    (() => globals.screen?.orientation?.angle ?? globals.window?.orientation ?? 0);
 
   const onMotion = (rawEvent: any) => {
     const event = rawEvent as DeviceMotionEventLike;
