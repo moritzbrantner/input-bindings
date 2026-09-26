@@ -3,13 +3,17 @@ import { createRoot } from "react-dom/client";
 
 import type { ActionRegistry, Binding, Profile, WhenExpr } from "@moritzbrantner/input-bindings";
 import {
+  createStarterMobileControlsOverlay,
   InputBindingsWorkbench,
   type InputBindingsContextScenario,
+  type MobileControlsOverlay,
+  type MobileOverlayControl,
 } from "@moritzbrantner/input-bindings-react/workbench";
 import "@moritzbrantner/input-bindings-react/workbench.css";
 import "./site.css";
 
 const STORAGE_KEY = "input-bindings-demo-profile-v1";
+const MOBILE_OVERLAY_STORAGE_KEY = "input-bindings-demo-mobile-overlay-v1";
 const PROFILE_ID = "pages-demo-user";
 
 const context = (id: string): WhenExpr => ({ op: "context", id });
@@ -240,6 +244,22 @@ const registry: ActionRegistry = {
   ],
 };
 
+
+const starterMobileOverlay = createStarterMobileControlsOverlay();
+const demoMobileActionByControl = new Map<string, string>([
+  ["movement-stick", "game.moveForward"],
+  ["primary-action", "game.jump"],
+  ["secondary-action", "game.interact"],
+  ["command-dock", "game.pause"],
+]);
+const DEFAULT_MOBILE_OVERLAY: MobileControlsOverlay = {
+  ...starterMobileOverlay,
+  controls: starterMobileOverlay.controls.map((control) => {
+    const actionId = demoMobileActionByControl.get(control.id);
+    return actionId ? { ...control, actionId } : control;
+  }),
+};
+
 const contextScenarios: InputBindingsContextScenario[] = [
   {
     id: "global",
@@ -305,12 +325,56 @@ function loadProfile(): Profile {
   return { id: PROFILE_ID, patches: [] };
 }
 
+
+function loadMobileOverlay(): MobileControlsOverlay {
+  try {
+    const raw = localStorage.getItem(MOBILE_OVERLAY_STORAGE_KEY);
+    if (!raw) return DEFAULT_MOBILE_OVERLAY;
+    const parsed: unknown = JSON.parse(raw);
+    if (isMobileControlsOverlay(parsed)) return parsed;
+  } catch {
+    // Corrupt local state is ignored rather than reinterpreted.
+  }
+  return DEFAULT_MOBILE_OVERLAY;
+}
+
+function isMobileControlsOverlay(value: unknown): value is MobileControlsOverlay {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { orientation?: unknown; controls?: unknown };
+  if (candidate.orientation !== "portrait" && candidate.orientation !== "landscape") return false;
+  return Array.isArray(candidate.controls) && candidate.controls.every(isMobileOverlayControl);
+}
+
+function isMobileOverlayControl(value: unknown): value is MobileOverlayControl {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Record<keyof MobileOverlayControl, unknown>>;
+  return (
+    typeof candidate.id === "string" &&
+    (candidate.kind === "stick" ||
+      candidate.kind === "button" ||
+      candidate.kind === "gestureZone" ||
+      candidate.kind === "dock") &&
+    typeof candidate.label === "string" &&
+    (candidate.actionId === undefined || typeof candidate.actionId === "string") &&
+    typeof candidate.x === "number" &&
+    typeof candidate.y === "number" &&
+    typeof candidate.width === "number" &&
+    typeof candidate.height === "number"
+  );
+}
+
 function App() {
   const [profile, setProfile] = useState<Profile>(loadProfile);
+  const [mobileOverlay, setMobileOverlay] = useState<MobileControlsOverlay>(loadMobileOverlay);
 
   const updateProfile = (next: Profile) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     setProfile(next);
+  };
+
+  const updateMobileOverlay = (next: MobileControlsOverlay) => {
+    localStorage.setItem(MOBILE_OVERLAY_STORAGE_KEY, JSON.stringify(next));
+    setMobileOverlay(next);
   };
 
   return (
@@ -320,19 +384,21 @@ function App() {
           <p className="site-eyebrow">input-bindings / GitHub Pages dogfood</p>
           <h1>Reusable controls settings workbench</h1>
           <p>
-            A default settings surface for editors, games, tables, and web applications: manage the same shortcuts as a list or keyboard map, resolve conflicts as a separate task, then test real key presses against application-owned contexts.
+            A default settings surface for editors, games, tables, and web applications: manage semantic actions as a list, inspect desktop keyboard placement, or arrange touch controls directly on a mobile overlay.
           </p>
         </div>
         <a href="https://github.com/moritzbrantner/input-bindings">Repository</a>
       </header>
       <p className="site-note">
-        List and keyboard are two presentations of the same shortcut workspace. Conflict repair is a separate task. Try shortcuts switches between editor, timeline, table, gameplay, and a modal pause-menu scenario using the real ordered-context resolver.
+        Desktop uses list and keyboard presentations. Narrow screens replace the keyboard map with an editable mobile overlay for thumbsticks, action buttons, gesture zones, and command docks; keyboard-only preview is omitted there.
       </p>
       <InputBindingsWorkbench
         registry={registry}
         profile={profile}
         onProfileChange={updateProfile}
         contextScenarios={contextScenarios}
+        mobileOverlay={mobileOverlay}
+        onMobileOverlayChange={updateMobileOverlay}
       />
     </main>
   );
