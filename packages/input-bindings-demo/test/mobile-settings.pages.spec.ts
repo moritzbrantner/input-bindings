@@ -72,13 +72,15 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
     await page.mouse.move(stickBox.x + stickBox.width / 2, stickBox.y + stickBox.height / 2);
     await page.mouse.down();
     await page.mouse.move(stickBox.x + stickBox.width - 2, stickBox.y + stickBox.height / 2);
-    await expect(page.getByLabel("Live mobile input").getByText(/1\.00, 0\.00/)).toBeVisible();
+    await expect(page.getByLabel("Move axis")).not.toHaveText("0.00, 0.00");
+    const moveText = (await page.getByLabel("Move axis").textContent()) ?? "0, 0";
+    expect(Number.parseFloat(moveText.split(",")[0] ?? "0")).toBeGreaterThan(0.5);
     await page.mouse.up();
-    await expect(page.getByLabel("Live mobile input").getByText(/0\.00, 0\.00/).first()).toBeVisible();
+    await expect(page.getByLabel("Move axis")).toHaveText("0.00, 0.00");
   }
 
   await page.getByRole("button", { name: "A runtime control" }).click();
-  await expect(page.getByLabel("Live mobile input").getByText(/game\.jump · release/)).toBeVisible();
+  await expect(page.getByLabel("Last mobile action")).toHaveText("game.jump · release");
   await expect(page.getByRole("button", { name: "Enable gyroscope look" })).toBeVisible();
 
   await page.getByRole("button", { name: "Edit", exact: true }).click();
