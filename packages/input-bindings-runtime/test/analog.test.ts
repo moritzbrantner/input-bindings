@@ -104,7 +104,7 @@ test("analog configuration rejects duplicate, unknown, and mismatched action kin
 
 test("analog processors provide remapped deadzones, smoothing, and orientation rotation", () => {
   assert.equal(applyAxis1DDeadzone(0.2, 0.2), 0);
-  assert.equal(applyAxis1DDeadzone(0.6, 0.2), 0.5);
+  assert.ok(Math.abs(applyAxis1DDeadzone(0.6, 0.2) - 0.5) < 1e-12);
 
   const radial = applyAxis2DDeadzone({ x: 0.6, y: 0 }, 0.2);
   assert.deepEqual(radial, { x: 0.49999999999999994, y: 0 });
