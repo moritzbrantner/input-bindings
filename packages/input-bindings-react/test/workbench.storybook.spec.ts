@@ -105,19 +105,22 @@ test("live preview is explicitly activated and announces the resolution", async 
   await expect(page.getByRole("button", { name: "Start preview" })).toBeVisible();
 });
 
-test("workbench stories keep controls named and avoid page-level overflow on narrow screens", async ({ page }) => {
+test("narrow screens replace keyboard-only surfaces with mobile controls", async ({ page }) => {
   await page.setViewportSize({ width: 420, height: 900 });
   await openStory(page, "keyboard");
 
-  const tabs = page.getByRole("tablist", { name: "Input settings tasks" }).getByRole("tab");
-  await expect(tabs).toHaveCount(3);
-  for (const name of ["Shortcuts", "Conflicts", "Try shortcuts"]) {
-    const tab = page.getByRole("tab", { name, exact: true });
-    await expect(tab).toHaveAttribute("aria-controls", /ib-workbench-panel-/);
-  }
+  const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
+  await expect(taskTabs.getByRole("tab")).toHaveCount(2);
+  await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
+  await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toBeVisible();
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
 
   const presentation = page.getByLabel("Shortcut presentation");
-  await expect(presentation.getByText("View", { exact: true })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "List" })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toHaveAttribute("aria-pressed", "true");
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keyboard overview" })).toHaveCount(0);
 
   const metrics = await page.locator("html").evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
@@ -126,16 +129,24 @@ test("workbench stories keep controls named and avoid page-level overflow on nar
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 });
 
-test("mobile settings support precise editing without a hardware keyboard", async ({ page }) => {
+test("mobile settings support exact binding edits and an editable touch overlay", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openStory(page, "mobile-settings");
 
-  const tabs = page.getByRole("tablist", { name: "Input settings tasks" }).getByRole("tab");
+  const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
+  const tabs = taskTabs.getByRole("tab");
+  await expect(tabs).toHaveCount(2);
   const firstBox = await tabs.nth(0).boundingBox();
-  const lastBox = await tabs.nth(2).boundingBox();
+  const lastBox = await tabs.nth(1).boundingBox();
   expect(firstBox).not.toBeNull();
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
+  await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
+
+  const presentation = page.getByLabel("Shortcut presentation");
+  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
 
   await expect(page.getByLabel("Category")).toBeHidden();
   const filters = page.getByRole("button", { name: "Filters", exact: true });
@@ -175,6 +186,19 @@ test("mobile settings support precise editing without a hardware keyboard", asyn
   await recorder.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByTestId("profile-state")).toHaveText("Profile patches: 1");
 
+  await presentation.getByRole("button", { name: "Mobile controls" }).click();
+  await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
+  await expect(page.getByLabel("Mobile control overlay preview")).toBeVisible();
+
+  await page.getByRole("button", { name: "Primary mobile control" }).click();
+  const inspector = page.getByLabel("Selected mobile control");
+  await expect(inspector.getByLabel("Semantic action")).toHaveValue("game.jump");
+  await inspector.getByLabel("X").fill("76");
+  await expect(inspector.getByLabel("X")).toHaveValue("76");
+
+  await page.getByRole("button", { name: "Add action button" }).click();
+  await expect(page.getByTestId("mobile-overlay-state")).toHaveText("Mobile controls: 6");
+
   const metrics = await page.locator("html").evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
     viewportWidth: window.innerWidth,
@@ -182,7 +206,7 @@ test("mobile settings support precise editing without a hardware keyboard", asyn
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 
   await page.screenshot({
-    path: "test-results/storybook/workbench-mobile-settings.png",
+    path: "test-results/storybook/workbench-mobile-overlay.png",
     fullPage: true,
   });
 });
