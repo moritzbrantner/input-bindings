@@ -52,6 +52,7 @@ export function MobileControlsRuntimeSurface({
 }: MobileControlsRuntimeSurfaceProps) {
   const activePointers = useRef(new Map<string, ActivePointer>());
   const overlayRef = useRef(overlay);
+  const previousControlsRef = useRef(overlay.controls);
   const actionInputRef = useRef(onActionInput);
   const analogInputRef = useRef(onAnalogInput);
   overlayRef.current = overlay;
@@ -103,6 +104,7 @@ export function MobileControlsRuntimeSurface({
     control: MobileOverlayControl,
     event: ReactPointerEvent<HTMLButtonElement>,
   ) => {
+    if (activePointers.current.has(control.id)) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     activePointers.current.set(control.id, {
@@ -176,6 +178,41 @@ export function MobileControlsRuntimeSurface({
       phase: "release",
     });
   };
+
+  useEffect(() => {
+    const currentIds = new Set(overlay.controls.map((control) => control.id));
+    for (const controlId of [...activePointers.current.keys()]) {
+      if (currentIds.has(controlId)) continue;
+      const previous = previousControlsRef.current.find(
+        (control) => control.id === controlId,
+      );
+      activePointers.current.delete(controlId);
+      if (!previous) continue;
+      if (
+        (previous.kind === "stick" || previous.kind === "gestureZone") &&
+        previous.analogActionId
+      ) {
+        analogInputRef.current?.({
+          controlId,
+          action: previous.analogActionId,
+          phase: "release",
+          value: { x: 0, y: 0 },
+        });
+      } else if (previous.actionId) {
+        actionInputRef.current?.({
+          controlId,
+          action: previous.actionId,
+          phase: "release",
+        });
+      }
+      setAxisByControl((current) => {
+        const next = { ...current };
+        delete next[controlId];
+        return next;
+      });
+    }
+    previousControlsRef.current = overlay.controls;
+  }, [overlay.controls]);
 
   useEffect(() => {
     return () => {
