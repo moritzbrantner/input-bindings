@@ -946,6 +946,15 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  .ib-mobile-controls-heading .ib-workbench-eyebrow,
+  .ib-mobile-controls-heading > div > p:last-child {
+    display: none;
+  }
+
+  .ib-mobile-controls-heading h2 {
+    font-size: 1.35rem;
+  }
+
   .ib-mobile-overlay-frame {
     border-radius: 0.75rem;
   }
