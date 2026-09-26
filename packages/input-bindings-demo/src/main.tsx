@@ -471,11 +471,12 @@ function App() {
           setLastAction(`${event.action} · ${event.phase}`);
         }}
         onMobileAnalogInput={(event) => {
-          analogController.setAxis2D(
-            `overlay:${event.controlId}`,
-            event.action,
-            event.value,
-          );
+          const sourceId = `overlay:${event.controlId}`;
+          if (event.phase === "release") {
+            analogController.clearSource(sourceId, event.action);
+          } else {
+            analogController.setAxis2D(sourceId, event.action, event.value);
+          }
         }}
       />
       <section className="site-mobile-input-status" aria-label="Live mobile input">
