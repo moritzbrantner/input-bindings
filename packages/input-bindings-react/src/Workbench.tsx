@@ -382,11 +382,9 @@ function PresentationToolbar({
 
 
 function useCompactControlsPresentation(): boolean {
-  const [compact, setCompact] = useState(() =>
-    typeof window === "undefined"
-      ? false
-      : window.matchMedia(COMPACT_PRESENTATION_QUERY).matches,
-  );
+  // Keep the server render and the browser's first render identical. Responsive
+  // presentation is applied after hydration from the actual media query.
+  const [compact, setCompact] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia(COMPACT_PRESENTATION_QUERY);
