@@ -108,10 +108,12 @@ test("virtual stick emits semantic movement and clears it on release", () => {
   target.emit("pointerdown", { pointerId: 4, clientX: 50, clientY: 50 });
   target.emit("pointermove", { pointerId: 4, clientX: 100, clientY: 0 });
 
-  assert.deepEqual(controller.value("game.move"), {
-    x: Math.SQRT1_2,
-    y: Math.SQRT1_2,
-  });
+  const movement = controller.value("game.move");
+  assert.equal(typeof movement, "object");
+  if (typeof movement !== "number") {
+    assert.ok(Math.abs(movement.x - Math.SQRT1_2) < 1e-12);
+    assert.ok(Math.abs(movement.y - Math.SQRT1_2) < 1e-12);
+  }
   assert.deepEqual(target.captured, [4]);
 
   target.emit("pointerup", { pointerId: 4, clientX: 100, clientY: 0 });
