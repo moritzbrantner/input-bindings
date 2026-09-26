@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  isModifierOnlyKeyboardValue,
   isTextEntryTarget,
   keyboardEventToStroke,
   normalizeLogicalKey,
@@ -55,6 +56,14 @@ test("AltGraph is distinct from Ctrl+Alt by default", () => {
       modifiers: { ctrl: false, alt: false, shift: false, meta: false, altGraph: true },
     },
   );
+});
+
+test("modifier-only keyboard values are recognized in logical and physical modes", () => {
+  assert.equal(isModifierOnlyKeyboardValue("Control"), true);
+  assert.equal(isModifierOnlyKeyboardValue("ControlLeft", "physical"), true);
+  assert.equal(isModifierOnlyKeyboardValue("ShiftRight", "physical"), true);
+  assert.equal(isModifierOnlyKeyboardValue("KeyK", "physical"), false);
+  assert.equal(isModifierOnlyKeyboardValue("k"), false);
 });
 
 test("composition and bare modifiers are ignored", () => {

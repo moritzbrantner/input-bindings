@@ -119,6 +119,27 @@ export interface GamepadRuntimeAdapterOptions {
 }
 
 const MODIFIER_ONLY_KEYS = new Set(["Alt", "AltGraph", "Control", "Meta", "Shift"]);
+const MODIFIER_ONLY_CODES = new Set([
+  "Alt",
+  "AltLeft",
+  "AltRight",
+  "Control",
+  "ControlLeft",
+  "ControlRight",
+  "Meta",
+  "MetaLeft",
+  "MetaRight",
+  "Shift",
+  "ShiftLeft",
+  "ShiftRight",
+]);
+
+export function isModifierOnlyKeyboardValue(
+  value: string,
+  mode: "logical" | "physical" = "logical",
+): boolean {
+  return mode === "physical" ? MODIFIER_ONLY_CODES.has(value) : MODIFIER_ONLY_KEYS.has(value);
+}
 
 export function keyboardEventToStroke(
   event: KeyboardEventLike,
@@ -134,7 +155,7 @@ export function keyboardEventToStroke(
 
   if (ignoreComposing && event.isComposing) return null;
   if (respectDefaultPrevented && event.defaultPrevented) return null;
-  if (ignoreModifierOnly && MODIFIER_ONLY_KEYS.has(event.key)) return null;
+  if (ignoreModifierOnly && isModifierOnlyKeyboardValue(event.key)) return null;
   if (event.key === "Unidentified" || event.key === "Process") return null;
 
   const altGraphActive = event.getModifierState?.("AltGraph") ?? event.key === "AltGraph";

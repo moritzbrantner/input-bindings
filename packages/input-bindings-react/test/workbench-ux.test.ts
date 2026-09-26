@@ -13,7 +13,9 @@ import {
 import { bindingIdsForCode } from "@moritzbrantner/input-bindings-react";
 import { profileFromBindings } from "@moritzbrantner/input-bindings-react/model";
 import {
+  createStarterMobileControlsOverlay,
   InputBindingsWorkbench,
+  MobileControlsView,
   type InputBindingsContextScenario,
   type InputBindingsWorkbenchView,
 } from "@moritzbrantner/input-bindings-react/workbench";
@@ -121,12 +123,12 @@ function renderWorkbench(initialView: InputBindingsWorkbenchView): string {
 test("shortcut task keeps presentation orthogonal to the workbench task navigation", () => {
   const html = renderWorkbench("bindings");
 
-  assert.match(html, /Keyboard &amp; controls/);
+  assert.match(html, />Controls</);
   assert.match(html, /Shortcuts/);
   assert.match(html, /Conflicts/);
   assert.match(html, /Try shortcuts/);
   assert.match(html, /Presentation/);
-  assert.match(html, /Choose how to view the same shortcuts/);
+  assert.match(html, /Choose how to configure the same actions/);
   assert.match(html, />List</);
   assert.match(html, />Keyboard</);
   assert.doesNotMatch(html, /Keyboard map/);
@@ -154,7 +156,7 @@ test("legacy keyboard view maps to the keyboard presentation inside the shortcut
   const html = renderWorkbench("keyboard");
 
   assert.match(html, /Shortcuts/);
-  assert.match(html, /Choose how to view the same shortcuts/);
+  assert.match(html, /Choose how to configure the same actions/);
   assert.match(html, /Keyboard overview/);
   assert.match(html, /No action selected/);
   assert.match(html, /ib-editor ib-editor-keyboard/);
@@ -178,6 +180,25 @@ test("new workbench API can choose task and presentation independently", () => {
   assert.match(html, /aria-label="Shortcut presentation"/);
   assert.match(html, /ib-editor ib-editor-keyboard/);
   assert.match(html, /Keyboard overview/);
+});
+
+test("mobile controls expose the starter overlay and exact geometry inputs", () => {
+  const html = renderToStaticMarkup(
+    createElement(MobileControlsView, {
+      registry,
+      overlay: createStarterMobileControlsOverlay(),
+      onOverlayChange: () => {},
+    }),
+  );
+
+  assert.match(html, /Mobile controls/);
+  assert.match(html, /Move mobile control/);
+  assert.match(html, /A mobile control/);
+  assert.match(html, /Look mobile control/);
+  assert.match(html, /Menu mobile control/);
+  assert.match(html, /Position and size \(%\)/);
+  assert.match(html, /type="number"/);
+  assert.match(html, /Add gesture zone/);
 });
 
 test("clicked-key inspection is scoped to bindings reachable in the selected scenario", () => {

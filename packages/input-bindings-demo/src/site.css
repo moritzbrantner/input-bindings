@@ -305,8 +305,15 @@ body {
 }
 
 @media (max-width: 720px) {
-  .site-header {
-    display: grid;
+  .site-shell {
+    width: min(100% - 0.75rem, 1500px);
+    padding-top: 0.5rem;
+  }
+
+  .site-header,
+  .site-note,
+  .site-shortcut-hint {
+    display: none;
   }
 
   .site-panel-heading {

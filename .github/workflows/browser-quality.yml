@@ -1,0 +1,90 @@
+name: Browser Quality
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  storybook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:storybook
+      - name: Upload Storybook evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-quality-storybook
+          path: test-results/storybook
+          if-no-files-found: warn
+          retention-days: 7
+
+  pages-playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:pages
+      - name: Upload Pages browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-quality-pages
+          path: test-results/pages
+          if-no-files-found: warn
+          retention-days: 7
+
+  unlighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npm run build:pages
+      - name: Start built Pages preview
+        run: |
+          npm run preview --workspace @moritzbrantner/input-bindings-demo > /tmp/input-bindings-vite.log 2>&1 &
+          echo $! > /tmp/input-bindings-vite.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/input-bindings/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/input-bindings-vite.log
+          exit 1
+      - name: Install Unlighthouse
+        run: npm install --global @unlighthouse/cli@0.18.1 puppeteer@25.11.0
+      - name: Audit mobile Pages
+        run: |
+          unlighthouse-ci \
+            --site http://127.0.0.1:4173 \
+            --urls /input-bindings/ \
+            --mobile \
+            --disable-sitemap \
+            --disable-robots-txt \
+            --build-static
+      - name: Upload Unlighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-quality-unlighthouse
+          path: .unlighthouse
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7

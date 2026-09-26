@@ -105,25 +105,118 @@ test("live preview is explicitly activated and announces the resolution", async 
   await expect(page.getByRole("button", { name: "Start preview" })).toBeVisible();
 });
 
-test("workbench stories keep controls named and avoid page-level overflow on narrow screens", async ({ page }) => {
+test("narrow screens replace keyboard-only surfaces with mobile controls", async ({ page }) => {
   await page.setViewportSize({ width: 420, height: 900 });
   await openStory(page, "keyboard");
 
-  const tabs = page.getByRole("tablist", { name: "Input settings tasks" }).getByRole("tab");
-  await expect(tabs).toHaveCount(3);
-  for (const name of ["Shortcuts", "Conflicts", "Try shortcuts"]) {
-    const tab = page.getByRole("tab", { name, exact: true });
-    await expect(tab).toHaveAttribute("aria-controls", /ib-workbench-panel-/);
-  }
+  const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
+  await expect(taskTabs.getByRole("tab")).toHaveCount(2);
+  await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
+  await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toBeVisible();
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
 
   const presentation = page.getByLabel("Shortcut presentation");
-  await expect(presentation.getByText("View", { exact: true })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "List" })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toHaveAttribute("aria-pressed", "true");
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keyboard overview" })).toHaveCount(0);
 
   const metrics = await page.locator("html").evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
     viewportWidth: window.innerWidth,
   }));
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+});
+
+test("mobile settings support exact binding edits and an editable touch overlay", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStory(page, "mobile-settings");
+
+  const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
+  const tabs = taskTabs.getByRole("tab");
+  await expect(tabs).toHaveCount(2);
+  const firstBox = await tabs.nth(0).boundingBox();
+  const lastBox = await tabs.nth(1).boundingBox();
+  expect(firstBox).not.toBeNull();
+  expect(lastBox).not.toBeNull();
+  expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
+  await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
+
+  const presentation = page.getByLabel("Shortcut presentation");
+  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
+
+  await expect(page.getByLabel("Category")).toBeHidden();
+  const filters = page.getByRole("button", { name: "Filters", exact: true });
+  await filters.click();
+  await expect(page.getByLabel("Category")).toBeVisible();
+  await filters.click();
+  await expect(page.getByLabel("Category")).toBeHidden();
+
+  await page.getByRole("searchbox", { name: "Search actions or shortcuts" }).fill("Save");
+  const saveRow = page.getByRole("row").filter({ hasText: "Save document" });
+  await expect(saveRow).toBeVisible();
+  await expect(saveRow.getByText("Save the active editor document.")).toBeHidden();
+
+  await saveRow.getByRole("button", { name: "Edit", exact: true }).click();
+  const manual = page.getByLabel("Manual shortcut entry");
+  await expect(manual).toBeVisible();
+  const manualKey = manual.getByLabel("Manual key or code");
+  const setShortcut = manual.getByRole("button", { name: "Set shortcut" });
+  const altGraph = manual.getByRole("checkbox", { name: "AltGraph" });
+
+  await expect(altGraph).toBeVisible();
+  await altGraph.check();
+  await manualKey.fill("k");
+  await setShortcut.click();
+  await expect(page.locator(".ib-capture strong")).toHaveText("AltGr+k");
+  await altGraph.uncheck();
+
+  await manualKey.fill("Control");
+  await expect(setShortcut).toBeDisabled();
+
+  await manualKey.fill("Esc");
+  await expect(setShortcut).toBeEnabled();
+  await setShortcut.click();
+  await expect(page.locator(".ib-capture strong")).toHaveText("Escape");
+
+  await manualKey.fill("k");
+  await page.screenshot({
+    path: "test-results/storybook/workbench-mobile-editor.png",
+    fullPage: true,
+  });
+  await setShortcut.click();
+
+  const recorder = page.locator(".ib-recorder");
+  await expect(recorder.getByRole("button", { name: "Save", exact: true })).toBeEnabled();
+  await recorder.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByTestId("profile-state")).toHaveText("Profile patches: 1");
+
+  await presentation.getByRole("button", { name: "Mobile controls" }).click();
+  await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
+  await expect(page.getByLabel("Mobile control overlay preview")).toBeVisible();
+
+  await page.getByRole("button", { name: "A mobile control" }).click();
+  const inspector = page.getByLabel("Selected mobile control");
+  await expect(inspector.getByLabel("Semantic action")).toHaveValue("game.jump");
+  await inspector.getByRole("spinbutton", { name: "X", exact: true }).fill("76");
+  await expect(inspector.getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("76");
+
+  await page.getByRole("button", { name: "Add action button" }).click();
+  await expect(page.getByTestId("mobile-overlay-state")).toHaveText("Mobile controls: 6");
+
+  const metrics = await page.locator("html").evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+
+  await page.screenshot({
+    path: "test-results/storybook/workbench-mobile-overlay.png",
+    fullPage: true,
+  });
 });
 
 test("keyboard presentation produces inspectable visual evidence", async ({ page }) => {
@@ -146,15 +239,15 @@ test("all workbench stories render without browser errors", async ({ page }) => 
   });
   page.on("pageerror", (error) => errors.push(error.message));
 
-  for (const story of ["list", "keyboard", "conflicts", "preview"]) {
+  for (const story of ["list", "keyboard", "conflicts", "preview", "mobile-settings"] as const) {
     await openStory(page, story);
   }
 
   expect(errors).toEqual([]);
 });
 
-async function openStory(page: Page, story: "list" | "keyboard" | "conflicts" | "preview") {
+async function openStory(page: Page, story: "list" | "keyboard" | "conflicts" | "preview" | "mobile-settings") {
   await page.goto(`/iframe.html?id=${storyBase}--${story}&viewMode=story`);
   await expect(page.locator("#storybook-root")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Keyboard & controls" })).toBeVisible();
+  await expect(page.locator(".ib-workbench")).toBeVisible();
 }
