@@ -83,6 +83,11 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   await expect(page.getByLabel("Last mobile action")).toHaveText("game.jump · release");
   await expect(page.getByRole("button", { name: "Enable gyroscope look" })).toBeVisible();
 
+  await page.screenshot({
+    path: "test-results/pages/mobile-controls-runtime.png",
+    fullPage: true,
+  });
+
   await page.getByRole("button", { name: "Edit", exact: true }).click();
 
   await page.screenshot({
