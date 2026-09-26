@@ -354,11 +354,27 @@ function loadMobileOverlay(): MobileControlsOverlay {
     const raw = localStorage.getItem(MOBILE_OVERLAY_STORAGE_KEY);
     if (!raw) return DEFAULT_MOBILE_OVERLAY;
     const parsed: unknown = JSON.parse(raw);
-    if (isMobileControlsOverlay(parsed)) return parsed;
+    if (isMobileControlsOverlay(parsed)) return migrateMobileOverlay(parsed);
   } catch {
     // Corrupt local state is ignored rather than reinterpreted.
   }
   return DEFAULT_MOBILE_OVERLAY;
+}
+
+function migrateMobileOverlay(overlay: MobileControlsOverlay): MobileControlsOverlay {
+  return {
+    ...overlay,
+    controls: overlay.controls.map((control) => {
+      if (control.id === "movement-stick" && !control.analogActionId) {
+        const { actionId: _legacyActionId, ...rest } = control;
+        return { ...rest, analogActionId: "game.move" };
+      }
+      if (control.id === "camera-zone" && !control.analogActionId) {
+        return { ...control, analogActionId: "game.look" };
+      }
+      return control;
+    }),
+  };
 }
 
 function isMobileControlsOverlay(value: unknown): value is MobileControlsOverlay {
