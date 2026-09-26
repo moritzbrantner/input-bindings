@@ -23,6 +23,11 @@ import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
 
 import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
 import {
+  createStarterMobileControlsOverlay,
+  MobileControlsView,
+  type MobileControlsOverlay,
+} from "./MobileControlsView.tsx";
+import {
   KeyboardView,
   KeybindingEditor,
 } from "./index.tsx";
@@ -40,10 +45,21 @@ import {
 } from "./workbench-model.ts";
 
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
+export {
+  createStarterMobileControlsOverlay,
+  MobileControlsView,
+} from "./MobileControlsView.tsx";
+export type {
+  MobileControlKind,
+  MobileControlsOrientation,
+  MobileControlsOverlay,
+  MobileControlsViewProps,
+  MobileOverlayControl,
+} from "./MobileControlsView.tsx";
 
-export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
+export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "mobile" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
-export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
 
 export interface InputBindingsWorkbenchProps {
   registry: ActionRegistry;
@@ -55,6 +71,8 @@ export interface InputBindingsWorkbenchProps {
   initialView?: InputBindingsWorkbenchView;
   initialMode?: InputBindingsWorkbenchMode;
   initialPresentation?: InputBindingsWorkbenchPresentation;
+  mobileOverlay?: MobileControlsOverlay;
+  onMobileOverlayChange?: (overlay: MobileControlsOverlay) => void;
   className?: string;
 }
 
@@ -66,16 +84,21 @@ const DEFAULT_SCENARIO: InputBindingsContextScenario = {
   defaultKeyboardMode: "logical",
 };
 
+const DEFAULT_MOBILE_OVERLAY = createStarterMobileControlsOverlay();
+const COMPACT_PRESENTATION_QUERY = "(max-width: 620px)";
+
 export function InputBindingsWorkbench({
   registry,
   profile,
   onProfileChange,
   contextScenarios,
-  title = "Keyboard & controls",
-  description = "Browse, customize, and test application shortcuts from one reusable settings surface.",
+  title = "Controls",
+  description = "Browse, customize, and test application input from one reusable settings surface.",
   initialView = "bindings",
   initialMode,
   initialPresentation,
+  mobileOverlay = DEFAULT_MOBILE_OVERLAY,
+  onMobileOverlayChange,
   className,
 }: InputBindingsWorkbenchProps) {
   const compiledRegistry = useMemo(() => compileActionRegistry(registry), [registry]);
@@ -109,8 +132,21 @@ export function InputBindingsWorkbench({
           : "shortcuts"),
   );
   const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
-    initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
+    initialPresentation ??
+      (initialView === "keyboard"
+        ? "keyboard"
+        : initialView === "mobile"
+          ? "mobile"
+          : "list"),
   );
+  const compactPresentation = useCompactControlsPresentation();
+  const visibleMode = compactPresentation && mode === "preview" ? "shortcuts" : mode;
+  const visiblePresentation: InputBindingsWorkbenchPresentation =
+    presentation === "list"
+      ? "list"
+      : compactPresentation
+        ? "mobile"
+        : "keyboard";
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
   const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
   const [keyboardMode, setKeyboardMode] = useState<InputBindingsKeyboardMode>(
@@ -122,6 +158,12 @@ export function InputBindingsWorkbench({
       setScenarioId(scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
     }
   }, [scenarioId, scenarios]);
+
+  useEffect(() => {
+    if (compactPresentation && mode === "preview") {
+      setMode("shortcuts");
+    }
+  }, [compactPresentation, mode]);
 
   useEffect(() => {
     setKeyboardMode(scenario.defaultKeyboardMode ?? "logical");
@@ -149,28 +191,40 @@ export function InputBindingsWorkbench({
             {registry.actions.length} actions · {effectiveBindings.length} bindings · {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
           </p>
         </div>
-        <WorkbenchTabs mode={mode} onChange={setMode} />
+        <WorkbenchTabs mode={visibleMode} compact={compactPresentation} onChange={setMode} />
       </header>
 
-      {mode === "shortcuts" && (
+      {visibleMode === "shortcuts" && (
         <div
           id="ib-workbench-panel-shortcuts"
           role="tabpanel"
           aria-labelledby="ib-workbench-tab-shortcuts"
           className="ib-workbench-panel"
         >
-          <PresentationToolbar presentation={presentation} onChange={setPresentation} />
-          <KeybindingEditor
-            registry={registry}
-            profile={profile}
-            onProfileChange={onProfileChange}
-            compiledRegistry={compiledRegistry}
-            presentation={presentation}
+          <PresentationToolbar
+            presentation={visiblePresentation}
+            compact={compactPresentation}
+            onChange={setPresentation}
           />
+          {visiblePresentation === "mobile" ? (
+            <MobileControlsView
+              registry={registry}
+              overlay={mobileOverlay}
+              onOverlayChange={onMobileOverlayChange}
+            />
+          ) : (
+            <KeybindingEditor
+              registry={registry}
+              profile={profile}
+              onProfileChange={onProfileChange}
+              compiledRegistry={compiledRegistry}
+              presentation={visiblePresentation}
+            />
+          )}
         </div>
       )}
 
-      {mode === "conflicts" && (
+      {visibleMode === "conflicts" && (
         <div
           id="ib-workbench-panel-conflicts"
           role="tabpanel"
@@ -187,7 +241,7 @@ export function InputBindingsWorkbench({
         </div>
       )}
 
-      {mode === "preview" && (
+      {visibleMode === "preview" && (
         <div
           id="ib-workbench-panel-preview"
           role="tabpanel"
@@ -219,16 +273,24 @@ export function InputBindingsWorkbench({
 
 function WorkbenchTabs({
   mode,
+  compact,
   onChange,
 }: {
   mode: InputBindingsWorkbenchMode;
+  compact: boolean;
   onChange: (mode: InputBindingsWorkbenchMode) => void;
 }) {
-  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] = [
-    { id: "shortcuts", label: "Shortcuts", description: "Browse and edit shortcuts in either list or keyboard presentation." },
-    { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
-    { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
-  ];
+  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] =
+    compact
+      ? [
+          { id: "shortcuts", label: "Bindings", description: "Browse bindings or arrange the mobile control overlay." },
+          { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
+        ]
+      : [
+          { id: "shortcuts", label: "Shortcuts", description: "Browse and edit shortcuts in either list or keyboard presentation." },
+          { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
+          { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
+        ];
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const activate = (index: number) => {
@@ -286,17 +348,19 @@ function WorkbenchTabs({
 
 function PresentationToolbar({
   presentation,
+  compact,
   onChange,
 }: {
   presentation: InputBindingsWorkbenchPresentation;
+  compact: boolean;
   onChange: (presentation: InputBindingsWorkbenchPresentation) => void;
 }) {
   return (
     <section className="ib-presentation-toolbar" aria-label="Shortcut presentation">
       <div>
         <p className="ib-workbench-eyebrow">Presentation</p>
-        <h2>Choose how to view the same shortcuts</h2>
-        <p>Selection and editing stay in the shortcuts task; only the spatial representation changes.</p>
+        <h2>Choose how to configure the same actions</h2>
+        <p>The action registry stays authoritative while the device-specific presentation changes.</p>
       </div>
       <fieldset className="ib-mode-switch">
         <legend>View</legend>
@@ -310,15 +374,34 @@ function PresentationToolbar({
         </button>
         <button
           type="button"
-          aria-pressed={presentation === "keyboard"}
-          className={presentation === "keyboard" ? "is-active" : undefined}
-          onClick={() => onChange("keyboard")}
+          aria-pressed={presentation === (compact ? "mobile" : "keyboard")}
+          className={presentation === (compact ? "mobile" : "keyboard") ? "is-active" : undefined}
+          onClick={() => onChange(compact ? "mobile" : "keyboard")}
         >
-          Keyboard
+          {compact ? "Mobile controls" : "Keyboard"}
         </button>
       </fieldset>
     </section>
   );
+}
+
+
+function useCompactControlsPresentation(): boolean {
+  const [compact, setCompact] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : window.matchMedia(COMPACT_PRESENTATION_QUERY).matches,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(COMPACT_PRESENTATION_QUERY);
+    const update = () => setCompact(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return compact;
 }
 
 function ScenarioToolbar({
