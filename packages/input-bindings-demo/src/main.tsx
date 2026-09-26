@@ -509,8 +509,11 @@ function App() {
           <output>{lastAction}</output>
         </div>
         <div className="site-motion-controls">
-          <button type="button" onClick={enableGyro}>
-            {gyroEnabled ? "Gyroscope enabled" : "Enable gyroscope look"}
+          <button
+            type="button"
+            onClick={gyroEnabled ? () => setGyroEnabled(false) : enableGyro}
+          >
+            {gyroEnabled ? "Disable gyroscope look" : "Enable gyroscope look"}
           </button>
           <span>
             {motionPermission === "idle"
