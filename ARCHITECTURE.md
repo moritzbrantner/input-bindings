@@ -51,6 +51,16 @@ The runtime controller remains responsible for input-down/up state, repeats, cho
 
 Changing the application stack is therefore not an implicit dispatch operation. Consumers remain authoritative for when layers are pushed or popped. Press/release lifecycle remains paired by normalized input identity so a later context change does not strand an already active press.
 
+## Continuous analog input
+
+Continuous input is a sibling runtime path, not another `InputStroke` variant. The discrete resolver remains authoritative for keys, buttons, chords, conflict ranking, and press/release lifecycle. Analog sources instead publish normalized `Axis1D` or `Axis2D` values directly to semantic analog action ids.
+
+The TypeScript `AnalogInputController` owns only normalization, stable multi-source aggregation, and source release/reset behavior. Multiple sources for one semantic axis are combined in source-id order and clamped to the normalized range, so touch look and gyroscope look can contribute to the same `game.look` channel without either adapter knowing application camera behavior.
+
+Consumers remain authoritative for what an analog action means and when a source is enabled. A game may interpret `game.move` as a movement vector and `game.look` as camera angular velocity; this repository does not integrate position, rotate a camera, or invent gameplay context. Adapters should be attached/detached when the consumer's context permits them rather than adding a second hidden context resolver.
+
+Pointer/touch adapters normalize virtual sticks and touch-look regions. Motion input uses browser gyroscope rotation-rate data, applies screen-orientation normalization plus configurable deadzone/sensitivity/smoothing, and feeds the same semantic look axis. Motion permission is always requested explicitly from a user action; merely rendering settings never prompts for sensor access.
+
 ## Conflict analysis
 
 Conflict reporting is separate from runtime resolution because users need explanations, not merely a winning action. The analyzer distinguishes duplicate bindings, equal-rank exact ambiguities, intentional/contextual exact overrides, chord-prefix overlaps, and potential conflicts when a context expression is too large for exhaustive analysis.

@@ -31,6 +31,8 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Reusable React controls-settings workbench with all-bindings editing, dedicated conflict review/repair, a context-aware desktop keyboard map, a narrow-screen mobile overlay editor for sticks/buttons/gesture zones/command docks, and live desktop preview that explains the same ordered-context decision used at runtime.
 - Search, filters, logical/physical recording, declared context-scenario evidence, normalized input history, reset, provenance, local profile persistence, and separately persisted consumer-owned mobile overlay geometry in the Pages dogfood.
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
+- Sibling semantic analog runtime for normalized Axis1D/Axis2D actions, including deterministic multi-source aggregation so touch and gyroscope can feed the same action without synthesizing keyboard input.
+- Browser virtual-stick, touch-look, and gyroscope adapters with deadzone/sensitivity/smoothing/orientation processing and explicit motion-permission handling.
 - Normalized keyboard, mouse, wheel, and gamepad inputs, with browser adapters for keyboard/mouse/gamepad runtime attachment.
 - Versioned portable configuration with inherited presets, explicit action/binding migrations, deterministic serialization, stale-override diagnostics, and provenance for every effective binding.
 - Advisory browser/OS/layout/AltGr/IME conflict analysis with environment targeting and source provenance, kept separate from internal binding conflicts.

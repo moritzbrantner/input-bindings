@@ -1,3 +1,5 @@
+export * from "./analog.ts";
+
 import {
   compileActionRegistry,
   inputStrokeIdentity,

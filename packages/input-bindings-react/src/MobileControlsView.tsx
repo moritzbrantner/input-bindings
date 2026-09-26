@@ -9,6 +9,11 @@ import {
 } from "react";
 
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
+import {
+  MobileControlsRuntimeSurface,
+  type MobileActionInputEvent,
+  type MobileAnalogInputEvent,
+} from "./MobileControlsRuntimeSurface.tsx";
 
 export type MobileControlKind = "stick" | "button" | "gestureZone" | "dock";
 export type MobileControlsOrientation = "portrait" | "landscape";
@@ -18,6 +23,7 @@ export interface MobileOverlayControl {
   kind: MobileControlKind;
   label: string;
   actionId?: string;
+  analogActionId?: string;
   /** Left edge as a percentage of the preview surface. */
   x: number;
   /** Top edge as a percentage of the preview surface. */
@@ -33,10 +39,18 @@ export interface MobileControlsOverlay {
   controls: readonly MobileOverlayControl[];
 }
 
+export interface MobileAnalogActionOption {
+  id: string;
+  title: string;
+}
+
 export interface MobileControlsViewProps {
   registry: ActionRegistry;
   overlay: MobileControlsOverlay;
+  analogActions?: readonly MobileAnalogActionOption[];
   onOverlayChange?: (overlay: MobileControlsOverlay) => void;
+  onActionInput?: (event: MobileActionInputEvent) => void;
+  onAnalogInput?: (event: MobileAnalogInputEvent) => void;
 }
 
 const CONTROL_DEFAULTS: Record<
@@ -119,7 +133,10 @@ export function createStarterMobileControlsOverlay(): MobileControlsOverlay {
 export function MobileControlsView({
   registry,
   overlay,
+  analogActions = [],
   onOverlayChange,
+  onActionInput,
+  onAnalogInput,
 }: MobileControlsViewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -131,6 +148,7 @@ export function MobileControlsView({
   const [selectedId, setSelectedId] = useState<string | undefined>(
     () => overlay.controls[0]?.id,
   );
+  const [testing, setTesting] = useState(false);
   const selected = overlay.controls.find((control) => control.id === selectedId);
   const actionById = useMemo(
     () => new Map(registry.actions.map((action) => [action.id, action])),
@@ -139,6 +157,10 @@ export function MobileControlsView({
   const sortedActions = useMemo(
     () => [...registry.actions].sort((left, right) => left.title.localeCompare(right.title)),
     [registry],
+  );
+  const sortedAnalogActions = useMemo(
+    () => [...analogActions].sort((left, right) => left.title.localeCompare(right.title)),
+    [analogActions],
   );
   const editable = Boolean(onOverlayChange);
 
@@ -259,29 +281,59 @@ export function MobileControlsView({
           <h2 id="ib-mobile-controls-heading">Mobile controls</h2>
           <p>Arrange touch controls over the application surface. Drag for coarse placement, then use exact percentage fields for precise positioning.</p>
         </div>
-        <fieldset className="ib-mode-switch">
-          <legend>Preview orientation</legend>
-          <button
-            type="button"
-            aria-pressed={overlay.orientation === "portrait"}
-            className={overlay.orientation === "portrait" ? "is-active" : undefined}
-            disabled={!editable}
-            onClick={() => setOrientation("portrait")}
-          >
-            Portrait
-          </button>
-          <button
-            type="button"
-            aria-pressed={overlay.orientation === "landscape"}
-            className={overlay.orientation === "landscape" ? "is-active" : undefined}
-            disabled={!editable}
-            onClick={() => setOrientation("landscape")}
-          >
-            Landscape
-          </button>
-        </fieldset>
+        <div className="ib-mobile-controls-modes">
+          {(onActionInput || onAnalogInput) && (
+            <fieldset className="ib-mode-switch">
+              <legend>Mode</legend>
+              <button
+                type="button"
+                aria-pressed={!testing}
+                className={!testing ? "is-active" : undefined}
+                onClick={() => setTesting(false)}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                aria-pressed={testing}
+                className={testing ? "is-active" : undefined}
+                onClick={() => setTesting(true)}
+              >
+                Test
+              </button>
+            </fieldset>
+          )}
+          <fieldset className="ib-mode-switch">
+            <legend>Preview orientation</legend>
+            <button
+              type="button"
+              aria-pressed={overlay.orientation === "portrait"}
+              className={overlay.orientation === "portrait" ? "is-active" : undefined}
+              disabled={!editable}
+              onClick={() => setOrientation("portrait")}
+            >
+              Portrait
+            </button>
+            <button
+              type="button"
+              aria-pressed={overlay.orientation === "landscape"}
+              className={overlay.orientation === "landscape" ? "is-active" : undefined}
+              disabled={!editable}
+              onClick={() => setOrientation("landscape")}
+            >
+              Landscape
+            </button>
+          </fieldset>
+        </div>
       </div>
 
+      {testing ? (
+        <MobileControlsRuntimeSurface
+          overlay={overlay}
+          onActionInput={onActionInput}
+          onAnalogInput={onAnalogInput}
+        />
+      ) : (
       <div className="ib-mobile-overlay-layout">
         <div className="ib-mobile-overlay-workspace">
           <div
@@ -296,6 +348,9 @@ export function MobileControlsView({
             </div>
             {overlay.controls.map((control) => {
               const action = control.actionId ? actionById.get(control.actionId) : undefined;
+              const analogAction = control.analogActionId
+                ? sortedAnalogActions.find((candidate) => candidate.id === control.analogActionId)
+                : undefined;
               const style = {
                 "--ib-mobile-x": `${control.x}%`,
                 "--ib-mobile-y": `${control.y}%`,
@@ -314,7 +369,13 @@ export function MobileControlsView({
                   style={style}
                   aria-pressed={selectedId === control.id}
                   aria-label={`${control.label} mobile control`}
-                  title={action ? `${control.label} → ${action.title}` : control.label}
+                  title={
+                    analogAction
+                      ? `${control.label} → ${analogAction.title}`
+                      : action
+                        ? `${control.label} → ${action.title}`
+                        : control.label
+                  }
                   onClick={() => setSelectedId(control.id)}
                   onPointerDown={(event) => startDrag(event, control)}
                   onPointerMove={moveDrag}
@@ -325,7 +386,8 @@ export function MobileControlsView({
                   {control.kind === "stick" && <span className="ib-mobile-stick-knob" aria-hidden="true" />}
                   <strong>{control.label}</strong>
                   {control.kind === "gestureZone" && <small>drag / swipe</small>}
-                  {action && <small>{action.title}</small>}
+                  {analogAction && <small>{analogAction.title}</small>}
+                  {!analogAction && action && <small>{action.title}</small>}
                 </button>
               );
             })}
@@ -359,23 +421,56 @@ export function MobileControlsView({
                 />
               </label>
 
-              <label>
-                <span>Semantic action</span>
-                <select
-                  value={selected.actionId ?? ""}
-                  disabled={!editable}
-                  onChange={(event) =>
-                    updateControl(selected.id, {
-                      actionId: event.target.value || undefined,
-                    })
-                  }
-                >
-                  <option value="">No direct action</option>
-                  {sortedActions.map((action) => (
-                    <option key={action.id} value={action.id}>{action.title}</option>
-                  ))}
-                </select>
-              </label>
+              {selected.kind === "stick" || selected.kind === "gestureZone" ? (
+                <label>
+                  <span>Analog action</span>
+                  {sortedAnalogActions.length > 0 ? (
+                    <select
+                      value={selected.analogActionId ?? ""}
+                      disabled={!editable}
+                      onChange={(event) =>
+                        updateControl(selected.id, {
+                          analogActionId: event.target.value || undefined,
+                        })
+                      }
+                    >
+                      <option value="">No analog action</option>
+                      {sortedAnalogActions.map((action) => (
+                        <option key={action.id} value={action.id}>{action.title}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={selected.analogActionId ?? ""}
+                      disabled={!editable}
+                      placeholder="game.move"
+                      onChange={(event) =>
+                        updateControl(selected.id, {
+                          analogActionId: event.target.value || undefined,
+                        })
+                      }
+                    />
+                  )}
+                </label>
+              ) : (
+                <label>
+                  <span>Semantic action</span>
+                  <select
+                    value={selected.actionId ?? ""}
+                    disabled={!editable}
+                    onChange={(event) =>
+                      updateControl(selected.id, {
+                        actionId: event.target.value || undefined,
+                      })
+                    }
+                  >
+                    <option value="">No direct action</option>
+                    {sortedActions.map((action) => (
+                      <option key={action.id} value={action.id}>{action.title}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <fieldset className="ib-mobile-control-geometry">
                 <legend>Position and size (%)</legend>
@@ -425,6 +520,7 @@ export function MobileControlsView({
           )}
         </aside>
       </div>
+      )}
     </section>
   );
 }
