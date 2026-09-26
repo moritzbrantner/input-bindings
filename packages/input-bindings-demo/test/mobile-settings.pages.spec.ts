@@ -21,7 +21,8 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   await expect(presentation.getByRole("button", { name: "List" })).toBeVisible();
   await expect(presentation.getByRole("button", { name: "Mobile controls" })).toBeVisible();
   await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
-  await expect(page.getByText("Hotkeys ?", { exact: true })).toBeHidden();
+  await expect(page.getByText("Hotkeys ?", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Shortcuts ?", { exact: true })).toBeHidden();
 
   await expect(page.getByLabel("Category")).toBeHidden();
   const filters = page.getByRole("button", { name: "Filters", exact: true });
