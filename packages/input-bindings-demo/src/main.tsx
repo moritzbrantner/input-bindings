@@ -498,15 +498,15 @@ function App() {
       <section className="site-mobile-input-status" aria-label="Live mobile input">
         <div>
           <strong>Move</strong>
-          <output>{formatAxis(analogValues["game.move"])}</output>
+          <output aria-label="Move axis">{formatAxis(analogValues["game.move"])}</output>
         </div>
         <div>
           <strong>Look</strong>
-          <output>{formatAxis(analogValues["game.look"])}</output>
+          <output aria-label="Look axis">{formatAxis(analogValues["game.look"])}</output>
         </div>
         <div>
           <strong>Action</strong>
-          <output>{lastAction}</output>
+          <output aria-label="Last mobile action">{lastAction}</output>
         </div>
         <div className="site-motion-controls">
           <button
