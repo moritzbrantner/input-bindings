@@ -51,6 +51,12 @@ export function MobileControlsRuntimeSurface({
   className,
 }: MobileControlsRuntimeSurfaceProps) {
   const activePointers = useRef(new Map<string, ActivePointer>());
+  const overlayRef = useRef(overlay);
+  const actionInputRef = useRef(onActionInput);
+  const analogInputRef = useRef(onAnalogInput);
+  overlayRef.current = overlay;
+  actionInputRef.current = onActionInput;
+  analogInputRef.current = onAnalogInput;
   const [axisByControl, setAxisByControl] = useState<Record<string, MobileAxis2D>>({});
 
   const emitAxis = (
@@ -174,17 +180,19 @@ export function MobileControlsRuntimeSurface({
   useEffect(() => {
     return () => {
       for (const controlId of activePointers.current.keys()) {
-        const control = overlay.controls.find((candidate) => candidate.id === controlId);
+        const control = overlayRef.current.controls.find(
+          (candidate) => candidate.id === controlId,
+        );
         if (!control) continue;
         if ((control.kind === "stick" || control.kind === "gestureZone") && control.analogActionId) {
-          onAnalogInput?.({
+          analogInputRef.current?.({
             controlId,
             action: control.analogActionId,
             phase: "release",
             value: { x: 0, y: 0 },
           });
         } else if (control.actionId) {
-          onActionInput?.({
+          actionInputRef.current?.({
             controlId,
             action: control.actionId,
             phase: "release",
@@ -193,7 +201,7 @@ export function MobileControlsRuntimeSurface({
       }
       activePointers.current.clear();
     };
-  }, [onActionInput, onAnalogInput, overlay.controls]);
+  }, []);
 
   return (
     <div
