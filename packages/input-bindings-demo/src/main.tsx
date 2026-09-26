@@ -1,11 +1,22 @@
-import { StrictMode, useState } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import type { ActionRegistry, Binding, Profile, WhenExpr } from "@moritzbrantner/input-bindings";
 import {
+  AnalogInputController,
+  type AnalogDispatch,
+  type Axis2D,
+} from "@moritzbrantner/input-bindings-runtime";
+import {
+  attachGyroscopeAnalog,
+  requestDeviceMotionPermission,
+  type MotionPermissionState,
+} from "@moritzbrantner/input-bindings-web";
+import {
   createStarterMobileControlsOverlay,
   InputBindingsWorkbench,
   type InputBindingsContextScenario,
+  type MobileAnalogActionOption,
   type MobileControlsOverlay,
   type MobileOverlayControl,
 } from "@moritzbrantner/input-bindings-react/workbench";
@@ -247,16 +258,28 @@ const registry: ActionRegistry = {
 
 const starterMobileOverlay = createStarterMobileControlsOverlay();
 const demoMobileActionByControl = new Map<string, string>([
-  ["movement-stick", "game.moveForward"],
   ["primary-action", "game.jump"],
   ["secondary-action", "game.interact"],
   ["command-dock", "game.pause"],
 ]);
+const demoMobileAnalogActionByControl = new Map<string, string>([
+  ["movement-stick", "game.move"],
+  ["camera-zone", "game.look"],
+]);
+const MOBILE_ANALOG_ACTIONS: readonly MobileAnalogActionOption[] = [
+  { id: "game.move", title: "Move" },
+  { id: "game.look", title: "Look / aim" },
+];
 const DEFAULT_MOBILE_OVERLAY: MobileControlsOverlay = {
   ...starterMobileOverlay,
   controls: starterMobileOverlay.controls.map((control) => {
     const actionId = demoMobileActionByControl.get(control.id);
-    return actionId ? { ...control, actionId } : control;
+    const analogActionId = demoMobileAnalogActionByControl.get(control.id);
+    return {
+      ...control,
+      ...(actionId ? { actionId } : {}),
+      ...(analogActionId ? { analogActionId } : {}),
+    };
   }),
 };
 
@@ -356,6 +379,7 @@ function isMobileOverlayControl(value: unknown): value is MobileOverlayControl {
       candidate.kind === "dock") &&
     typeof candidate.label === "string" &&
     (candidate.actionId === undefined || typeof candidate.actionId === "string") &&
+    (candidate.analogActionId === undefined || typeof candidate.analogActionId === "string") &&
     typeof candidate.x === "number" &&
     typeof candidate.y === "number" &&
     typeof candidate.width === "number" &&
@@ -366,6 +390,43 @@ function isMobileOverlayControl(value: unknown): value is MobileOverlayControl {
 function App() {
   const [profile, setProfile] = useState<Profile>(loadProfile);
   const [mobileOverlay, setMobileOverlay] = useState<MobileControlsOverlay>(loadMobileOverlay);
+  const [analogValues, setAnalogValues] = useState<Record<string, Axis2D>>({
+    "game.move": { x: 0, y: 0 },
+    "game.look": { x: 0, y: 0 },
+  });
+  const [lastAction, setLastAction] = useState("None");
+  const [motionPermission, setMotionPermission] = useState<MotionPermissionState | "idle">("idle");
+  const [gyroEnabled, setGyroEnabled] = useState(false);
+
+  const analogController = useMemo(
+    () =>
+      new AnalogInputController({
+        actions: [
+          { id: "game.move", kind: "axis2D", title: "Move" },
+          { id: "game.look", kind: "axis2D", title: "Look / aim" },
+        ],
+        onDispatch: (dispatch: AnalogDispatch) => {
+          if (dispatch.kind !== "axis2D") return;
+          setAnalogValues((current) => ({
+            ...current,
+            [dispatch.action]: dispatch.value,
+          }));
+        },
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    if (!gyroEnabled) return;
+    return attachGyroscopeAnalog(analogController, {
+      action: "game.look",
+      sourceId: "gyro",
+      maxRateDegPerSec: 180,
+      deadzone: 0.04,
+      sensitivity: 0.85,
+      smoothing: 0.3,
+    });
+  }, [analogController, gyroEnabled]);
 
   const updateProfile = (next: Profile) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -375,6 +436,12 @@ function App() {
   const updateMobileOverlay = (next: MobileControlsOverlay) => {
     localStorage.setItem(MOBILE_OVERLAY_STORAGE_KEY, JSON.stringify(next));
     setMobileOverlay(next);
+  };
+
+  const enableGyro = async () => {
+    const permission = await requestDeviceMotionPermission();
+    setMotionPermission(permission);
+    setGyroEnabled(permission === "granted");
   };
 
   return (
@@ -398,10 +465,50 @@ function App() {
         onProfileChange={updateProfile}
         contextScenarios={contextScenarios}
         mobileOverlay={mobileOverlay}
+        mobileAnalogActions={MOBILE_ANALOG_ACTIONS}
         onMobileOverlayChange={updateMobileOverlay}
+        onMobileActionInput={(event) => {
+          setLastAction(`${event.action} · ${event.phase}`);
+        }}
+        onMobileAnalogInput={(event) => {
+          analogController.setAxis2D(
+            `overlay:${event.controlId}`,
+            event.action,
+            event.value,
+          );
+        }}
       />
+      <section className="site-mobile-input-status" aria-label="Live mobile input">
+        <div>
+          <strong>Move</strong>
+          <output>{formatAxis(analogValues["game.move"])}</output>
+        </div>
+        <div>
+          <strong>Look</strong>
+          <output>{formatAxis(analogValues["game.look"])}</output>
+        </div>
+        <div>
+          <strong>Action</strong>
+          <output>{lastAction}</output>
+        </div>
+        <div className="site-motion-controls">
+          <button type="button" onClick={enableGyro}>
+            {gyroEnabled ? "Gyroscope enabled" : "Enable gyroscope look"}
+          </button>
+          <span>
+            {motionPermission === "idle"
+              ? "Motion permission is requested only from this explicit action."
+              : `Motion permission: ${motionPermission}`}
+          </span>
+        </div>
+      </section>
     </main>
   );
+}
+
+function formatAxis(value: Axis2D | undefined): string {
+  const axis = value ?? { x: 0, y: 0 };
+  return `${axis.x.toFixed(2)}, ${axis.y.toFixed(2)}`;
 }
 
 const root = document.getElementById("root");
