@@ -116,7 +116,9 @@ export class AnalogInputController {
   }
 
   reset(): AnalogDispatch[] {
-    const actions = [...new Set(this.contributions.values().map((entry) => entry.action))].sort();
+    const actions = [
+      ...new Set([...this.contributions.values()].map((entry) => entry.action)),
+    ].sort();
     this.contributions.clear();
     return actions.flatMap((action) => {
       const dispatch = this.emitIfChanged(action, "reset");
