@@ -57,9 +57,9 @@ export type {
   MobileOverlayControl,
 } from "./MobileControlsView.tsx";
 
-export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "mobile" | "preview";
+export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
-export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
 
 export interface InputBindingsWorkbenchProps {
   registry: ActionRegistry;
@@ -132,16 +132,11 @@ export function InputBindingsWorkbench({
           : "shortcuts"),
   );
   const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
-    initialPresentation ??
-      (initialView === "keyboard"
-        ? "keyboard"
-        : initialView === "mobile"
-          ? "mobile"
-          : "list"),
+    initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
   );
   const compactPresentation = useCompactControlsPresentation();
   const visibleMode = compactPresentation && mode === "preview" ? "shortcuts" : mode;
-  const visiblePresentation: InputBindingsWorkbenchPresentation =
+  const visiblePresentation: "list" | "keyboard" | "mobile" =
     presentation === "list"
       ? "list"
       : compactPresentation
@@ -351,7 +346,7 @@ function PresentationToolbar({
   compact,
   onChange,
 }: {
-  presentation: InputBindingsWorkbenchPresentation;
+  presentation: InputBindingsWorkbenchPresentation | "mobile";
   compact: boolean;
   onChange: (presentation: InputBindingsWorkbenchPresentation) => void;
 }) {
@@ -376,7 +371,7 @@ function PresentationToolbar({
           type="button"
           aria-pressed={presentation === (compact ? "mobile" : "keyboard")}
           className={presentation === (compact ? "mobile" : "keyboard") ? "is-active" : undefined}
-          onClick={() => onChange(compact ? "mobile" : "keyboard")}
+          onClick={() => onChange("keyboard")}
         >
           {compact ? "Mobile controls" : "Keyboard"}
         </button>
