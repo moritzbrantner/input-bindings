@@ -165,6 +165,14 @@ test("mobile settings support exact binding edits and an editable touch overlay"
   await expect(manual).toBeVisible();
   const manualKey = manual.getByLabel("Manual key or code");
   const setShortcut = manual.getByRole("button", { name: "Set shortcut" });
+  const altGraph = manual.getByRole("checkbox", { name: "AltGraph" });
+
+  await expect(altGraph).toBeVisible();
+  await altGraph.check();
+  await manualKey.fill("k");
+  await setShortcut.click();
+  await expect(page.locator(".ib-capture strong")).toHaveText("AltGr+k");
+  await altGraph.uncheck();
 
   await manualKey.fill("Control");
   await expect(setShortcut).toBeDisabled();
