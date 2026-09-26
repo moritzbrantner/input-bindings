@@ -108,3 +108,45 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
     fullPage: true,
   });
 });
+
+
+test("saved v1 mobile overlays migrate their stick and look mappings", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "input-bindings-demo-mobile-overlay-v1",
+      JSON.stringify({
+        orientation: "landscape",
+        controls: [
+          {
+            id: "movement-stick",
+            kind: "stick",
+            label: "Move",
+            actionId: "game.moveForward",
+            x: 5,
+            y: 47,
+            width: 24,
+            height: 42,
+          },
+          {
+            id: "camera-zone",
+            kind: "gestureZone",
+            label: "Look",
+            x: 41,
+            y: 18,
+            width: 36,
+            height: 43,
+          },
+        ],
+      }),
+    );
+  });
+
+  await page.goto("./");
+  await page.getByLabel("Shortcut presentation").getByRole("button", { name: "Mobile controls" }).click();
+
+  await page.getByRole("button", { name: "Move mobile control" }).click();
+  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue("game.move");
+
+  await page.getByRole("button", { name: "Look mobile control" }).click();
+  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue("game.look");
+});
