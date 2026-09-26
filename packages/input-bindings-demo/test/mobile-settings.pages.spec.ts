@@ -52,7 +52,7 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
 
   await presentation.getByRole("button", { name: "Mobile controls" }).click();
   await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
-  await page.getByRole("button", { name: "Primary mobile control" }).click();
+  await page.getByRole("button", { name: "A mobile control" }).click();
 
   const inspector = page.getByLabel("Selected mobile control");
   await expect(inspector.getByLabel("Semantic action")).toHaveValue("game.jump");
@@ -70,7 +70,7 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   await expect(persistedSaveRow.getByText("Changed", { exact: true })).toBeVisible();
 
   await page.getByLabel("Shortcut presentation").getByRole("button", { name: "Mobile controls" }).click();
-  await page.getByRole("button", { name: "Primary mobile control" }).click();
+  await page.getByRole("button", { name: "A mobile control" }).click();
   await expect(page.getByLabel("Selected mobile control").getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("74");
 
   const metrics = await page.locator("html").evaluate(() => ({
