@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -6,6 +7,10 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import {
+  pointerAxisFromCenter,
+  pointerAxisFromOrigin,
+} from "@moritzbrantner/input-bindings-web";
 import type { MobileControlsOverlay, MobileOverlayControl } from "./MobileControlsView.tsx";
 
 export interface MobileAxis2D {
@@ -22,6 +27,7 @@ export interface MobileActionInputEvent {
 export interface MobileAnalogInputEvent {
   controlId: string;
   action: string;
+  phase: "update" | "release";
   value: MobileAxis2D;
 }
 
@@ -47,12 +53,17 @@ export function MobileControlsRuntimeSurface({
   const activePointers = useRef(new Map<string, ActivePointer>());
   const [axisByControl, setAxisByControl] = useState<Record<string, MobileAxis2D>>({});
 
-  const emitAxis = (control: MobileOverlayControl, value: MobileAxis2D) => {
+  const emitAxis = (
+    control: MobileOverlayControl,
+    value: MobileAxis2D,
+    phase: "update" | "release" = "update",
+  ) => {
     setAxisByControl((current) => ({ ...current, [control.id]: value }));
     if (control.analogActionId) {
       onAnalogInput?.({
         controlId: control.id,
         action: control.analogActionId,
+        phase,
         value,
       });
     }
@@ -62,23 +73,24 @@ export function MobileControlsRuntimeSurface({
     control: MobileOverlayControl,
     event: ReactPointerEvent<HTMLButtonElement>,
   ): MobileAxis2D => {
-    const rect = event.currentTarget.getBoundingClientRect();
     if (control.kind === "stick") {
-      const halfWidth = Math.max(1, rect.width / 2);
-      const halfHeight = Math.max(1, rect.height / 2);
-      return normalizeAxis({
-        x: (event.clientX - (rect.left + halfWidth)) / halfWidth,
-        y: -((event.clientY - (rect.top + halfHeight)) / halfHeight),
+      return pointerAxisFromCenter(event.currentTarget, event, {
+        deadzone: 0.08,
+        invertY: true,
       });
     }
 
     const pointer = activePointers.current.get(control.id);
     if (!pointer) return { x: 0, y: 0 };
-    const maxTravel = Math.max(1, Math.min(rect.width, rect.height) / 3);
-    return normalizeAxis({
-      x: (event.clientX - pointer.originX) / maxTravel,
-      y: -((event.clientY - pointer.originY) / maxTravel),
-    });
+    return pointerAxisFromOrigin(
+      event.currentTarget,
+      event,
+      { x: pointer.originX, y: pointer.originY },
+      {
+        deadzone: 0.03,
+        invertY: true,
+      },
+    );
   };
 
   const start = (
@@ -129,7 +141,7 @@ export function MobileControlsRuntimeSurface({
     activePointers.current.delete(control.id);
 
     if (control.kind === "stick" || control.kind === "gestureZone") {
-      emitAxis(control, { x: 0, y: 0 });
+      emitAxis(control, { x: 0, y: 0 }, "release");
       return;
     }
 
@@ -158,6 +170,30 @@ export function MobileControlsRuntimeSurface({
       phase: "release",
     });
   };
+
+  useEffect(() => {
+    return () => {
+      for (const controlId of activePointers.current.keys()) {
+        const control = overlay.controls.find((candidate) => candidate.id === controlId);
+        if (!control) continue;
+        if ((control.kind === "stick" || control.kind === "gestureZone") && control.analogActionId) {
+          onAnalogInput?.({
+            controlId,
+            action: control.analogActionId,
+            phase: "release",
+            value: { x: 0, y: 0 },
+          });
+        } else if (control.actionId) {
+          onActionInput?.({
+            controlId,
+            action: control.actionId,
+            phase: "release",
+          });
+        }
+      }
+      activePointers.current.clear();
+    };
+  }, [onActionInput, onAnalogInput, overlay.controls]);
 
   return (
     <div
@@ -200,6 +236,7 @@ export function MobileControlsRuntimeSurface({
               onPointerMove={(event) => move(control, event)}
               onPointerUp={(event) => stop(control, event)}
               onPointerCancel={(event) => stop(control, event)}
+              onLostPointerCapture={(event) => stop(control, event)}
               onClick={(event) => keyboardActivate(control, event)}
             >
               {control.kind === "stick" && (
@@ -224,14 +261,6 @@ export function MobileControlsRuntimeSurface({
       </div>
     </div>
   );
-}
-
-function normalizeAxis(value: MobileAxis2D): MobileAxis2D {
-  const x = Number.isFinite(value.x) ? value.x : 0;
-  const y = Number.isFinite(value.y) ? value.y : 0;
-  const magnitude = Math.hypot(x, y);
-  if (magnitude <= 1 || magnitude === 0) return { x, y };
-  return { x: x / magnitude, y: y / magnitude };
 }
 
 function formatAxis(value: MobileAxis2D): string {
