@@ -193,8 +193,8 @@ test("mobile settings support exact binding edits and an editable touch overlay"
   await page.getByRole("button", { name: "Primary mobile control" }).click();
   const inspector = page.getByLabel("Selected mobile control");
   await expect(inspector.getByLabel("Semantic action")).toHaveValue("game.jump");
-  await inspector.getByLabel("X").fill("76");
-  await expect(inspector.getByLabel("X")).toHaveValue("76");
+  await inspector.getByRole("spinbutton", { name: "X", exact: true }).fill("76");
+  await expect(inspector.getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("76");
 
   await page.getByRole("button", { name: "Add action button" }).click();
   await expect(page.getByTestId("mobile-overlay-state")).toHaveText("Mobile controls: 6");
