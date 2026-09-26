@@ -576,6 +576,238 @@
   color: var(--ib-muted, #606774);
 }
 
+
+.ib-mobile-controls {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--ib-border, #d6d9de);
+  border-radius: 0.9rem;
+  background: var(--ib-surface, #ffffff);
+}
+
+.ib-mobile-controls-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.ib-mobile-controls-heading h2,
+.ib-mobile-controls-heading p {
+  margin: 0;
+}
+
+.ib-mobile-controls-heading > div > p:last-child {
+  max-width: 62rem;
+  margin-top: 0.35rem;
+  color: var(--ib-muted, #606774);
+}
+
+.ib-mobile-overlay-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(15rem, 0.7fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.ib-mobile-overlay-workspace {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.ib-mobile-overlay-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--ib-border, #d6d9de);
+  border-radius: 1rem;
+  background: var(--ib-subtle, #f6f7f9);
+  isolation: isolate;
+}
+
+.ib-mobile-overlay-frame[data-orientation="portrait"] {
+  width: min(100%, 24rem);
+  aspect-ratio: 9 / 16;
+  margin-inline: auto;
+}
+
+.ib-mobile-overlay-safe-area {
+  position: absolute;
+  inset: 4%;
+  z-index: 1;
+  border: 1px dashed var(--ib-border, #d6d9de);
+  border-radius: 0.8rem;
+  pointer-events: none;
+}
+
+.ib-mobile-overlay-content {
+  position: absolute;
+  inset: 12%;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: var(--ib-muted, #606774);
+  background: color-mix(in srgb, var(--ib-surface, #ffffff) 62%, transparent);
+  font-size: 0.82rem;
+  pointer-events: none;
+}
+
+.ib-mobile-overlay-control {
+  position: absolute;
+  left: var(--ib-mobile-x);
+  top: var(--ib-mobile-y);
+  z-index: 2;
+  width: var(--ib-mobile-width);
+  height: var(--ib-mobile-height);
+  min-width: 2.65rem;
+  min-height: 2.65rem;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.15rem;
+  overflow: hidden;
+  padding: 0.35rem !important;
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent) !important;
+  background: color-mix(in srgb, var(--ib-surface, #ffffff) 88%, transparent) !important;
+  box-shadow: 0 0.2rem 0.8rem rgb(0 0 0 / 12%);
+  touch-action: none;
+  user-select: none;
+  cursor: grab !important;
+}
+
+.ib-mobile-overlay-control:active {
+  cursor: grabbing !important;
+}
+
+.ib-mobile-overlay-control.is-selected {
+  outline: 3px solid var(--ib-accent, #0969da);
+  outline-offset: 2px;
+}
+
+.ib-mobile-overlay-control strong,
+.ib-mobile-overlay-control small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ib-mobile-overlay-control strong {
+  font-size: 0.76rem;
+}
+
+.ib-mobile-overlay-control small {
+  color: var(--ib-muted, #606774);
+  font-size: 0.64rem;
+}
+
+.ib-mobile-overlay-control.is-stick {
+  border-radius: 50%;
+}
+
+.ib-mobile-stick-knob {
+  width: 38%;
+  aspect-ratio: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--ib-subtle, #f6f7f9);
+}
+
+.ib-mobile-overlay-control.is-button {
+  border-radius: 50%;
+}
+
+.ib-mobile-overlay-control.is-gestureZone {
+  border-style: dashed !important;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--ib-surface, #ffffff) 64%, transparent) !important;
+}
+
+.ib-mobile-overlay-control.is-dock {
+  border-radius: 999px;
+}
+
+.ib-mobile-control-palette {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.ib-mobile-control-palette button {
+  min-height: 2.75rem;
+}
+
+.ib-mobile-control-inspector {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  border: 1px solid var(--ib-border, #d6d9de);
+  border-radius: 0.8rem;
+  background: var(--ib-subtle, #f6f7f9);
+}
+
+.ib-mobile-control-inspector-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ib-mobile-control-inspector-heading > div,
+.ib-mobile-control-inspector > label,
+.ib-mobile-control-empty {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ib-mobile-control-inspector-heading span,
+.ib-mobile-control-inspector > label > span,
+.ib-mobile-control-hint,
+.ib-mobile-control-empty span {
+  color: var(--ib-muted, #606774);
+  font-size: 0.76rem;
+}
+
+.ib-mobile-control-inspector input,
+.ib-mobile-control-inspector select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.ib-mobile-control-geometry {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ib-mobile-control-geometry legend {
+  grid-column: 1 / -1;
+  margin-bottom: 0.1rem;
+  color: var(--ib-muted, #606774);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.ib-mobile-control-geometry label {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.ib-mobile-control-hint {
+  margin: 0;
+  line-height: 1.45;
+}
+
 @media (max-width: 980px) {
   .ib-workbench-header,
   .ib-presentation-toolbar,
@@ -588,8 +820,14 @@
   .ib-scenario-toolbar,
   .ib-reference-layout,
   .ib-preview-layout,
-  .ib-inspector-grid {
+  .ib-inspector-grid,
+  .ib-mobile-overlay-layout {
     grid-template-columns: 1fr;
+  }
+
+  .ib-mobile-controls-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .ib-mode-switch {
@@ -623,7 +861,8 @@
   .ib-reference-keyboard,
   .ib-preview-surface,
   .ib-scenario-toolbar,
-  .ib-conflict-workbench {
+  .ib-conflict-workbench,
+  .ib-mobile-controls {
     padding: 0.8rem;
   }
 
@@ -652,7 +891,9 @@
   .ib-workbench-tabs {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     gap: 0.25rem;
     padding: 0.25rem;
   }
@@ -699,6 +940,14 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     width: 100%;
+  }
+
+  .ib-mobile-control-palette {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ib-mobile-overlay-frame {
+    border-radius: 0.75rem;
   }
 
   .ib-key-inspection-binding {
