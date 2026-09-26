@@ -193,9 +193,9 @@ test("mobile controls expose the starter overlay and exact geometry inputs", () 
 
   assert.match(html, /Mobile controls/);
   assert.match(html, /Move mobile control/);
-  assert.match(html, /Primary mobile control/);
-  assert.match(html, /Camera \/ gesture mobile control/);
-  assert.match(html, /Commands mobile control/);
+  assert.match(html, /A mobile control/);
+  assert.match(html, /Look mobile control/);
+  assert.match(html, /Menu mobile control/);
   assert.match(html, /Position and size \(%\)/);
   assert.match(html, /type="number"/);
   assert.match(html, /Add gesture zone/);
