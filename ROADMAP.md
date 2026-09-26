@@ -188,10 +188,23 @@ Acceptance: users can maintain multiple portable binding setups and accessibilit
 
 Acceptance: the same binding semantics work cleanly inside the settings framework without either repository absorbing the other's authority.
 
-## 16. Touch and advanced device interaction — later
+## 16. Touch, analog, and motion input — in progress
 
-- Swipe, pinch, virtual-stick, and touch-region bindings where they can be normalized deterministically.
-- Interactive device diagrams and per-device diagnostics.
-- Preserve semantic actions so touch/gamepad/keyboard remain alternative inputs rather than separate command systems.
+Implemented first slice:
 
-Acceptance: touch and richer device input reuse the same action/context/profile foundations instead of creating a parallel input architecture.
+- Semantic `Axis1D` / `Axis2D` runtime actions live beside the discrete shortcut resolver rather than being encoded as fake key strokes.
+- A deterministic analog controller aggregates multiple normalized sources for the same action and provides deadzone, sensitivity, smoothing, rotation, source-release, and reset primitives.
+- Browser adapters execute virtual sticks and touch-look regions as continuous Axis2D producers.
+- Browser gyroscope input uses motion rotation-rate data, explicit permission requests, screen-orientation normalization, configurable sensitivity/deadzone/smoothing, and the same semantic look axis as touch.
+- The mobile overlay model can map sticks/gesture zones to analog actions and provides a reusable runtime/test surface for sticks, action buttons, and look regions.
+- The Pages dogfood shows live move/look values and never asks for motion permission until the user explicitly enables gyroscope look.
+
+Remaining:
+
+- Add swipe, pinch, tap/hold, and richer gesture recognition where deterministic semantics are useful.
+- Add user-facing gyro calibration/recenter and persisted per-profile motion settings.
+- Add gamepad continuous-axis producers to the same analog action path rather than only threshold-to-discrete bindings.
+- Add Rust-side analog helpers when a Rust-native consumer needs the continuous path; do not move the web sensor adapters into core.
+- Add richer live device diagnostics without turning the settings surface into a profiler.
+
+Acceptance: touch and motion can already feed shared semantic continuous actions without a parallel application command system; richer gestures, profiles, and non-web parity remain.
