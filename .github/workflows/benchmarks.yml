@@ -32,7 +32,7 @@ jobs:
         run: npm run bench:ts -- benchmark-results/typescript.json
       - name: Run Rust benchmarks
         run: npm run bench:rust -- benchmark-results/rust.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: input-bindings-benchmarks-${{ github.sha }}
           path: benchmark-results/
