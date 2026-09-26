@@ -59,6 +59,30 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   await inspector.getByRole("spinbutton", { name: "X", exact: true }).fill("74");
   await expect(inspector.getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("74");
 
+  await page.getByRole("button", { name: "Move mobile control" }).click();
+  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue("game.move");
+
+  await page.getByRole("button", { name: "Test", exact: true }).click();
+  await expect(page.getByLabel("Mobile controls runtime")).toBeVisible();
+
+  const stick = page.getByRole("button", { name: "Move runtime control" });
+  const stickBox = await stick.boundingBox();
+  expect(stickBox).not.toBeNull();
+  if (stickBox) {
+    await page.mouse.move(stickBox.x + stickBox.width / 2, stickBox.y + stickBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(stickBox.x + stickBox.width - 2, stickBox.y + stickBox.height / 2);
+    await expect(page.getByLabel("Live mobile input").getByText(/1\.00, 0\.00/)).toBeVisible();
+    await page.mouse.up();
+    await expect(page.getByLabel("Live mobile input").getByText(/0\.00, 0\.00/).first()).toBeVisible();
+  }
+
+  await page.getByRole("button", { name: "A runtime control" }).click();
+  await expect(page.getByLabel("Live mobile input").getByText(/game\.jump · release/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Enable gyroscope look" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+
   await page.screenshot({
     path: "test-results/pages/mobile-controls-overlay.png",
     fullPage: true,
