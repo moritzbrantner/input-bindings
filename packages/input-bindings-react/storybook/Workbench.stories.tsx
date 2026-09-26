@@ -9,9 +9,11 @@ import type {
 } from "@moritzbrantner/input-bindings";
 
 import {
+  createStarterMobileControlsOverlay,
   InputBindingsWorkbench,
   type InputBindingsContextScenario,
   type InputBindingsWorkbenchProps,
+  type MobileControlsOverlay,
 } from "../src/Workbench.tsx";
 import "../src/workbench.css";
 import "./Workbench.stories.css";
@@ -174,8 +176,27 @@ const contextScenarios: InputBindingsContextScenario[] = [
   },
 ];
 
+
+const starterMobileOverlay = createStarterMobileControlsOverlay();
+const mobileActionByControl = new Map<string, string>([
+  ["movement-stick", "game.jump"],
+  ["primary-action", "game.jump"],
+  ["secondary-action", "menu.close"],
+  ["command-dock", "game.pause"],
+]);
+const storybookMobileOverlay: MobileControlsOverlay = {
+  ...starterMobileOverlay,
+  controls: starterMobileOverlay.controls.map((control) => {
+    const actionId = mobileActionByControl.get(control.id);
+    return actionId ? { ...control, actionId } : control;
+  }),
+};
+
 function StatefulWorkbench(args: InputBindingsWorkbenchProps) {
   const [currentProfile, setCurrentProfile] = useState(args.profile);
+  const [currentMobileOverlay, setCurrentMobileOverlay] = useState(
+    () => args.mobileOverlay ?? storybookMobileOverlay,
+  );
 
   return (
     <main className="ib-story-workbench">
@@ -183,9 +204,14 @@ function StatefulWorkbench(args: InputBindingsWorkbenchProps) {
         {...args}
         profile={currentProfile}
         onProfileChange={setCurrentProfile}
+        mobileOverlay={currentMobileOverlay}
+        onMobileOverlayChange={setCurrentMobileOverlay}
       />
       <output className="ib-story-profile-state" data-testid="profile-state" aria-live="polite">
         Profile patches: {currentProfile.patches.length}
+      </output>
+      <output className="ib-story-profile-state" data-testid="mobile-overlay-state" aria-live="polite">
+        Mobile controls: {currentMobileOverlay.controls.length}
       </output>
     </main>
   );
@@ -200,12 +226,15 @@ const meta = {
     profile,
     onProfileChange: () => {},
     contextScenarios,
+    mobileOverlay: storybookMobileOverlay,
   },
   argTypes: {
     registry: { control: false },
     profile: { control: false },
     onProfileChange: { control: false },
     contextScenarios: { control: false },
+    mobileOverlay: { control: false },
+    onMobileOverlayChange: { control: false },
   },
 } satisfies Meta<typeof InputBindingsWorkbench>;
 
