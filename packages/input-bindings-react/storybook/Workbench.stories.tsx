@@ -179,7 +179,6 @@ const contextScenarios: InputBindingsContextScenario[] = [
 
 const starterMobileOverlay = createStarterMobileControlsOverlay();
 const mobileActionByControl = new Map<string, string>([
-  ["movement-stick", "game.jump"],
   ["primary-action", "game.jump"],
   ["secondary-action", "menu.close"],
   ["command-dock", "game.pause"],
