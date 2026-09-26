@@ -257,13 +257,13 @@ export async function requestDeviceMotionPermission(): Promise<MotionPermissionS
       requestPermission?: () => Promise<"granted" | "denied">;
     };
   };
-  const requestPermission = globals.DeviceMotionEvent?.requestPermission;
-  if (!requestPermission) {
-    return globals.DeviceMotionEvent ? "granted" : "unsupported";
+  const motionEvent = globals.DeviceMotionEvent;
+  if (!motionEvent?.requestPermission) {
+    return motionEvent ? "granted" : "unsupported";
   }
 
   try {
-    return (await requestPermission()) === "granted" ? "granted" : "denied";
+    return (await motionEvent.requestPermission()) === "granted" ? "granted" : "denied";
   } catch {
     return "denied";
   }
