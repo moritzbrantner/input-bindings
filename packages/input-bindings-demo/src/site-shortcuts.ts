@@ -74,7 +74,7 @@ function installHint(): void {
   const hint = document.createElement("button");
   hint.type = "button";
   hint.className = "site-shortcut-hint";
-  hint.textContent = "Hotkeys ?";
+  hint.textContent = "Shortcuts ?";
   hint.setAttribute("aria-haspopup", "dialog");
   hint.addEventListener("click", toggleHelp);
   document.body.append(hint);
@@ -92,7 +92,7 @@ function toggleHelp(): void {
   overlay.className = "site-shortcut-overlay";
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", "GitHub Pages hotkeys");
+  overlay.setAttribute("aria-label", "GitHub Pages shortcuts");
   overlay.innerHTML = `
     <div class="site-shortcut-dialog">
       <div class="site-shortcut-dialog-header">
