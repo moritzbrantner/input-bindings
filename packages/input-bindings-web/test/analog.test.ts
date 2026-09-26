@@ -11,6 +11,7 @@ import {
   attachVirtualStickAnalog,
   gyroscopeEventToAxis2D,
   pointerAxisFromCenter,
+  requestDeviceMotionPermission,
   type AnalogPointerEventLike,
 } from "../src/index.ts";
 
@@ -195,4 +196,29 @@ test("gyroscope and touch can feed the same semantic look axis", () => {
   assert.deepEqual(controller.value("game.look"), { x: 0.25, y: 0 });
   detachMotion();
   assert.deepEqual(controller.value("game.look"), { x: 0, y: 0 });
+});
+
+
+test("motion permission helper preserves the platform request receiver", async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, "DeviceMotionEvent");
+  const fake = {
+    async requestPermission(this: unknown) {
+      assert.equal(this, fake);
+      return "granted" as const;
+    },
+  };
+  Object.defineProperty(globalThis, "DeviceMotionEvent", {
+    configurable: true,
+    value: fake,
+  });
+
+  try {
+    assert.equal(await requestDeviceMotionPermission(), "granted");
+  } finally {
+    if (descriptor) {
+      Object.defineProperty(globalThis, "DeviceMotionEvent", descriptor);
+    } else {
+      Reflect.deleteProperty(globalThis, "DeviceMotionEvent");
+    }
+  }
 });
