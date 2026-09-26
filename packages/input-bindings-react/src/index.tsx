@@ -822,7 +822,7 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
               </label>
               <fieldset className="ib-manual-modifiers">
                 <legend>Modifiers</legend>
-                {(["ctrl", "alt", "shift", "meta"] as const).map((modifier) => (
+                {(["ctrl", "alt", "shift", "meta", "altGraph"] as const).map((modifier) => (
                   <label key={modifier}>
                     <input
                       type="checkbox"
@@ -834,7 +834,15 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
                         }))
                       }
                     />
-                    <span>{modifier === "ctrl" ? "Ctrl" : modifier === "meta" ? "Meta" : modifier[0]!.toUpperCase() + modifier.slice(1)}</span>
+                    <span>
+                      {modifier === "ctrl"
+                        ? "Ctrl"
+                        : modifier === "meta"
+                          ? "Meta"
+                          : modifier === "altGraph"
+                            ? "AltGraph"
+                            : modifier[0]!.toUpperCase() + modifier.slice(1)}
+                    </span>
                   </label>
                 ))}
               </fieldset>
