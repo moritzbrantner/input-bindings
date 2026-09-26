@@ -137,14 +137,10 @@ export function attachTouchLookAnalog(
 
   const emit = (event: AnalogPointerEventLike) => {
     if (!origin) return;
-    const rect = options.target.getBoundingClientRect();
-    const defaultTravel = Math.max(1, Math.min(rect.width, rect.height) / 3);
-    const travel = Math.max(1, options.maxTravelPx ?? defaultTravel);
-    const value = processPointerAxis(
-      {
-        x: (event.clientX - origin.x) / travel,
-        y: (event.clientY - origin.y) / travel,
-      },
+    const value = pointerAxisFromOrigin(
+      options.target,
+      event,
+      origin,
       options,
     );
     controller.setAxis2D(sourceId, options.action, value);
@@ -271,6 +267,27 @@ export async function requestDeviceMotionPermission(): Promise<MotionPermissionS
   } catch {
     return "denied";
   }
+}
+
+export function pointerAxisFromOrigin(
+  target: Pick<AnalogPointerTargetLike, "getBoundingClientRect">,
+  event: Pick<AnalogPointerEventLike, "clientX" | "clientY">,
+  origin: { x: number; y: number },
+  options: Pick<
+    TouchLookAnalogAdapterOptions,
+    "deadzone" | "sensitivity" | "invertX" | "invertY" | "maxTravelPx"
+  > = {},
+): Axis2D {
+  const rect = target.getBoundingClientRect();
+  const defaultTravel = Math.max(1, Math.min(rect.width, rect.height) / 3);
+  const travel = Math.max(1, options.maxTravelPx ?? defaultTravel);
+  return processPointerAxis(
+    {
+      x: (event.clientX - origin.x) / travel,
+      y: (event.clientY - origin.y) / travel,
+    },
+    options,
+  );
 }
 
 export function pointerAxisFromCenter(
