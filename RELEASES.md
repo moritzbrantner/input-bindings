@@ -31,4 +31,27 @@ Creating a tag is therefore the explicit publication action. The workflow does n
 
 ## npm boundary
 
-The reusable TypeScript workspaces remain `private` while their public exports point at source `.ts`/`.tsx`. GitHub release artifacts are the supported browser distribution surface for this phase. npm publication should only be enabled after those workspaces have a compiled JavaScript/declaration build, explicit package contents, and equivalent artifact validation.
+The reusable TypeScript workspaces remain `private` and are not published to a registry. `npm run build:packages` compiles each workspace to `dist/` JavaScript and declarations, and `npm run pack:packages` verifies the packed contents. npm publication should only be enabled after an explicit release decision.
+
+## Git distribution branches
+
+Package managers install a Git dependency only from a repository root, so a consumer cannot depend on `packages/input-bindings-web` at a source commit. The `Package distribution` workflow therefore publishes each verified packed workspace to its own branch after every push to `main`:
+
+| Package | Branch |
+| --- | --- |
+| `@moritzbrantner/input-bindings` | `dist/input-bindings` |
+| `@moritzbrantner/input-bindings-runtime` | `dist/input-bindings-runtime` |
+| `@moritzbrantner/input-bindings-web` | `dist/input-bindings-web` |
+| `@moritzbrantner/input-bindings-react` | `dist/input-bindings-react` |
+
+Each distribution commit contains exactly the `npm pack` contents at its root. Internal dependencies are rewritten to the exact distribution commits produced in the same run, so pinning one commit pins the whole internal graph. The commit message names the source commit it was built from.
+
+Distribution branches only fast-forward. A new commit is added only when a package's packed contents change, with the previous tip as parent, so commits consumers have pinned stay reachable. Pull requests run the same preparation without pushing.
+
+Consumers pin an exact distribution commit, never the branch name:
+
+```sh
+bun add "@moritzbrantner/input-bindings-web@github:moritzbrantner/input-bindings#<dist commit>"
+```
+
+`target/npm/git-dist.json` (and the workflow run summary) lists the commit and dependency specifier for every package. Run `npm run dist:git` locally to prepare the same commits without pushing.

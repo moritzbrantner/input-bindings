@@ -8,7 +8,7 @@
   "scripts": {
     "build:packages": "node scripts/build-npm-packages.mjs",
     "pack:packages": "node scripts/pack-npm-packages.mjs",
-    "test:ts": "npm run build:packages && node --experimental-strip-types --test packages/input-bindings/test/*.test.ts packages/input-bindings-runtime/test/*.test.ts packages/input-bindings-web/test/*.test.ts packages/input-bindings-react/test/*.test.ts",
+    "test:ts": "npm run build:packages && node --experimental-strip-types --test packages/input-bindings/test/*.test.ts packages/input-bindings-runtime/test/*.test.ts packages/input-bindings-web/test/*.test.ts packages/input-bindings-react/test/*.test.ts scripts/publish-git-dist.test.mjs",
     "build:pages": "npm run build:packages && npm run build --workspace @moritzbrantner/input-bindings-demo",
     "bench:ts": "node --experimental-strip-types packages/input-bindings/benchmark/run.ts",
     "bench:rust": "cargo run --locked --release -p input-bindings-core --example benchmark --",
@@ -18,7 +18,8 @@
     "test:storybook": "npm run build:storybook && npm run test:storybook:built",
     "test:storybook:built": "playwright test -c playwright.storybook.config.ts",
     "test:pages": "npm run build:pages && npm run test:pages:built",
-    "test:pages:built": "playwright test -c playwright.pages.config.ts"
+    "test:pages:built": "playwright test -c playwright.pages.config.ts",
+    "dist:git": "npm run build:packages && npm run pack:packages && node scripts/publish-git-dist.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
