@@ -1,0 +1,19 @@
+import { type ActionDefinition, type ActionRegistry, type Binding, type Conflict, type ConflictKind, type InputStroke, type Profile, type WhenExpr } from "@moritzbrantner/input-bindings";
+export declare function flattenDefaults(registry: ActionRegistry): Binding[];
+export declare function profileFromBindings(registry: ActionRegistry, effectiveBindings: readonly Binding[], profileId: string): Profile;
+export declare function bindingEquals(left: Binding, right: Binding): boolean;
+export declare function actionIsChanged(action: ActionDefinition, effectiveBindings: readonly Binding[]): boolean;
+export interface ActionEditorIndexEntry {
+    bindings: readonly Binding[];
+    changed: boolean;
+    contexts: ReadonlySet<string>;
+    conflictKinds: ReadonlySet<ConflictKind>;
+    searchText: string;
+}
+export declare function createActionEditorIndex(registry: ActionRegistry, effectiveBindings: readonly Binding[], conflicts: readonly Conflict[]): ReadonlyMap<string, ActionEditorIndexEntry>;
+export declare function nextBindingId(actionId: string, bindings: readonly Binding[]): string;
+export declare function formatStroke(stroke: InputStroke): string;
+export declare function formatSequence(sequence: readonly InputStroke[]): string;
+export declare function describeWhen(expression: WhenExpr | undefined): string;
+export declare function contextsForWhen(expression: WhenExpr | undefined): string[];
+export declare function sequenceStartsWith(sequence: readonly InputStroke[], prefix: readonly InputStroke[]): boolean;

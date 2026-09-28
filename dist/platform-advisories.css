@@ -1,0 +1,131 @@
+.ib-platform-advisories {
+  margin: 0 0 1rem;
+  border: 1px solid var(--ib-border, #d0d7de);
+  border-radius: 8px;
+  background: var(--ib-surface, #fff);
+}
+
+.ib-platform-advisories > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ib-platform-environment {
+  color: var(--ib-muted, #59636e);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ib-platform-advisories > p,
+.ib-platform-advisory-list {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.ib-platform-advisory-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ib-platform-advisory {
+  padding: 0.85rem;
+  border: 1px solid var(--ib-border, #d0d7de);
+  border-radius: 7px;
+  background: var(--ib-subtle, #f6f8fa);
+}
+
+.ib-platform-advisory-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ib-platform-advisory-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.ib-platform-advisory-heading kbd {
+  padding: 0.18rem 0.4rem;
+  border: 1px solid var(--ib-border, #d0d7de);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--ib-surface, #fff);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.ib-platform-advisory ul {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ib-platform-advisory li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.ib-platform-advisory li p {
+  margin: 0.2rem 0;
+  color: var(--ib-muted, #59636e);
+  font-size: 0.86rem;
+}
+
+.ib-platform-advisory li a {
+  color: inherit;
+  font-size: 0.8rem;
+}
+
+.ib-advisory-severity {
+  min-width: 4.4rem;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ib-advisory-severity.is-warning {
+  color: #8a5a00;
+}
+
+.ib-advisory-severity.is-info {
+  color: #0969da;
+}
+
+@media (max-width: 720px) {
+  .ib-platform-advisories > summary,
+  .ib-platform-advisory-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .ib-platform-advisory li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ib-advisory-severity.is-warning {
+    color: #d29922;
+  }
+
+  .ib-advisory-severity.is-info {
+    color: #58a6ff;
+  }
+}
