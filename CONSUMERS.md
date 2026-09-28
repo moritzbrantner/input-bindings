@@ -2,7 +2,7 @@
 
 `input-bindings` owns normalized input, binding resolution, runtime lifecycle, persistence semantics, and reusable configuration UI. A consuming repository must continue to own its semantic actions, defaults, active contexts, and the code that actually performs each action.
 
-The integrations intentionally exercise different application shapes. They use the self-contained GitHub Pages ESM bridge while package publication is still being hardened; consumers must not copy resolver/runtime code locally.
+The integrations intentionally exercise different application shapes. The integrations below use the self-contained GitHub Pages ESM bridge. New consumers should instead pin an exact commit of the Git distribution branches described in [RELEASES.md](RELEASES.md#git-distribution-branches), so a Pages deploy cannot change their behavior. Consumers must not copy resolver/runtime code locally.
 
 ## SceneDetect RS — dense timeline/editor
 

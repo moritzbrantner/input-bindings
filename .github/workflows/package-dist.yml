@@ -1,0 +1,53 @@
+name: Package distribution
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-distribution-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npm run dist:git
+      - name: Summarize distribution commits
+        run: |
+          {
+            echo '```json'
+            cat target/npm/git-dist.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npm run dist:git -- --push
+      - name: Summarize distribution commits
+        run: |
+          {
+            echo '```json'
+            cat target/npm/git-dist.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
