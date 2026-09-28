@@ -1,0 +1,95 @@
+import { type ActionRegistry, type Binding, type ContextLayer, type InputStroke, type KeyStroke, type Profile, type RegistryValidationReport, type Resolution } from "@moritzbrantner/input-bindings";
+export type RuntimeActionPhase = "press" | "repeat" | "release";
+export type RuntimeConsumePolicy = "never" | "matched" | "dispatched";
+export type RuntimeDispatchReason = "direct" | "chord" | "timeout" | "keyUp" | "reset";
+export type RuntimeDecisionKind = "none" | "pending" | "dispatched" | "released" | "ambiguous" | "repeatSuppressed" | "cancelled" | "reset" | "invalidConfiguration";
+export type RuntimeDecisionReason = "unmatched" | "pendingChord" | "resolved" | "ambiguous" | "repeatSuppressed" | "keyReleased" | "chordMismatch" | "chordCancelled" | "timeoutResolved" | "timeoutAmbiguous" | "timeoutExpired" | "reset" | "invalidConfiguration";
+export interface RuntimeScheduler {
+    setTimeout(callback: () => void, delayMs: number): unknown;
+    clearTimeout(handle: unknown): void;
+}
+export interface RuntimeDispatch {
+    action: string;
+    bindingId: string;
+    phase: RuntimeActionPhase;
+    repeat: boolean;
+    reason: RuntimeDispatchReason;
+    sequence: InputStroke[];
+    activeContexts: string[];
+}
+export interface RuntimeExplanation {
+    reason: RuntimeDecisionReason;
+    bindingIds?: string[];
+    continuationBindingIds?: string[];
+    cancelledSequence?: InputStroke[];
+    resetReason?: string;
+}
+export interface RuntimeDecision {
+    kind: RuntimeDecisionKind;
+    sequence: InputStroke[];
+    activeContexts: string[];
+    resolution?: Resolution;
+    dispatches: RuntimeDispatch[];
+    consumed: boolean;
+    explanation: RuntimeExplanation;
+}
+export interface RuntimeControllerOptions {
+    registry: ActionRegistry;
+    profile?: Profile;
+    getActiveContexts: () => ReadonlySet<string>;
+    getContextStack?: () => readonly ContextLayer[];
+    chordTimeoutMs?: number;
+    consumePolicy?: RuntimeConsumePolicy;
+    retryOnChordMismatch?: boolean;
+    scheduler?: RuntimeScheduler;
+    onDispatch?: (dispatch: RuntimeDispatch) => void;
+    onDecision?: (decision: RuntimeDecision) => void;
+}
+export interface InputDownOptions {
+    repeat?: boolean;
+}
+export type KeyDownOptions = InputDownOptions;
+export declare class InputRuntimeController {
+    private registry;
+    private compiledRegistry;
+    private profile;
+    private report;
+    private readonly getActiveContexts;
+    private readonly getContextStack?;
+    private readonly chordTimeoutMs;
+    private readonly consumePolicy;
+    private readonly retryOnChordMismatch;
+    private readonly scheduler;
+    private readonly onDispatch?;
+    private readonly onDecision?;
+    private pending;
+    private pendingExactBindingIds;
+    private timer;
+    private readonly active;
+    private readonly pressedInputs;
+    constructor(options: RuntimeControllerOptions);
+    get validationReport(): RegistryValidationReport;
+    get effectiveBindings(): Binding[];
+    get pendingSequence(): InputStroke[];
+    get hasPendingChord(): boolean;
+    updateConfiguration(registry: ActionRegistry, profile?: Profile): RuntimeDecision;
+    updateProfile(profile?: Profile): RuntimeDecision;
+    handleKeyDown(stroke: KeyStroke, options?: KeyDownOptions): RuntimeDecision;
+    handleInputDown(stroke: InputStroke, options?: InputDownOptions): RuntimeDecision;
+    handleKeyUp(stroke: KeyStroke): RuntimeDecision;
+    handleInputUp(stroke: InputStroke): RuntimeDecision;
+    cancelChord(reason?: string): RuntimeDecision;
+    reset(reason?: string): RuntimeDecision;
+    private processFreshStroke;
+    private finishInputDown;
+    private scheduleTimeout;
+    private flushPendingTimeout;
+    private resolve;
+    private activate;
+    private contextStack;
+    private contexts;
+    private clearPending;
+    private shouldConsume;
+    private decision;
+    private emit;
+}
