@@ -1,0 +1,33 @@
+{
+  "name": "@moritzbrantner/input-bindings-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moritzbrantner/input-bindings.git",
+    "directory": "packages/input-bindings-web"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./platform-conflicts": {
+      "types": "./dist/platformCatalog.d.ts",
+      "import": "./dist/platformCatalog.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#f3747579e462d9c6e65196912d1348afd5cf4b13",
+    "@moritzbrantner/input-bindings-runtime": "github:moritzbrantner/input-bindings#2f8c5e2caf435d9bdc284aae09246041680c67b6"
+  }
+}
