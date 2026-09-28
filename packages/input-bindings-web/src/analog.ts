@@ -104,25 +104,30 @@ export function attachVirtualStickAnalog(
     if (event.pointerId !== pointerId) return;
     emit(event);
   };
-  const stop = (rawEvent: any) => {
+  const stop = (rawEvent: any, releaseCapture = true) => {
     const event = rawEvent as AnalogPointerEventLike;
     if (event.pointerId !== pointerId) return;
-    options.target.releasePointerCapture?.(event.pointerId);
     pointerId = undefined;
+    if (releaseCapture) {
+      options.target.releasePointerCapture?.(event.pointerId);
+    }
     controller.clearSource(sourceId, options.action);
     if (options.preventDefault ?? true) event.preventDefault?.();
   };
+  const onLostPointerCapture = (rawEvent: any) => stop(rawEvent, false);
 
   options.target.addEventListener("pointerdown", onPointerDown);
   options.target.addEventListener("pointermove", onPointerMove);
   options.target.addEventListener("pointerup", stop);
   options.target.addEventListener("pointercancel", stop);
+  options.target.addEventListener("lostpointercapture", onLostPointerCapture);
 
   return () => {
     options.target.removeEventListener("pointerdown", onPointerDown);
     options.target.removeEventListener("pointermove", onPointerMove);
     options.target.removeEventListener("pointerup", stop);
     options.target.removeEventListener("pointercancel", stop);
+    options.target.removeEventListener("lostpointercapture", onLostPointerCapture);
     controller.clearSource(sourceId, options.action);
   };
 }
@@ -161,26 +166,31 @@ export function attachTouchLookAnalog(
     if (event.pointerId !== pointerId) return;
     emit(event);
   };
-  const stop = (rawEvent: any) => {
+  const stop = (rawEvent: any, releaseCapture = true) => {
     const event = rawEvent as AnalogPointerEventLike;
     if (event.pointerId !== pointerId) return;
-    options.target.releasePointerCapture?.(event.pointerId);
     pointerId = undefined;
     origin = undefined;
+    if (releaseCapture) {
+      options.target.releasePointerCapture?.(event.pointerId);
+    }
     controller.clearSource(sourceId, options.action);
     if (options.preventDefault ?? true) event.preventDefault?.();
   };
+  const onLostPointerCapture = (rawEvent: any) => stop(rawEvent, false);
 
   options.target.addEventListener("pointerdown", onPointerDown);
   options.target.addEventListener("pointermove", onPointerMove);
   options.target.addEventListener("pointerup", stop);
   options.target.addEventListener("pointercancel", stop);
+  options.target.addEventListener("lostpointercapture", onLostPointerCapture);
 
   return () => {
     options.target.removeEventListener("pointerdown", onPointerDown);
     options.target.removeEventListener("pointermove", onPointerMove);
     options.target.removeEventListener("pointerup", stop);
     options.target.removeEventListener("pointercancel", stop);
+    options.target.removeEventListener("lostpointercapture", onLostPointerCapture);
     controller.clearSource(sourceId, options.action);
   };
 }

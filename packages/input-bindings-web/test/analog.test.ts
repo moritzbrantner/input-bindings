@@ -145,6 +145,73 @@ test("touch look uses displacement from touch-down as a normalized look rate", (
   detach();
 });
 
+test("pointer analog adapters clear their source when pointer capture is lost", () => {
+  const stickController = analogController();
+  const stickTarget = new FakePointerTarget();
+  const detachStick = attachVirtualStickAnalog(stickController, {
+    target: stickTarget,
+    action: "game.move",
+    deadzone: 0,
+  });
+
+  stickTarget.emit("pointerdown", {
+    pointerId: 4,
+    clientX: 100,
+    clientY: 50,
+  });
+  assert.deepEqual(stickController.value("game.move"), { x: 1, y: 0 });
+
+  stickTarget.emit("lostpointercapture", {
+    pointerId: 4,
+  });
+  assert.deepEqual(stickController.value("game.move"), { x: 0, y: 0 });
+  assert.deepEqual(stickTarget.released, []);
+
+  stickTarget.emit("pointermove", {
+    pointerId: 4,
+    clientX: 0,
+    clientY: 50,
+  });
+  assert.deepEqual(stickController.value("game.move"), { x: 0, y: 0 });
+  detachStick();
+
+  const lookController = analogController();
+  const lookTarget = new FakePointerTarget();
+  const detachLook = attachTouchLookAnalog(lookController, {
+    target: lookTarget,
+    action: "game.look",
+    sourceId: "touch-look",
+    deadzone: 0,
+    maxTravelPx: 25,
+  });
+
+  lookTarget.emit("pointerdown", {
+    pointerId: 7,
+    clientX: 50,
+    clientY: 50,
+  });
+  lookTarget.emit("pointermove", {
+    pointerId: 7,
+    clientX: 75,
+    clientY: 50,
+  });
+  assert.deepEqual(lookController.value("game.look"), { x: 1, y: 0 });
+
+  lookTarget.emit("lostpointercapture", {
+    pointerId: 7,
+  });
+  assert.deepEqual(lookController.value("game.look"), { x: 0, y: 0 });
+  assert.deepEqual(lookTarget.released, []);
+
+  lookTarget.emit("pointermove", {
+    pointerId: 7,
+    clientX: 25,
+    clientY: 50,
+  });
+  assert.deepEqual(lookController.value("game.look"), { x: 0, y: 0 });
+  detachLook();
+});
+
 test("gyroscope samples normalize rotation rate and screen orientation", () => {
   assert.deepEqual(
     gyroscopeEventToAxis2D(
