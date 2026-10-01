@@ -53,6 +53,10 @@ The runtime controller remains responsible for input-down/up state, repeats, cho
 
 Changing the application stack is therefore not an implicit dispatch operation. Consumers remain authoritative for when layers are pushed or popped. Press/release lifecycle remains paired by normalized input identity so a later context change does not strand an already active press.
 
+## Held control state
+
+Games often sample input on a fixed simulation tick instead of reacting to each dispatch. `SemanticControlState` is the consumer-side bridge: it applies runtime dispatches, tracks which semantic actions are held and by which bindings (several devices may hold one action), exposes `axis(negative, positive)` for digital axes, and queues presses so one-shot actions pressed and released between ticks are sampled exactly once. It never interprets actions or reads clocks. Releases come from the runtime's activation pairing and reset lifecycle, so blur, hidden visibility, device disconnect, explicit retirement on context transitions, and profile changes cannot strand held state. Gestures count only as presses.
+
 ## Continuous analog input
 
 Continuous input is a sibling runtime path, not another `InputStroke` variant. The discrete resolver remains authoritative for keys, buttons, chords, conflict ranking, and press/release lifecycle. Analog sources instead publish normalized `Axis1D` or `Axis2D` values directly to semantic analog action ids.
