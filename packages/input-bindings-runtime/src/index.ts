@@ -1,4 +1,5 @@
 export * from "./analog.ts";
+export * from "./control-state.ts";
 export * from "./gesture-features.ts";
 export * from "./gesture-primitives.ts";
 export * from "./gesture-templates.ts";
