@@ -32,7 +32,7 @@ When asked to "pick up work", take the oldest open issue labeled `spec:ready` pl
 An implementer run (Codex: the `implementer-loop` skill in `.agents/skills/`; Sonnet: dispatched by `/agent-loop`) takes exactly one action, in this priority order, then reports and exits.
 
 1. **Fix your own open PR.** A PR of yours (its issue carries your `agent:*` label) needs work when:
-   - a CI check failed;
+   - a CI check failed (`failure` or `timed_out`; a `cancelled` check is not a failure, re-run it with `gh run rerun <run-id>`);
    - a Codex review finding is neither fixed nor answered;
    - the loop driver posted a "changes needed" comment newer than your last push.
 

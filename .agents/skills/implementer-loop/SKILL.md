@@ -23,7 +23,7 @@ You are ChatGPT Sol, the implementer for `agent:sol` tasks in `moritzbrantner/in
 - One branch, one PR. Never split the task or open follow-up issues; put unrelated findings in one line of the PR description.
 - Keep Rust and TypeScript in parity through shared fixtures under `fixtures/`, and bump the configuration schema version at most once.
 - Testing:
-  - install with `bun install --frozen-lockfile`; iterate with focused checks (`cargo test -p input-bindings-core`, `bun test <package tests>`, `bun run check:fast`), and run `bun run check` before pushing;
+  - install with `bun install --frozen-lockfile`; iterate with focused checks (`cargo test -p input-bindings-core`, `bun test <package tests>`, `bun run check:fast`) for the touched scope;
   - GitHub Actions is the full gate (`Validate`, `Browser Quality`, `Release artifacts`, `Package distribution`);
   - locally, run only what CI does not run: `bun run bench:ts` / `bun run bench:rust` when the issue makes a performance claim (evidence, never a pass/fail threshold);
   - verification commands must not rewrite tracked files; use `bun run format` / `bun run lint:fix` explicitly;
