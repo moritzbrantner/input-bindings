@@ -45,6 +45,11 @@ export type PointerStrokeCaptureOptions = {
   mouseButtons?: readonly number[] | undefined;
   coalesced?: CoalescedPointerPolicy | undefined;
   maxActiveStrokes?: number | undefined;
+  /**
+   * Cancel active strokes as `multiPointer` when another pointer goes down, so a two-pointer
+   * adapter on the same element can take over. Defaults to false (the extra pointer is ignored).
+   */
+  cancelOnAdditionalPointer?: boolean | undefined;
   capturePointer?: boolean | undefined;
   preventDefault?: boolean | undefined;
   focusTarget?: RuntimeEventTargetLike | undefined;
@@ -89,6 +94,12 @@ export function attachPointerStrokeCapture(options: PointerStrokeCaptureOptions)
     }
     if (kind === "mouse" && !mouseButtons.has(event.button ?? 0)) {
       return;
+    }
+    if (options.cancelOnAdditionalPointer && tracker.activeStrokes().length > 0) {
+      if (!tracker.isActive(event.pointerId)) {
+        tracker.cancelAll("multiPointer");
+        return;
+      }
     }
     const rect = target.getBoundingClientRect();
     tracker.begin(toInput(event), {
