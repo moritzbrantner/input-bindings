@@ -7,6 +7,7 @@ import {
   type BindingPatch,
   type Conflict,
   type ConflictKind,
+  type GestureMatch,
   type InputStroke,
   type Modifiers,
   type Profile,
@@ -182,6 +183,28 @@ export function formatStroke(stroke: InputStroke): string {
       return `${gamepadLabel(stroke.gamepad)} Button ${stroke.button} ≥ ${stroke.threshold}%`;
     case "gamepadAxis":
       return `${gamepadLabel(stroke.gamepad)} Axis ${stroke.axis} ${stroke.direction === "positive" ? "+" : "−"} ≥ ${stroke.threshold}% (deadzone ${stroke.deadzone}%)`;
+    case "gesture":
+      return formatGesture(stroke.gesture);
+  }
+}
+
+export function formatGesture(gesture: GestureMatch): string {
+  switch (gesture.kind) {
+    case "tap":
+      return "Tap";
+    case "hold":
+      return "Hold";
+    case "drag":
+    case "swipe":
+    case "slash":
+      return [capitalize(gesture.kind), gesture.direction].filter(Boolean).join(" ");
+    case "circle":
+      if (!gesture.orientation) {
+        return "Circle";
+      }
+      return gesture.orientation === "clockwise" ? "Circle clockwise" : "Circle counter-clockwise";
+    case "symbol":
+      return `Symbol ${gesture.id}`;
   }
 }
 
