@@ -153,3 +153,30 @@
     border-color: #30363d;
   }
 }
+
+.gesture-target {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 2px solid #8250df;
+  border-radius: 50%;
+  color: #8250df;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.gesture-scenario {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gesture-target {
+    border-color: #a371f7;
+    color: #a371f7;
+  }
+}

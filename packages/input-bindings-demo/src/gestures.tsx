@@ -1,4 +1,3 @@
-import type { ActionRegistry, Binding, GestureMatch } from "@moritzbrantner/input-bindings";
 import { formatGesture } from "@moritzbrantner/input-bindings-react/model";
 import {
   analyzeGestureTrace,
@@ -20,44 +19,21 @@ import { attachGestureRuntime } from "@moritzbrantner/input-bindings-web";
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 
+import {
+  gestureLabContextStack,
+  gestureLabEffect,
+  gestureLabProfiles,
+  gestureLabRegistry,
+  gestureLabRunes,
+  gestureLabTargets,
+} from "./gesture-scenario.ts";
+
 import "./site.css";
 import "./runtime.css";
 import "./gestures.css";
 
 const LIFECYCLE_LIMIT = 8;
 const REPLAY_SCALES = [0.5, 1, 2] as const;
-
-const gestureBinding = (id: string, action: string, gesture: GestureMatch): Binding => ({
-  id,
-  action,
-  sequence: [{ device: "gesture", gesture }],
-});
-
-const labAction = (
-  id: string,
-  title: string,
-  binding: Binding,
-): ActionRegistry["actions"][number] => ({
-  id,
-  title,
-  allowedDevices: ["pointer"],
-  defaults: [binding],
-  provenance: { source: "gesture-lab", version: "1" },
-});
-
-const registry: ActionRegistry = {
-  actions: [
-    labAction(
-      "lab.encircle",
-      "Encircle",
-      gestureBinding("lab.circle", "lab.encircle", { kind: "circle" }),
-    ),
-    labAction("lab.slash", "Slash", gestureBinding("lab.slash", "lab.slash", { kind: "slash" })),
-    labAction("lab.swipe", "Swipe", gestureBinding("lab.swipe", "lab.swipe", { kind: "swipe" })),
-    labAction("lab.hold", "Hold", gestureBinding("lab.hold", "lab.hold", { kind: "hold" })),
-    labAction("lab.tap", "Tap", gestureBinding("lab.tap", "lab.tap", { kind: "tap" })),
-  ],
-};
 
 type LifecycleEntry = {
   key: string;
@@ -73,7 +49,10 @@ type Analysis = {
   trace: GestureTrace;
   result: GestureTraceAnalysis;
   decision: RuntimeDecision;
+  effect: string | undefined;
 };
+
+type LabContexts = { casting: boolean; menuOpen: boolean };
 
 type TraceEvidence = { trace: GestureTrace; result: GestureTraceAnalysis };
 
@@ -81,6 +60,9 @@ function App() {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const controllerRef = useRef<InputRuntimeController | null>(null);
   const recordingRef = useRef(false);
+  const contextsRef = useRef<LabContexts>({ casting: false, menuOpen: false });
+  const [contexts, setContexts] = useState<LabContexts>(contextsRef.current);
+  const [profileId, setProfileId] = useState("default");
   const [stroke, setStroke] = useState<PointerStroke | undefined>();
   const [lifecycle, setLifecycle] = useState<LifecycleEntry[]>([]);
   const [analysis, setAnalysis] = useState<Analysis | undefined>();
@@ -96,7 +78,11 @@ function App() {
     if (!surface) {
       return undefined;
     }
-    const controller = new InputRuntimeController({ registry, getActiveContexts: () => new Set() });
+    const controller = new InputRuntimeController({
+      registry: gestureLabRegistry,
+      getActiveContexts: () => new Set(),
+      getContextStack: () => gestureLabContextStack(contextsRef.current),
+    });
     controllerRef.current = controller;
     let entry = 0;
     let recordedCount = 0;
@@ -106,7 +92,7 @@ function App() {
       // Recognize from the rounded trace so live input and replayed exports decide identically.
       recognize(completed) {
         const trace = gestureTraceFromStroke(completed);
-        const result = analyzeGestureTrace(trace);
+        const result = analyzeGestureTrace(trace, { templates: gestureLabRunes });
         return { matches: result.matches, evidence: { trace, result } satisfies TraceEvidence };
       },
       onStroke(event) {
@@ -126,7 +112,14 @@ function App() {
       },
       onGesture({ input, decision }) {
         const { trace, result } = input.evidence as TraceEvidence;
-        setAnalysis({ source: "live", scale: 1, trace, result, decision });
+        setAnalysis({
+          source: "live",
+          scale: 1,
+          trace,
+          result,
+          decision,
+          effect: effectFor(decision, trace, result),
+        });
         if (recordingRef.current) {
           recordedCount += 1;
           const saved = {
@@ -146,6 +139,17 @@ function App() {
 
   const latestRecorded = recorded.at(-1);
 
+  const updateContexts = (patch: Partial<LabContexts>) => {
+    // The controller reads the ref when it resolves; React state drives the rendered toggles.
+    contextsRef.current = { ...contextsRef.current, ...patch };
+    setContexts(contextsRef.current);
+  };
+
+  const changeProfile = (id: string) => {
+    setProfileId(id);
+    controllerRef.current?.updateProfile(gestureLabProfiles[id]);
+  };
+
   const toggleRecording = () => {
     // The capture callback reads the ref; React state drives the rendered toggle.
     recordingRef.current = !recording;
@@ -159,11 +163,18 @@ function App() {
     }
     try {
       const trace = scaleGestureTrace(parseGestureTrace(replayText), replayScale);
-      const result = analyzeGestureTrace(trace);
+      const result = analyzeGestureTrace(trace, { templates: gestureLabRunes });
       const decision = controller.handleGesture({ matches: result.matches, evidence: { trace } });
       setReplayError(undefined);
       setStroke(undefined);
-      setAnalysis({ source: "replay", scale: replayScale, trace, result, decision });
+      setAnalysis({
+        source: "replay",
+        scale: replayScale,
+        trace,
+        result,
+        decision,
+        effect: effectFor(decision, trace, result),
+      });
     } catch (error) {
       setReplayError(error instanceof Error ? error.message : String(error));
     }
@@ -228,6 +239,16 @@ function App() {
                 ))}
               </svg>
             )}
+            {gestureLabTargets.map((target) => (
+              <span
+                key={target.id}
+                className="gesture-target"
+                style={{ left: `${target.x * 100}%`, top: `${target.y * 100}%` }}
+                aria-hidden="true"
+              >
+                {target.id}
+              </span>
+            ))}
             {stroke?.status === "cancelled" && (
               <span className="gesture-surface-hint">Stroke cancelled: {stroke.cancelReason}</span>
             )}
@@ -240,6 +261,38 @@ function App() {
         </div>
 
         <aside className="gesture-evidence" aria-label="Gesture evidence">
+          <section className="runtime-panel" aria-labelledby="gesture-scenario-heading">
+            <h2 id="gesture-scenario-heading">Scenario</h2>
+            <div className="gesture-scenario">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={contexts.casting}
+                  onChange={(event) => updateContexts({ casting: event.target.checked })}
+                />
+                Spellcasting
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={contexts.menuOpen}
+                  onChange={(event) => updateContexts({ menuOpen: event.target.checked })}
+                />
+                Menu open (modal)
+              </label>
+              <label>
+                <span>Profile </span>
+                <select value={profileId} onChange={(event) => changeProfile(event.target.value)}>
+                  {Object.keys(gestureLabProfiles).map((id) => (
+                    <option key={id} value={id}>
+                      {id}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
+
           <section className="runtime-panel" aria-labelledby="gesture-stroke-heading">
             <h2 id="gesture-stroke-heading">Stroke</h2>
             <dl className="gesture-metrics">
@@ -322,6 +375,21 @@ function App() {
                   points={features.normalized.map((point) => `${point.x},${point.y}`).join(" ")}
                 />
               </svg>
+            </section>
+          )}
+
+          {analysis?.result.symbols && (
+            <section className="runtime-panel" aria-labelledby="gesture-symbols-heading">
+              <h2 id="gesture-symbols-heading">Symbols</h2>
+              <ol className="gesture-candidates" aria-labelledby="gesture-symbols-heading">
+                {analysis.result.symbols.candidates.map((symbol) => (
+                  <li key={symbol.id}>
+                    <strong>{symbol.id}</strong>
+                    <span>{symbol.accepted ? "accepted" : "rejected"}</span>
+                    <code>{format(symbol.distance, 3)}</code>
+                  </li>
+                ))}
+              </ol>
             </section>
           )}
 
@@ -420,6 +488,9 @@ function DecisionPanel({ analysis }: { analysis: Analysis | undefined }) {
           name="Matched gesture"
           value={dispatch?.gesture ? formatGesture(dispatch.gesture.match) : "—"}
         />
+        <Metric label="Binding" value={dispatch?.bindingId ?? "—"} />
+        <Metric label="Contexts" value={decision.activeContexts.join(", ") || "—"} />
+        <Metric label="Effect" name="Consumer effect" value={analysis.effect ?? "—"} />
       </dl>
       <p className="gesture-tried">
         Tried:{" "}
@@ -428,6 +499,15 @@ function DecisionPanel({ analysis }: { analysis: Analysis | undefined }) {
       </p>
     </section>
   );
+}
+
+function effectFor(
+  decision: RuntimeDecision,
+  trace: GestureTrace,
+  result: GestureTraceAnalysis,
+): string | undefined {
+  const action = decision.dispatches[0]?.action;
+  return action ? gestureLabEffect(action, trace, result.primitives.candidates) : undefined;
 }
 
 function Metric({ label, value, name }: { label: string; value: string; name?: string }) {
@@ -454,7 +534,9 @@ function describeCandidate(candidate: GesturePrimitiveCandidate): string {
 }
 
 function format(value: number, digits: number): string {
-  return value.toFixed(digits);
+  const text = value.toFixed(digits);
+  // Values that round to zero should not display as "-0".
+  return Number(text) === 0 ? text.replace(/^-/u, "") : text;
 }
 
 function formatPoint(sample: { x: number; y: number } | undefined): string {
