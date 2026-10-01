@@ -1,6 +1,3 @@
-import { StrictMode, useEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
-
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
 import {
   InputRuntimeController,
@@ -12,6 +9,9 @@ import {
   attachKeyboardRuntime,
   attachMouseRuntime,
 } from "@moritzbrantner/input-bindings-web";
+import { StrictMode, useEffect, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import "./site.css";
 import "./runtime.css";
 import "./devices.css";
@@ -132,10 +132,10 @@ const registry: ActionRegistry = {
   ],
 };
 
-interface LogEntry {
+type LogEntry = {
   id: number;
   dispatch: RuntimeDispatch;
-}
+};
 
 function App() {
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -150,10 +150,9 @@ function App() {
       consumePolicy: "matched",
       onDecision: setDecision,
       onDispatch(dispatch) {
-        setEntries((current) => [
-          { id: Date.now() + Math.random(), dispatch },
-          ...current,
-        ].slice(0, 30));
+        setEntries((current) =>
+          [{ id: Date.now() + Math.random(), dispatch }, ...current].slice(0, 30),
+        );
       },
     });
 
@@ -189,7 +188,8 @@ function App() {
           <p className="site-eyebrow">input-bindings / device dogfood</p>
           <h1>Mouse + gamepad device lab</h1>
           <p>
-            Every event below enters the same runtime controller. The handler receives semantic actions; it does not care whether they came from a keyboard, mouse, wheel, or gamepad.
+            Every event below enters the same runtime controller. The handler receives semantic
+            actions; it does not care whether they came from a keyboard, mouse, wheel, or gamepad.
           </p>
         </div>
         <a href="./">Keybinding editor</a>
@@ -198,13 +198,34 @@ function App() {
       <section className="runtime-instructions">
         <h2>Try the bindings</h2>
         <dl className="runtime-shortcuts">
-          <div><dt>Space / left click / gamepad A</dt><dd><code>demo.activate</code></dd></div>
-          <div><dt>D / left stick right</dt><dd><code>demo.moveRight</code></dd></div>
-          <div><dt>A / left stick left</dt><dd><code>demo.moveLeft</code></dd></div>
-          <div><dt>Wheel up / down</dt><dd><code>demo.zoomIn</code> / <code>demo.zoomOut</code></dd></div>
+          <div>
+            <dt>Space / left click / gamepad A</dt>
+            <dd>
+              <code>demo.activate</code>
+            </dd>
+          </div>
+          <div>
+            <dt>D / left stick right</dt>
+            <dd>
+              <code>demo.moveRight</code>
+            </dd>
+          </div>
+          <div>
+            <dt>A / left stick left</dt>
+            <dd>
+              <code>demo.moveLeft</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Wheel up / down</dt>
+            <dd>
+              <code>demo.zoomIn</code> / <code>demo.zoomOut</code>
+            </dd>
+          </div>
         </dl>
         <p>
-          Gamepad axis activation starts at 60% and stays active until it returns through the 20% deadzone. Connected gamepads: <strong>{connectedPads}</strong>.
+          Gamepad axis activation starts at 60% and stays active until it returns through the 20%
+          deadzone. Connected gamepads: <strong>{connectedPads}</strong>.
         </p>
       </section>
 
@@ -215,7 +236,9 @@ function App() {
         aria-label="Mouse input test surface"
       >
         <strong>Mouse test surface</strong>
-        <span>Left-click or scroll here. Keyboard and gamepad input work anywhere on the page.</span>
+        <span>
+          Left-click or scroll here. Keyboard and gamepad input work anywhere on the page.
+        </span>
       </div>
 
       <div className="runtime-columns">
@@ -246,7 +269,9 @@ function App() {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {
+  throw new Error("Missing #root element");
+}
 createRoot(root).render(
   <StrictMode>
     <App />

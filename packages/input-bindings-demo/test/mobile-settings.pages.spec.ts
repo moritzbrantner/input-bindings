@@ -60,7 +60,9 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   await expect(inspector.getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("74");
 
   await page.getByRole("button", { name: "Move mobile control" }).click();
-  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue("game.move");
+  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue(
+    "game.move",
+  );
 
   await page.getByRole("button", { name: "Test", exact: true }).click();
   await expect(page.getByLabel("Mobile controls runtime")).toBeVisible();
@@ -100,9 +102,14 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   const persistedSaveRow = page.getByRole("row").filter({ hasText: "Save document" });
   await expect(persistedSaveRow.getByText("Changed", { exact: true })).toBeVisible();
 
-  await page.getByLabel("Shortcut presentation").getByRole("button", { name: "Mobile controls" }).click();
+  await page
+    .getByLabel("Shortcut presentation")
+    .getByRole("button", { name: "Mobile controls" })
+    .click();
   await page.getByRole("button", { name: "A mobile control" }).click();
-  await expect(page.getByLabel("Selected mobile control").getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("74");
+  await expect(
+    page.getByLabel("Selected mobile control").getByRole("spinbutton", { name: "X", exact: true }),
+  ).toHaveValue("74");
 
   const metrics = await page.locator("html").evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
@@ -115,7 +122,6 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
     fullPage: true,
   });
 });
-
 
 test("saved v1 mobile overlays migrate their stick and look mappings", async ({ page }) => {
   await page.addInitScript(() => {
@@ -149,11 +155,18 @@ test("saved v1 mobile overlays migrate their stick and look mappings", async ({ 
   });
 
   await page.goto("./");
-  await page.getByLabel("Shortcut presentation").getByRole("button", { name: "Mobile controls" }).click();
+  await page
+    .getByLabel("Shortcut presentation")
+    .getByRole("button", { name: "Mobile controls" })
+    .click();
 
   await page.getByRole("button", { name: "Move mobile control" }).click();
-  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue("game.move");
+  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue(
+    "game.move",
+  );
 
   await page.getByRole("button", { name: "Look mobile control" }).click();
-  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue("game.look");
+  await expect(page.getByLabel("Selected mobile control").getByLabel("Analog action")).toHaveValue(
+    "game.look",
+  );
 });

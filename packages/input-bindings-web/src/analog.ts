@@ -7,12 +7,12 @@ import {
   type Axis2D,
 } from "@moritzbrantner/input-bindings-runtime";
 
-export interface AnalogEventTargetLike {
+export type AnalogEventTargetLike = {
   addEventListener(type: string, listener: (event: any) => void, options?: unknown): void;
   removeEventListener(type: string, listener: (event: any) => void, options?: unknown): void;
-}
+};
 
-export interface AnalogPointerTargetLike extends AnalogEventTargetLike {
+export type AnalogPointerTargetLike = {
   getBoundingClientRect(): {
     left: number;
     top: number;
@@ -21,61 +21,61 @@ export interface AnalogPointerTargetLike extends AnalogEventTargetLike {
   };
   setPointerCapture?(pointerId: number): void;
   releasePointerCapture?(pointerId: number): void;
-}
+} & AnalogEventTargetLike;
 
-export interface AnalogPointerEventLike {
+export type AnalogPointerEventLike = {
   pointerId: number;
   clientX: number;
   clientY: number;
-  preventDefault?: () => void;
-}
+  preventDefault?: (() => void) | undefined;
+};
 
-export interface PointerAnalogAdapterOptions {
+export type PointerAnalogAdapterOptions = {
   target: AnalogPointerTargetLike;
   action: string;
-  sourceId?: string;
-  deadzone?: number;
-  sensitivity?: number;
-  invertX?: boolean;
-  invertY?: boolean;
-  preventDefault?: boolean;
-}
+  sourceId?: string | undefined;
+  deadzone?: number | undefined;
+  sensitivity?: number | undefined;
+  invertX?: boolean | undefined;
+  invertY?: boolean | undefined;
+  preventDefault?: boolean | undefined;
+};
 
-export interface TouchLookAnalogAdapterOptions extends PointerAnalogAdapterOptions {
-  maxTravelPx?: number;
-}
+export type TouchLookAnalogAdapterOptions = {
+  maxTravelPx?: number | undefined;
+} & PointerAnalogAdapterOptions;
 
-export interface DeviceMotionRotationRateLike {
-  alpha?: number | null;
-  beta?: number | null;
-  gamma?: number | null;
-}
+export type DeviceMotionRotationRateLike = {
+  alpha?: number | null | undefined;
+  beta?: number | null | undefined;
+  gamma?: number | null | undefined;
+};
 
-export interface DeviceMotionEventLike {
-  rotationRate?: DeviceMotionRotationRateLike | null;
-}
+export type DeviceMotionEventLike = {
+  rotationRate?: DeviceMotionRotationRateLike | null | undefined;
+};
 
-export interface GyroscopeAnalogAdapterOptions {
+export type GyroscopeAnalogAdapterOptions = {
   action: string;
-  sourceId?: string;
-  target?: AnalogEventTargetLike;
-  maxRateDegPerSec?: number;
-  deadzone?: number;
-  sensitivity?: number;
-  smoothing?: number;
-  invertX?: boolean;
-  invertY?: boolean;
-  getScreenOrientationDegrees?: () => number;
-}
+  sourceId?: string | undefined;
+  target?: AnalogEventTargetLike | undefined;
+  maxRateDegPerSec?: number | undefined;
+  deadzone?: number | undefined;
+  sensitivity?: number | undefined;
+  smoothing?: number | undefined;
+  invertX?: boolean | undefined;
+  invertY?: boolean | undefined;
+  getScreenOrientationDegrees?: (() => number) | undefined;
+};
 
-export interface GyroscopeSampleOptions {
-  maxRateDegPerSec?: number;
-  deadzone?: number;
-  sensitivity?: number;
-  invertX?: boolean;
-  invertY?: boolean;
-  screenOrientationDegrees?: number;
-}
+export type GyroscopeSampleOptions = {
+  maxRateDegPerSec?: number | undefined;
+  deadzone?: number | undefined;
+  sensitivity?: number | undefined;
+  invertX?: boolean | undefined;
+  invertY?: boolean | undefined;
+  screenOrientationDegrees?: number | undefined;
+};
 
 export type MotionPermissionState = "granted" | "denied" | "unsupported";
 
@@ -89,30 +89,40 @@ export function attachVirtualStickAnalog(
   const emit = (event: AnalogPointerEventLike) => {
     const value = pointerAxisFromCenter(options.target, event, options);
     controller.setAxis2D(sourceId, options.action, value);
-    if (options.preventDefault ?? true) event.preventDefault?.();
+    if (options.preventDefault ?? true) {
+      event.preventDefault?.();
+    }
   };
 
   const onPointerDown = (rawEvent: any) => {
     const event = rawEvent as AnalogPointerEventLike;
-    if (pointerId !== undefined) return;
+    if (pointerId !== undefined) {
+      return;
+    }
     pointerId = event.pointerId;
     options.target.setPointerCapture?.(event.pointerId);
     emit(event);
   };
   const onPointerMove = (rawEvent: any) => {
     const event = rawEvent as AnalogPointerEventLike;
-    if (event.pointerId !== pointerId) return;
+    if (event.pointerId !== pointerId) {
+      return;
+    }
     emit(event);
   };
   const stop = (rawEvent: any, releaseCapture = true) => {
     const event = rawEvent as AnalogPointerEventLike;
-    if (event.pointerId !== pointerId) return;
+    if (event.pointerId !== pointerId) {
+      return;
+    }
     pointerId = undefined;
     if (releaseCapture) {
       options.target.releasePointerCapture?.(event.pointerId);
     }
     controller.clearSource(sourceId, options.action);
-    if (options.preventDefault ?? true) event.preventDefault?.();
+    if (options.preventDefault ?? true) {
+      event.preventDefault?.();
+    }
   };
   const onLostPointerCapture = (rawEvent: any) => stop(rawEvent, false);
 
@@ -141,41 +151,50 @@ export function attachTouchLookAnalog(
   let origin: { x: number; y: number } | undefined;
 
   const emit = (event: AnalogPointerEventLike) => {
-    if (!origin) return;
-    const value = pointerAxisFromOrigin(
-      options.target,
-      event,
-      origin,
-      options,
-    );
+    if (!origin) {
+      return;
+    }
+    const value = pointerAxisFromOrigin(options.target, event, origin, options);
     controller.setAxis2D(sourceId, options.action, value);
-    if (options.preventDefault ?? true) event.preventDefault?.();
+    if (options.preventDefault ?? true) {
+      event.preventDefault?.();
+    }
   };
 
   const onPointerDown = (rawEvent: any) => {
     const event = rawEvent as AnalogPointerEventLike;
-    if (pointerId !== undefined) return;
+    if (pointerId !== undefined) {
+      return;
+    }
     pointerId = event.pointerId;
     origin = { x: event.clientX, y: event.clientY };
     options.target.setPointerCapture?.(event.pointerId);
     controller.setAxis2D(sourceId, options.action, { x: 0, y: 0 });
-    if (options.preventDefault ?? true) event.preventDefault?.();
+    if (options.preventDefault ?? true) {
+      event.preventDefault?.();
+    }
   };
   const onPointerMove = (rawEvent: any) => {
     const event = rawEvent as AnalogPointerEventLike;
-    if (event.pointerId !== pointerId) return;
+    if (event.pointerId !== pointerId) {
+      return;
+    }
     emit(event);
   };
   const stop = (rawEvent: any, releaseCapture = true) => {
     const event = rawEvent as AnalogPointerEventLike;
-    if (event.pointerId !== pointerId) return;
+    if (event.pointerId !== pointerId) {
+      return;
+    }
     pointerId = undefined;
     origin = undefined;
     if (releaseCapture) {
       options.target.releasePointerCapture?.(event.pointerId);
     }
     controller.clearSource(sourceId, options.action);
-    if (options.preventDefault ?? true) event.preventDefault?.();
+    if (options.preventDefault ?? true) {
+      event.preventDefault?.();
+    }
   };
   const onLostPointerCapture = (rawEvent: any) => stop(rawEvent, false);
 
@@ -200,8 +219,8 @@ export function attachGyroscopeAnalog(
   options: GyroscopeAnalogAdapterOptions,
 ): () => void {
   const globals = globalThis as unknown as {
-    window?: AnalogEventTargetLike & { orientation?: number };
-    screen?: { orientation?: { angle?: number } };
+    window?: (AnalogEventTargetLike & { orientation?: number }) | undefined;
+    screen?: { orientation?: { angle?: number } } | undefined;
   };
   const target = options.target ?? globals.window;
   if (!target) {
@@ -244,7 +263,9 @@ export function gyroscopeEventToAxis2D(
   options: GyroscopeSampleOptions = {},
 ): Axis2D {
   const rate = event.rotationRate;
-  if (!rate) return { x: 0, y: 0 };
+  if (!rate) {
+    return { x: 0, y: 0 };
+  }
 
   const maxRate = Math.max(1, finiteOr(options.maxRateDegPerSec, 180));
   const gamma = finiteOr(rate.gamma, 0);
@@ -254,8 +275,12 @@ export function gyroscopeEventToAxis2D(
     y: beta / maxRate,
   };
 
-  if (options.invertX) value.x *= -1;
-  if (options.invertY) value.y *= -1;
+  if (options.invertX) {
+    value.x *= -1;
+  }
+  if (options.invertY) {
+    value.y *= -1;
+  }
   value = rotateAxis2D(value, -(options.screenOrientationDegrees ?? 0));
   value = applyAxis2DDeadzone(value, options.deadzone ?? 0.03);
   return scaleAxis2D(value, options.sensitivity ?? 1);
@@ -264,7 +289,7 @@ export function gyroscopeEventToAxis2D(
 export async function requestDeviceMotionPermission(): Promise<MotionPermissionState> {
   const globals = globalThis as unknown as {
     DeviceMotionEvent?: {
-      requestPermission?: () => Promise<"granted" | "denied">;
+      requestPermission?: (() => Promise<"granted" | "denied">) | undefined;
     };
   };
   const motionEvent = globals.DeviceMotionEvent;
@@ -322,10 +347,7 @@ export function pointerAxisFromCenter(
 
 function processPointerAxis(
   value: Axis2D,
-  options: Pick<
-    PointerAnalogAdapterOptions,
-    "deadzone" | "sensitivity" | "invertX" | "invertY"
-  >,
+  options: Pick<PointerAnalogAdapterOptions, "deadzone" | "sensitivity" | "invertX" | "invertY">,
 ): Axis2D {
   const directed = {
     x: options.invertX ? -value.x : value.x,

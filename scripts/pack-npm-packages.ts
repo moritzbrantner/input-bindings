@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   copyFileSync,
@@ -8,9 +9,8 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const output = resolve(root, "target/npm");
@@ -29,7 +29,7 @@ const artifacts = [];
 for (const packagePath of packageRoots) {
   const packageRoot = resolve(root, packagePath);
   const manifest = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8"));
-  const temporaryFiles = [];
+  const temporaryFiles: string[] = [];
 
   try {
     for (const filename of sharedFiles) {
@@ -41,23 +41,43 @@ for (const packagePath of packageRoots) {
     }
 
     const result = spawnSync(
-      "npm",
-      ["pack", "--json", "--ignore-scripts", "--pack-destination", output, packageRoot],
+      "bun",
+      ["pm", "pack", "--quiet", "--ignore-scripts", "--destination", output],
       {
-        cwd: root,
+        cwd: packageRoot,
+        timeout: 120_000,
         encoding: "utf8",
         shell: process.platform === "win32",
       },
     );
-    if (result.error) throw result.error;
+    if (result.error) {
+      throw result.error;
+    }
     if (result.status !== 0) {
       throw new Error(
-        `npm pack failed for ${manifest.name}:\n${result.stdout ?? ""}\n${result.stderr ?? ""}`,
+        `bun pm pack failed for ${manifest.name}:\n${result.stdout ?? ""}\n${result.stderr ?? ""}`,
       );
     }
 
-    const report = JSON.parse(result.stdout)[0];
-    const packedFiles = new Set(report.files.map((file) => file.path));
+    const filename = basename(result.stdout.trim());
+    if (!filename) {
+      throw new Error(`No tarball filename for ${manifest.name}.`);
+    }
+    const tarball = resolve(output, filename);
+    const listing = spawnSync("tar", ["-tzf", tarball], { encoding: "utf8", timeout: 120_000 });
+    if (listing.error) {
+      throw listing.error;
+    }
+    if (listing.status !== 0) {
+      throw new Error(`Cannot inspect ${filename}: ${listing.stderr}`);
+    }
+    const packedFiles = new Set(
+      listing.stdout
+        .trim()
+        .split("\n")
+        .filter((path) => !path.endsWith("/"))
+        .map((path) => path.replace(/^package\//u, "")),
+    );
     for (const required of ["package.json", ...sharedFiles]) {
       if (!packedFiles.has(required)) {
         throw new Error(`${manifest.name} package is missing ${required}.`);
@@ -73,17 +93,18 @@ for (const packagePath of packageRoots) {
       throw new Error(`${manifest.name} package has no declarations.`);
     }
 
-    const tarball = resolve(output, report.filename);
     artifacts.push({
       name: manifest.name,
       version: manifest.version,
-      file: report.filename,
+      file: filename,
       bytes: statSync(tarball).size,
       sha256: sha256(tarball),
       files: [...packedFiles].sort((left, right) => left.localeCompare(right, "en")),
     });
   } finally {
-    for (const path of temporaryFiles) rmSync(path, { force: true });
+    for (const path of temporaryFiles) {
+      rmSync(path, { force: true });
+    }
   }
 }
 
@@ -94,6 +115,6 @@ writeFileSync(
 );
 console.log(`Packed and verified ${artifacts.length} private npm workspaces in ${output}`);
 
-function sha256(path) {
+function sha256(path: string) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }

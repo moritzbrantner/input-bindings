@@ -1,16 +1,13 @@
-import { useState } from "react";
-
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 
 import {
   MobileControlsRuntimeSurface,
   type MobileActionInputEvent,
   type MobileAnalogInputEvent,
 } from "../src/MobileControlsRuntimeSurface.tsx";
-import type {
-  MobileControlsOverlay,
-  MobileOverlayControl,
-} from "../src/MobileControlsView.tsx";
+import type { MobileControlsOverlay, MobileOverlayControl } from "../src/MobileControlsView.tsx";
+
 import "../src/workbench.css";
 
 const initialControl: MobileOverlayControl = {
@@ -46,25 +43,16 @@ function RuntimeMappingHarness() {
   };
 
   const recordAction = (event: MobileActionInputEvent) => {
-    setEvents((current) => [
-      ...current,
-      `action:${event.action}:${event.phase}`,
-    ]);
+    setEvents((current) => [...current, `action:${event.action}:${event.phase}`]);
   };
   const recordAnalog = (event: MobileAnalogInputEvent) => {
-    setEvents((current) => [
-      ...current,
-      `analog:${event.action}:${event.phase}`,
-    ]);
+    setEvents((current) => [...current, `analog:${event.action}:${event.phase}`]);
   };
 
   return (
     <main>
       <div>
-        <button
-          type="button"
-          onClick={() => updateControl({ actionId: "menu.close" })}
-        >
+        <button type="button" onClick={() => updateControl({ actionId: "menu.close" })}>
           Change action mapping
         </button>
         <button
@@ -79,10 +67,7 @@ function RuntimeMappingHarness() {
         >
           Use analog mapping
         </button>
-        <button
-          type="button"
-          onClick={() => updateControl({ analogActionId: "game.look" })}
-        >
+        <button type="button" onClick={() => updateControl({ analogActionId: "game.look" })}>
           Change analog mapping
         </button>
       </div>

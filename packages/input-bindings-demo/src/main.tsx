@@ -1,7 +1,18 @@
-import { StrictMode, useEffect, useMemo, useState } from "react";
-import { createRoot } from "react-dom/client";
-
-import type { ActionRegistry, Binding, Profile, WhenExpr } from "@moritzbrantner/input-bindings";
+import type {
+  ActionRegistry,
+  Modifiers,
+  Binding,
+  Profile,
+  WhenExpr,
+} from "@moritzbrantner/input-bindings";
+import {
+  createStarterMobileControlsOverlay,
+  InputBindingsWorkbench,
+  type InputBindingsContextScenario,
+  type MobileAnalogActionOption,
+  type MobileControlsOverlay,
+  type MobileOverlayControl,
+} from "@moritzbrantner/input-bindings-react/workbench";
 import {
   AnalogInputController,
   type AnalogDispatch,
@@ -12,14 +23,9 @@ import {
   requestDeviceMotionPermission,
   type MotionPermissionState,
 } from "@moritzbrantner/input-bindings-web";
-import {
-  createStarterMobileControlsOverlay,
-  InputBindingsWorkbench,
-  type InputBindingsContextScenario,
-  type MobileAnalogActionOption,
-  type MobileControlsOverlay,
-  type MobileOverlayControl,
-} from "@moritzbrantner/input-bindings-react/workbench";
+import { StrictMode, useEffect, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import "@moritzbrantner/input-bindings-react/workbench.css";
 import "./site.css";
 
@@ -32,7 +38,7 @@ const logical = (
   id: string,
   action: string,
   key: string,
-  modifiers: Binding["sequence"][number]["modifiers"] = {},
+  modifiers: Modifiers = {},
   when: WhenExpr = { op: "always" },
   priority = 0,
 ): Binding => ({
@@ -42,24 +48,14 @@ const logical = (
   when,
   priority,
 });
-const physical = (
-  id: string,
-  action: string,
-  code: string,
-  when: WhenExpr,
-): Binding => ({
+const physical = (id: string, action: string, code: string, when: WhenExpr): Binding => ({
   id,
   action,
   sequence: [{ key: { kind: "physical", value: code } }],
   when,
   priority: 0,
 });
-const chord = (
-  id: string,
-  action: string,
-  keys: string[],
-  when: WhenExpr,
-): Binding => ({
+const chord = (id: string, action: string, keys: string[], when: WhenExpr): Binding => ({
   id,
   action,
   sequence: keys.map((key) => ({
@@ -79,7 +75,12 @@ const registry: ActionRegistry = {
       categoryPath: ["Global"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("global.commandPalette.default", "global.commandPalette", "p", { ctrl: true, shift: true })],
+      defaults: [
+        logical("global.commandPalette.default", "global.commandPalette", "p", {
+          ctrl: true,
+          shift: true,
+        }),
+      ],
       provenance: { source: "demo-shell", version: "1" },
     },
     {
@@ -95,11 +96,14 @@ const registry: ActionRegistry = {
     {
       id: "global.showShortcuts",
       title: "Show shortcuts",
-      description: "A deliberately short leader binding used to demonstrate chord-prefix conflicts.",
+      description:
+        "A deliberately short leader binding used to demonstrate chord-prefix conflicts.",
       categoryPath: ["Global"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("global.showShortcuts.default", "global.showShortcuts", "k", { ctrl: true })],
+      defaults: [
+        logical("global.showShortcuts.default", "global.showShortcuts", "k", { ctrl: true }),
+      ],
       provenance: { source: "demo-shell", version: "1" },
     },
     {
@@ -109,7 +113,15 @@ const registry: ActionRegistry = {
       categoryPath: ["Editor", "File"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("editor.save.default", "editor.save", "s", { ctrl: true }, context("editorFocused"))],
+      defaults: [
+        logical(
+          "editor.save.default",
+          "editor.save",
+          "s",
+          { ctrl: true },
+          context("editorFocused"),
+        ),
+      ],
       provenance: { source: "editor-core", version: "1" },
     },
     {
@@ -119,7 +131,15 @@ const registry: ActionRegistry = {
       categoryPath: ["Editor", "Editing"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("editor.formatDocument.default", "editor.formatDocument", "f", { alt: true, shift: true }, context("editorFocused"))],
+      defaults: [
+        logical(
+          "editor.formatDocument.default",
+          "editor.formatDocument",
+          "f",
+          { alt: true, shift: true },
+          context("editorFocused"),
+        ),
+      ],
       provenance: { source: "editor-core", version: "1" },
     },
     {
@@ -128,7 +148,9 @@ const registry: ActionRegistry = {
       categoryPath: ["Editor", "Editing"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("editor.rename.default", "editor.rename", "F2", {}, context("editorFocused"))],
+      defaults: [
+        logical("editor.rename.default", "editor.rename", "F2", {}, context("editorFocused")),
+      ],
       provenance: { source: "editor-core", version: "1" },
     },
     {
@@ -137,7 +159,15 @@ const registry: ActionRegistry = {
       categoryPath: ["Editor", "Navigation"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("editor.search.default", "editor.search", "f", { ctrl: true }, context("editorFocused"))],
+      defaults: [
+        logical(
+          "editor.search.default",
+          "editor.search",
+          "f",
+          { ctrl: true },
+          context("editorFocused"),
+        ),
+      ],
       provenance: { source: "editor-core", version: "1" },
     },
     {
@@ -147,7 +177,9 @@ const registry: ActionRegistry = {
       categoryPath: ["Timeline", "Cuts"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [chord("timeline.addCut.default", "timeline.addCut", ["k", "c"], context("timelineFocused"))],
+      defaults: [
+        chord("timeline.addCut.default", "timeline.addCut", ["k", "c"], context("timelineFocused")),
+      ],
       provenance: { source: "timeline-editor", version: "1" },
     },
     {
@@ -156,7 +188,14 @@ const registry: ActionRegistry = {
       categoryPath: ["Timeline", "Cuts"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [chord("timeline.removeCut.default", "timeline.removeCut", ["k", "Backspace"], context("timelineFocused"))],
+      defaults: [
+        chord(
+          "timeline.removeCut.default",
+          "timeline.removeCut",
+          ["k", "Backspace"],
+          context("timelineFocused"),
+        ),
+      ],
       provenance: { source: "timeline-editor", version: "1" },
     },
     {
@@ -165,7 +204,15 @@ const registry: ActionRegistry = {
       categoryPath: ["Timeline", "Navigation"],
       repeatPolicy: "allow",
       allowedDevices: ["keyboard"],
-      defaults: [logical("timeline.nextFrame.default", "timeline.nextFrame", "ArrowRight", {}, context("timelineFocused"))],
+      defaults: [
+        logical(
+          "timeline.nextFrame.default",
+          "timeline.nextFrame",
+          "ArrowRight",
+          {},
+          context("timelineFocused"),
+        ),
+      ],
       provenance: { source: "timeline-editor", version: "1" },
     },
     {
@@ -174,7 +221,15 @@ const registry: ActionRegistry = {
       categoryPath: ["Table", "Rows"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("table.deleteRow.default", "table.deleteRow", "Delete", {}, context("tableFocused"))],
+      defaults: [
+        logical(
+          "table.deleteRow.default",
+          "table.deleteRow",
+          "Delete",
+          {},
+          context("tableFocused"),
+        ),
+      ],
       provenance: { source: "tables", version: "1" },
     },
     {
@@ -183,7 +238,15 @@ const registry: ActionRegistry = {
       categoryPath: ["Table", "Columns"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [logical("table.deleteColumn.default", "table.deleteColumn", "Delete", { ctrl: true }, context("tableFocused"))],
+      defaults: [
+        logical(
+          "table.deleteColumn.default",
+          "table.deleteColumn",
+          "Delete",
+          { ctrl: true },
+          context("tableFocused"),
+        ),
+      ],
       provenance: { source: "tables", version: "1" },
     },
     {
@@ -193,7 +256,9 @@ const registry: ActionRegistry = {
       categoryPath: ["Game", "Movement"],
       repeatPolicy: "allow",
       allowedDevices: ["keyboard", "gamepad"],
-      defaults: [physical("game.moveForward.default", "game.moveForward", "KeyW", context("gameplay"))],
+      defaults: [
+        physical("game.moveForward.default", "game.moveForward", "KeyW", context("gameplay")),
+      ],
       provenance: { source: "gameplay", version: "1" },
     },
     {
@@ -226,11 +291,20 @@ const registry: ActionRegistry = {
     {
       id: "game.targetNearest",
       title: "Target nearest object",
-      description: "Shares Ctrl+F with editor search in another context to demonstrate context overlap diagnostics.",
+      description:
+        "Shares Ctrl+F with editor search in another context to demonstrate context overlap diagnostics.",
       categoryPath: ["Game", "Actions"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard", "gamepad"],
-      defaults: [logical("game.targetNearest.default", "game.targetNearest", "f", { ctrl: true }, context("gameplay"))],
+      defaults: [
+        logical(
+          "game.targetNearest.default",
+          "game.targetNearest",
+          "f",
+          { ctrl: true },
+          context("gameplay"),
+        ),
+      ],
       provenance: { source: "gameplay", version: "1" },
     },
     {
@@ -254,7 +328,6 @@ const registry: ActionRegistry = {
     },
   ],
 };
-
 
 const starterMobileOverlay = createStarterMobileControlsOverlay();
 const demoMobileActionByControl = new Map<string, string>([
@@ -295,7 +368,8 @@ const contextScenarios: InputBindingsContextScenario[] = [
   {
     id: "editor",
     label: "Editor focused",
-    description: "An editor owns the active interaction layer while global commands remain available.",
+    description:
+      "An editor owns the active interaction layer while global commands remain available.",
     activeContexts: ["editorFocused"],
     stack: [{ id: "editorFocused" }],
     defaultKeyboardMode: "logical",
@@ -319,7 +393,8 @@ const contextScenarios: InputBindingsContextScenario[] = [
   {
     id: "gameplay",
     label: "Gameplay",
-    description: "Physical movement controls are active. Switch matching mode to inspect logical game shortcuts too.",
+    description:
+      "Physical movement controls are active. Switch matching mode to inspect logical game shortcuts too.",
     activeContexts: ["gameplay"],
     stack: [{ id: "gameplay" }],
     defaultKeyboardMode: "physical",
@@ -337,7 +412,9 @@ const contextScenarios: InputBindingsContextScenario[] = [
 function loadProfile(): Profile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { id: PROFILE_ID, patches: [] };
+    if (!raw) {
+      return { id: PROFILE_ID, patches: [] };
+    }
     const parsed = JSON.parse(raw) as Partial<Profile>;
     if (typeof parsed.id === "string" && Array.isArray(parsed.patches)) {
       return parsed as Profile;
@@ -348,13 +425,16 @@ function loadProfile(): Profile {
   return { id: PROFILE_ID, patches: [] };
 }
 
-
 function loadMobileOverlay(): MobileControlsOverlay {
   try {
     const raw = localStorage.getItem(MOBILE_OVERLAY_STORAGE_KEY);
-    if (!raw) return DEFAULT_MOBILE_OVERLAY;
+    if (!raw) {
+      return DEFAULT_MOBILE_OVERLAY;
+    }
     const parsed: unknown = JSON.parse(raw);
-    if (isMobileControlsOverlay(parsed)) return migrateMobileOverlay(parsed);
+    if (isMobileControlsOverlay(parsed)) {
+      return migrateMobileOverlay(parsed);
+    }
   } catch {
     // Corrupt local state is ignored rather than reinterpreted.
   }
@@ -378,14 +458,20 @@ function migrateMobileOverlay(overlay: MobileControlsOverlay): MobileControlsOve
 }
 
 function isMobileControlsOverlay(value: unknown): value is MobileControlsOverlay {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {
+    return false;
+  }
   const candidate = value as { orientation?: unknown; controls?: unknown };
-  if (candidate.orientation !== "portrait" && candidate.orientation !== "landscape") return false;
+  if (candidate.orientation !== "portrait" && candidate.orientation !== "landscape") {
+    return false;
+  }
   return Array.isArray(candidate.controls) && candidate.controls.every(isMobileOverlayControl);
 }
 
 function isMobileOverlayControl(value: unknown): value is MobileOverlayControl {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {
+    return false;
+  }
   const candidate = value as Partial<Record<keyof MobileOverlayControl, unknown>>;
   return (
     typeof candidate.id === "string" &&
@@ -422,7 +508,9 @@ function App() {
           { id: "game.look", kind: "axis2D", title: "Look / aim" },
         ],
         onDispatch: (dispatch: AnalogDispatch) => {
-          if (dispatch.kind !== "axis2D") return;
+          if (dispatch.kind !== "axis2D") {
+            return;
+          }
           setAnalogValues((current) => ({
             ...current,
             [dispatch.action]: dispatch.value,
@@ -433,7 +521,9 @@ function App() {
   );
 
   useEffect(() => {
-    if (!gyroEnabled) return;
+    if (!gyroEnabled) {
+      return;
+    }
     return attachGyroscopeAnalog(analogController, {
       action: "game.look",
       sourceId: "gyro",
@@ -467,13 +557,17 @@ function App() {
           <p className="site-eyebrow">input-bindings / GitHub Pages dogfood</p>
           <h1>Reusable controls settings workbench</h1>
           <p>
-            A default settings surface for editors, games, tables, and web applications: manage semantic actions as a list, inspect desktop keyboard placement, or arrange touch controls directly on a mobile overlay.
+            A default settings surface for editors, games, tables, and web applications: manage
+            semantic actions as a list, inspect desktop keyboard placement, or arrange touch
+            controls directly on a mobile overlay.
           </p>
         </div>
         <a href="https://github.com/moritzbrantner/input-bindings">Repository</a>
       </header>
       <p className="site-note">
-        Desktop uses list and keyboard presentations. Narrow screens replace the keyboard map with an editable mobile overlay for thumbsticks, action buttons, gesture zones, and command docks; keyboard-only preview is omitted there.
+        Desktop uses list and keyboard presentations. Narrow screens replace the keyboard map with
+        an editable mobile overlay for thumbsticks, action buttons, gesture zones, and command
+        docks; keyboard-only preview is omitted there.
       </p>
       <InputBindingsWorkbench
         registry={registry}
@@ -509,10 +603,7 @@ function App() {
           <output aria-label="Last mobile action">{lastAction}</output>
         </div>
         <div className="site-motion-controls">
-          <button
-            type="button"
-            onClick={gyroEnabled ? () => setGyroEnabled(false) : enableGyro}
-          >
+          <button type="button" onClick={gyroEnabled ? () => setGyroEnabled(false) : enableGyro}>
             {gyroEnabled ? "Disable gyroscope look" : "Enable gyroscope look"}
           </button>
           <span>
@@ -532,7 +623,9 @@ function formatAxis(value: Axis2D | undefined): string {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {
+  throw new Error("Missing #root element");
+}
 createRoot(root).render(
   <StrictMode>
     <App />

@@ -1,12 +1,12 @@
-import { useState } from "react";
-
-import type { Meta, StoryObj } from "@storybook/react-vite";
 import type {
   ActionRegistry,
+  Modifiers,
   Binding,
   Profile,
   WhenExpr,
 } from "@moritzbrantner/input-bindings";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 
 import {
   createStarterMobileControlsOverlay,
@@ -15,6 +15,7 @@ import {
   type InputBindingsWorkbenchProps,
   type MobileControlsOverlay,
 } from "../src/Workbench.tsx";
+
 import "../src/workbench.css";
 import "./Workbench.stories.css";
 
@@ -24,7 +25,7 @@ const logical = (
   id: string,
   action: string,
   key: string,
-  modifiers: Binding["sequence"][number]["modifiers"] = {},
+  modifiers: Modifiers = {},
   when: WhenExpr = { op: "always" },
 ): Binding => ({
   id,
@@ -34,12 +35,7 @@ const logical = (
   priority: 0,
 });
 
-const physical = (
-  id: string,
-  action: string,
-  code: string,
-  when: WhenExpr,
-): Binding => ({
+const physical = (id: string, action: string, code: string, when: WhenExpr): Binding => ({
   id,
   action,
   sequence: [{ key: { kind: "physical", value: code } }],
@@ -57,12 +53,10 @@ const registry: ActionRegistry = {
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
       defaults: [
-        logical(
-          "global.commandPalette.default",
-          "global.commandPalette",
-          "p",
-          { ctrl: true, shift: true },
-        ),
+        logical("global.commandPalette.default", "global.commandPalette", "p", {
+          ctrl: true,
+          shift: true,
+        }),
       ],
     },
     {
@@ -89,9 +83,7 @@ const registry: ActionRegistry = {
       categoryPath: ["Game", "Movement"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [
-        physical("game.jump.default", "game.jump", "Space", context("gameplay")),
-      ],
+      defaults: [physical("game.jump.default", "game.jump", "Space", context("gameplay"))],
     },
     {
       id: "game.pause",
@@ -99,15 +91,7 @@ const registry: ActionRegistry = {
       categoryPath: ["Game", "System"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [
-        logical(
-          "game.pause.default",
-          "game.pause",
-          "Escape",
-          {},
-          context("gameplay"),
-        ),
-      ],
+      defaults: [logical("game.pause.default", "game.pause", "Escape", {}, context("gameplay"))],
     },
     {
       id: "menu.close",
@@ -115,15 +99,7 @@ const registry: ActionRegistry = {
       categoryPath: ["Menu", "Navigation"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard"],
-      defaults: [
-        logical(
-          "menu.close.default",
-          "menu.close",
-          "Escape",
-          {},
-          context("menuOpen"),
-        ),
-      ],
+      defaults: [logical("menu.close.default", "menu.close", "Escape", {}, context("menuOpen"))],
     },
   ],
 };
@@ -176,7 +152,6 @@ const contextScenarios: InputBindingsContextScenario[] = [
   },
 ];
 
-
 const starterMobileOverlay = createStarterMobileControlsOverlay();
 const mobileActionByControl = new Map<string, string>([
   ["primary-action", "game.jump"],
@@ -209,7 +184,11 @@ function StatefulWorkbench(args: InputBindingsWorkbenchProps) {
       <output className="ib-story-profile-state" data-testid="profile-state" aria-live="polite">
         Profile patches: {currentProfile.patches.length}
       </output>
-      <output className="ib-story-profile-state" data-testid="mobile-overlay-state" aria-live="polite">
+      <output
+        className="ib-story-profile-state"
+        data-testid="mobile-overlay-state"
+        aria-live="polite"
+      >
         Mobile controls: {currentMobileOverlay.controls.length}
       </output>
     </main>

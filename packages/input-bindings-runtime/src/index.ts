@@ -45,12 +45,12 @@ export type RuntimeDecisionReason =
   | "reset"
   | "invalidConfiguration";
 
-export interface RuntimeScheduler {
+export type RuntimeScheduler = {
   setTimeout(callback: () => void, delayMs: number): unknown;
   clearTimeout(handle: unknown): void;
-}
+};
 
-export interface RuntimeDispatch {
+export type RuntimeDispatch = {
   action: string;
   bindingId: string;
   phase: RuntimeActionPhase;
@@ -58,17 +58,17 @@ export interface RuntimeDispatch {
   reason: RuntimeDispatchReason;
   sequence: InputStroke[];
   activeContexts: string[];
-}
+};
 
-export interface RuntimeExplanation {
+export type RuntimeExplanation = {
   reason: RuntimeDecisionReason;
   bindingIds?: string[];
   continuationBindingIds?: string[];
   cancelledSequence?: InputStroke[];
   resetReason?: string;
-}
+};
 
-export interface RuntimeDecision {
+export type RuntimeDecision = {
   kind: RuntimeDecisionKind;
   sequence: InputStroke[];
   activeContexts: string[];
@@ -76,9 +76,9 @@ export interface RuntimeDecision {
   dispatches: RuntimeDispatch[];
   consumed: boolean;
   explanation: RuntimeExplanation;
-}
+};
 
-export interface RuntimeControllerOptions {
+export type RuntimeControllerOptions = {
   registry: ActionRegistry;
   profile?: Profile;
   getActiveContexts: () => ReadonlySet<string>;
@@ -89,21 +89,21 @@ export interface RuntimeControllerOptions {
   scheduler?: RuntimeScheduler;
   onDispatch?: (dispatch: RuntimeDispatch) => void;
   onDecision?: (decision: RuntimeDecision) => void;
-}
+};
 
-export interface InputDownOptions {
+export type InputDownOptions = {
   repeat?: boolean;
-}
+};
 
 export type KeyDownOptions = InputDownOptions;
 
-interface ActiveActivation {
+type ActiveActivation = {
   action: string;
   bindingId: string;
   sequence: InputStroke[];
   triggerKey: string;
   activeContexts: string[];
-}
+};
 
 const defaultScheduler: RuntimeScheduler = {
   setTimeout(callback, delayMs) {
@@ -120,13 +120,13 @@ export class InputRuntimeController {
   private profile: Profile | undefined;
   private report: RegistryValidationReport;
   private readonly getActiveContexts: () => ReadonlySet<string>;
-  private readonly getContextStack?: () => readonly ContextLayer[];
+  private readonly getContextStack: (() => readonly ContextLayer[]) | undefined;
   private readonly chordTimeoutMs: number;
   private readonly consumePolicy: RuntimeConsumePolicy;
   private readonly retryOnChordMismatch: boolean;
   private readonly scheduler: RuntimeScheduler;
-  private readonly onDispatch?: (dispatch: RuntimeDispatch) => void;
-  private readonly onDecision?: (decision: RuntimeDecision) => void;
+  private readonly onDispatch: ((dispatch: RuntimeDispatch) => void) | undefined;
+  private readonly onDecision: ((decision: RuntimeDecision) => void) | undefined;
   private pending: InputStroke[] = [];
   private pendingExactBindingIds: string[] = [];
   private timer: unknown;
@@ -193,14 +193,9 @@ export class InputRuntimeController {
 
     if (!this.report.valid) {
       return this.emit(
-        this.decision(
-          "invalidConfiguration",
-          [stroke],
-          contexts,
-          [],
-          false,
-          { reason: "invalidConfiguration" },
-        ),
+        this.decision("invalidConfiguration", [stroke], contexts, [], false, {
+          reason: "invalidConfiguration",
+        }),
       );
     }
 
@@ -253,14 +248,9 @@ export class InputRuntimeController {
 
     if (!this.report.valid) {
       return this.emit(
-        this.decision(
-          "invalidConfiguration",
-          [stroke],
-          contexts,
-          [],
-          false,
-          { reason: "invalidConfiguration" },
-        ),
+        this.decision("invalidConfiguration", [stroke], contexts, [], false, {
+          reason: "invalidConfiguration",
+        }),
       );
     }
 
@@ -286,17 +276,10 @@ export class InputRuntimeController {
       }));
 
     return this.emit(
-      this.decision(
-        "released",
-        [stroke],
-        contexts,
-        dispatches,
-        this.shouldConsume(true, true),
-        {
-          reason: "keyReleased",
-          bindingIds: dispatches.map((dispatch) => dispatch.bindingId),
-        },
-      ),
+      this.decision("released", [stroke], contexts, dispatches, this.shouldConsume(true, true), {
+        reason: "keyReleased",
+        bindingIds: dispatches.map((dispatch) => dispatch.bindingId),
+      }),
     );
   }
 
@@ -305,14 +288,11 @@ export class InputRuntimeController {
     const cancelledSequence = structuredClone(this.pending);
     this.clearPending();
     return this.emit(
-      this.decision(
-        "cancelled",
+      this.decision("cancelled", cancelledSequence, contexts, [], false, {
+        reason: "chordCancelled",
         cancelledSequence,
-        contexts,
-        [],
-        false,
-        { reason: "chordCancelled", cancelledSequence, resetReason: reason },
-      ),
+        resetReason: reason,
+      }),
     );
   }
 
@@ -337,14 +317,10 @@ export class InputRuntimeController {
     this.active.clear();
 
     return this.emit(
-      this.decision(
-        "reset",
-        sequence,
-        contexts,
-        dispatches,
-        false,
-        { reason: "reset", resetReason: reason },
-      ),
+      this.decision("reset", sequence, contexts, dispatches, false, {
+        reason: "reset",
+        resetReason: reason,
+      }),
     );
   }
 
@@ -429,7 +405,8 @@ export class InputRuntimeController {
     }
 
     const repeatPolicy =
-      this.registry.actions.find((action) => action.id === resolution.action)?.repeatPolicy ?? "never";
+      this.registry.actions.find((action) => action.id === resolution.action)?.repeatPolicy ??
+      "never";
     if (repeat && repeatPolicy !== "allow") {
       return this.emit(
         this.decision(
@@ -457,7 +434,9 @@ export class InputRuntimeController {
       sequence: structuredClone(sequence),
       activeContexts: contexts,
     };
-    if (!repeat) this.activate(dispatch, triggerStroke);
+    if (!repeat) {
+      this.activate(dispatch, triggerStroke);
+    }
 
     return this.emit(
       this.decision(
@@ -477,7 +456,9 @@ export class InputRuntimeController {
   }
 
   private scheduleTimeout(): void {
-    if (this.timer !== undefined) this.scheduler.clearTimeout(this.timer);
+    if (this.timer !== undefined) {
+      this.scheduler.clearTimeout(this.timer);
+    }
     this.timer = this.scheduler.setTimeout(() => {
       this.timer = undefined;
       this.flushPendingTimeout();
@@ -485,7 +466,9 @@ export class InputRuntimeController {
   }
 
   private flushPendingTimeout(): void {
-    if (this.pending.length === 0 || !this.report.valid) return;
+    if (this.pending.length === 0 || !this.report.valid) {
+      return;
+    }
 
     const sequence = structuredClone(this.pending);
     const pendingExactBindingIds = new Set(this.pendingExactBindingIds);
@@ -590,7 +573,9 @@ export class InputRuntimeController {
 
   private contexts(contextStack: readonly ContextLayer[] | undefined): string[] {
     const contexts = new Set(this.getActiveContexts());
-    for (const layer of contextStack ?? []) contexts.add(layer.id);
+    for (const layer of contextStack ?? []) {
+      contexts.add(layer.id);
+    }
     return [...contexts].sort();
   }
 
@@ -635,7 +620,9 @@ export class InputRuntimeController {
   }
 
   private emit(decision: RuntimeDecision): RuntimeDecision {
-    for (const dispatch of decision.dispatches) this.onDispatch?.(structuredClone(dispatch));
+    for (const dispatch of decision.dispatches) {
+      this.onDispatch?.(structuredClone(dispatch));
+    }
     this.onDecision?.(structuredClone(decision));
     return decision;
   }

@@ -1,6 +1,3 @@
-import { StrictMode, useMemo, useState } from "react";
-import { createRoot } from "react-dom/client";
-
 import {
   analyzePlatformConflicts,
   type ActionRegistry,
@@ -11,14 +8,15 @@ import {
   type Profile,
   type WhenExpr,
 } from "@moritzbrantner/input-bindings";
+import { formatSequence } from "@moritzbrantner/input-bindings-react/model";
+import { PlatformAwareKeybindingEditor } from "@moritzbrantner/input-bindings-react/platform-advisories";
 import {
   DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG,
   detectPlatformConflictEnvironment,
 } from "@moritzbrantner/input-bindings-web/platform-conflicts";
-import {
-  PlatformAwareKeybindingEditor,
-} from "@moritzbrantner/input-bindings-react/platform-advisories";
-import { formatSequence } from "@moritzbrantner/input-bindings-react/model";
+import { StrictMode, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import "@moritzbrantner/input-bindings-react/styles.css";
 import "./site.css";
 
@@ -41,7 +39,13 @@ const bindings: Binding[] = [
   logical("browser.closeTab", "browser.closeTab", "w", { meta: true }),
   logical("app.close", "app.close", "F4", { alt: true }),
   logical("app.quit", "app.quit", "q", { meta: true }),
-  logical("editor.altGrCandidate", "editor.altGrCandidate", "q", { ctrl: true, alt: true }, context("editorFocused")),
+  logical(
+    "editor.altGrCandidate",
+    "editor.altGrCandidate",
+    "q",
+    { ctrl: true, alt: true },
+    context("editorFocused"),
+  ),
   logical("game.jump", "game.jump", "j"),
   {
     id: "game.left",
@@ -110,7 +114,9 @@ function PlatformLab() {
               }))
             }
           >
-            {platforms.map((platform) => <option key={platform}>{platform}</option>)}
+            {platforms.map((platform) => (
+              <option key={platform}>{platform}</option>
+            ))}
           </select>
         </label>
         <label>
@@ -124,7 +130,9 @@ function PlatformLab() {
               }))
             }
           >
-            {browsers.map((browser) => <option key={browser}>{browser}</option>)}
+            {browsers.map((browser) => (
+              <option key={browser}>{browser}</option>
+            ))}
           </select>
         </label>
         <label>
@@ -151,9 +159,13 @@ function PlatformLab() {
         <div className="site-panel-heading">
           <div>
             <p className="site-eyebrow">External advisories</p>
-            <h2>{environment.platform} / {environment.browser}</h2>
+            <h2>
+              {environment.platform} / {environment.browser}
+            </h2>
           </div>
-          <strong>{diagnostics.length} advisory{diagnostics.length === 1 ? "" : "ies"}</strong>
+          <strong>
+            {diagnostics.length} advisory{diagnostics.length === 1 ? "" : "ies"}
+          </strong>
         </div>
 
         {diagnostics.length === 0 ? (
@@ -174,8 +186,12 @@ function PlatformLab() {
                 {diagnostics.map((diagnostic, index) => {
                   const binding = bindings.find((entry) => entry.id === diagnostic.bindingId);
                   return (
-                    <tr key={`${diagnostic.bindingId}-${diagnostic.kind}-${diagnostic.ruleId ?? index}`}>
-                      <td><code>{diagnostic.bindingId}</code></td>
+                    <tr
+                      key={`${diagnostic.bindingId}-${diagnostic.kind}-${diagnostic.ruleId ?? index}`}
+                    >
+                      <td>
+                        <code>{diagnostic.bindingId}</code>
+                      </td>
                       <td>{binding ? formatSequence(binding.sequence) : "—"}</td>
                       <td>{diagnostic.kind}</td>
                       <td>{diagnostic.severity}</td>
@@ -196,7 +212,9 @@ function PlatformLab() {
       </section>
 
       <details className="site-panel">
-        <summary><strong>Full editor with automatically detected platform advisories</strong></summary>
+        <summary>
+          <strong>Full editor with automatically detected platform advisories</strong>
+        </summary>
         <p className="site-muted">
           Internal action conflicts remain inside the editor. The separate advisory panel describes
           browser/OS/input-method overlaps for the detected device.
@@ -212,7 +230,9 @@ function PlatformLab() {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {
+  throw new Error("Missing #root element");
+}
 createRoot(root).render(
   <StrictMode>
     <PlatformLab />

@@ -1,48 +1,48 @@
 export type AnalogActionKind = "axis1D" | "axis2D";
 export type AnalogDispatchReason = "update" | "release" | "reset";
 
-export interface Axis2D {
+export type Axis2D = {
   x: number;
   y: number;
-}
+};
 
-export interface AnalogActionDefinition {
+export type AnalogActionDefinition = {
   id: string;
   kind: AnalogActionKind;
-  title?: string;
-}
+  title?: string | undefined;
+};
 
-export interface AnalogAxis1DDispatch {
+export type AnalogAxis1DDispatch = {
   action: string;
   kind: "axis1D";
   value: number;
   sourceIds: string[];
   reason: AnalogDispatchReason;
-}
+};
 
-export interface AnalogAxis2DDispatch {
+export type AnalogAxis2DDispatch = {
   action: string;
   kind: "axis2D";
   value: Axis2D;
   sourceIds: string[];
   reason: AnalogDispatchReason;
-}
+};
 
 export type AnalogDispatch = AnalogAxis1DDispatch | AnalogAxis2DDispatch;
 
-export interface AnalogInputControllerOptions {
+export type AnalogInputControllerOptions = {
   actions: readonly AnalogActionDefinition[];
-  onDispatch?: (dispatch: AnalogDispatch) => void;
-}
+  onDispatch?: ((dispatch: AnalogDispatch) => void) | undefined;
+};
 
 type AnalogValue = number | Axis2D;
 
-interface SourceContribution {
+type SourceContribution = {
   sourceId: string;
   action: string;
   kind: AnalogActionKind;
   value: AnalogValue;
-}
+};
 
 const ZERO_AXIS_2D: Axis2D = { x: 0, y: 0 };
 
@@ -56,14 +56,16 @@ const ZERO_AXIS_2D: Axis2D = { x: 0, y: 0 };
  */
 export class AnalogInputController {
   private readonly actions: ReadonlyMap<string, AnalogActionDefinition>;
-  private readonly onDispatch?: (dispatch: AnalogDispatch) => void;
+  private readonly onDispatch: ((dispatch: AnalogDispatch) => void) | undefined;
   private readonly contributions = new Map<string, SourceContribution>();
   private readonly lastValues = new Map<string, AnalogValue>();
 
   constructor(options: AnalogInputControllerOptions) {
     const actions = new Map<string, AnalogActionDefinition>();
     for (const action of options.actions) {
-      if (!action.id.trim()) throw new Error("Analog action ids must not be empty");
+      if (!action.id.trim()) {
+        throw new Error("Analog action ids must not be empty");
+      }
       if (actions.has(action.id)) {
         throw new Error(`Duplicate analog action id: ${action.id}`);
       }
@@ -101,18 +103,20 @@ export class AnalogInputController {
     this.assertSourceId(sourceId);
     const affected = new Set<string>();
     for (const [key, contribution] of this.contributions) {
-      if (contribution.sourceId !== sourceId) continue;
-      if (action !== undefined && contribution.action !== action) continue;
+      if (contribution.sourceId !== sourceId) {
+        continue;
+      }
+      if (action !== undefined && contribution.action !== action) {
+        continue;
+      }
       this.contributions.delete(key);
       affected.add(contribution.action);
     }
 
-    return [...affected]
-      .sort()
-      .flatMap((actionId) => {
-        const dispatch = this.emitIfChanged(actionId, "release");
-        return dispatch ? [dispatch] : [];
-      });
+    return [...affected].sort().flatMap((actionId) => {
+      const dispatch = this.emitIfChanged(actionId, "release");
+      return dispatch ? [dispatch] : [];
+    });
   }
 
   reset(): AnalogDispatch[] {
@@ -128,17 +132,23 @@ export class AnalogInputController {
 
   value(action: string): number | Axis2D {
     const definition = this.actions.get(action);
-    if (!definition) throw new Error(`Unknown analog action: ${action}`);
+    if (!definition) {
+      throw new Error(`Unknown analog action: ${action}`);
+    }
     return structuredClone(this.aggregate(action, definition.kind).value);
   }
 
   private assertSourceId(sourceId: string): void {
-    if (!sourceId.trim()) throw new Error("Analog source ids must not be empty");
+    if (!sourceId.trim()) {
+      throw new Error("Analog source ids must not be empty");
+    }
   }
 
   private assertActionKind(action: string, kind: AnalogActionKind): void {
     const definition = this.actions.get(action);
-    if (!definition) throw new Error(`Unknown analog action: ${action}`);
+    if (!definition) {
+      throw new Error(`Unknown analog action: ${action}`);
+    }
     if (definition.kind !== kind) {
       throw new Error(`Analog action ${action} expects ${definition.kind}, received ${kind}`);
     }
@@ -146,7 +156,9 @@ export class AnalogInputController {
 
   private emitIfChanged(action: string, reason: AnalogDispatchReason): AnalogDispatch | undefined {
     const definition = this.actions.get(action);
-    if (!definition) return undefined;
+    if (!definition) {
+      return undefined;
+    }
     const aggregate = this.aggregate(action, definition.kind);
     const previous = this.lastValues.get(action);
     if (previous !== undefined && analogValueEquals(previous, aggregate.value)) {
@@ -187,9 +199,7 @@ export class AnalogInputController {
 
     if (kind === "axis1D") {
       return {
-        value: normalizeAxis1D(
-          entries.reduce((sum, entry) => sum + (entry.value as number), 0),
-        ),
+        value: normalizeAxis1D(entries.reduce((sum, entry) => sum + (entry.value as number), 0)),
         sourceIds,
       };
     }
@@ -206,7 +216,9 @@ export class AnalogInputController {
 }
 
 export function normalizeAxis1D(value: number): number {
-  if (!Number.isFinite(value)) return 0;
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
   return clamp(value, -1, 1);
 }
 
@@ -214,7 +226,9 @@ export function normalizeAxis2D(value: Axis2D): Axis2D {
   const x = Number.isFinite(value.x) ? value.x : 0;
   const y = Number.isFinite(value.y) ? value.y : 0;
   const magnitude = Math.hypot(x, y);
-  if (magnitude <= 1 || magnitude === 0) return { x, y };
+  if (magnitude <= 1 || magnitude === 0) {
+    return { x, y };
+  }
   return { x: x / magnitude, y: y / magnitude };
 }
 
@@ -222,7 +236,9 @@ export function applyAxis1DDeadzone(value: number, deadzone: number): number {
   const normalized = normalizeAxis1D(value);
   const threshold = clamp(deadzone, 0, 0.999999);
   const magnitude = Math.abs(normalized);
-  if (magnitude <= threshold) return 0;
+  if (magnitude <= threshold) {
+    return 0;
+  }
   const remapped = (magnitude - threshold) / (1 - threshold);
   return Math.sign(normalized) * remapped;
 }
@@ -231,7 +247,9 @@ export function applyAxis2DDeadzone(value: Axis2D, deadzone: number): Axis2D {
   const normalized = normalizeAxis2D(value);
   const magnitude = Math.hypot(normalized.x, normalized.y);
   const threshold = clamp(deadzone, 0, 0.999999);
-  if (magnitude <= threshold || magnitude === 0) return { ...ZERO_AXIS_2D };
+  if (magnitude <= threshold || magnitude === 0) {
+    return { ...ZERO_AXIS_2D };
+  }
   const remapped = (magnitude - threshold) / (1 - threshold);
   return {
     x: (normalized.x / magnitude) * remapped,
@@ -263,7 +281,9 @@ export function smoothAxis2D(previous: Axis2D, next: Axis2D, response: number): 
 }
 
 export function rotateAxis2D(value: Axis2D, degrees: number): Axis2D {
-  if (!Number.isFinite(degrees)) return normalizeAxis2D(value);
+  if (!Number.isFinite(degrees)) {
+    return normalizeAxis2D(value);
+  }
   const radians = (degrees * Math.PI) / 180;
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);

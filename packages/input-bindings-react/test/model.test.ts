@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { ActionRegistry, Binding, Conflict } from "@moritzbrantner/input-bindings";
+
 import {
   actionIsChanged,
   createActionEditorIndex,
@@ -20,9 +21,7 @@ const registry: ActionRegistry = {
         {
           id: "editor.save.default",
           action: "editor.save",
-          sequence: [
-            { key: { kind: "logical", value: "s" }, modifiers: { ctrl: true } },
-          ],
+          sequence: [{ key: { kind: "logical", value: "s" }, modifiers: { ctrl: true } }],
         },
       ],
     },
@@ -72,7 +71,13 @@ test("profileFromBindings stores only deterministic deltas", () => {
 test("changed state compares effective action bindings to defaults", () => {
   const defaults = registry.actions.flatMap((action) => action.defaults ?? []);
   assert.equal(actionIsChanged(registry.actions[0], defaults), false);
-  assert.equal(actionIsChanged(registry.actions[0], defaults.filter((binding) => binding.action !== "editor.save")), true);
+  assert.equal(
+    actionIsChanged(
+      registry.actions[0],
+      defaults.filter((binding) => binding.action !== "editor.save"),
+    ),
+    true,
+  );
 });
 
 test("new ids and labels are stable and readable", () => {
@@ -91,7 +96,6 @@ test("new ids and labels are stable and readable", () => {
     "Ctrl+k then Shift+[KeyP]",
   );
 });
-
 
 test("editor action index precomputes filtering metadata without changing binding semantics", () => {
   const defaults = registry.actions.flatMap((action) => action.defaults ?? []);

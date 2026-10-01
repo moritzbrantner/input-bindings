@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
+
 import { InputRuntimeController, type RuntimeDispatch } from "../src/index.ts";
 
 const registry: ActionRegistry = {

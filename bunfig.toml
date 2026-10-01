@@ -1,0 +1,4 @@
+[install]
+# Secretlint resolves consumer-installed rules through Node's ancestor module paths.
+linker = "hoisted"
+globalStore = false

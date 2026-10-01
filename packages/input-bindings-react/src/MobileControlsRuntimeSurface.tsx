@@ -1,3 +1,4 @@
+import { pointerAxisFromCenter, pointerAxisFromOrigin } from "@moritzbrantner/input-bindings-web";
 import {
   useEffect,
   useRef,
@@ -7,43 +8,39 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
-import {
-  pointerAxisFromCenter,
-  pointerAxisFromOrigin,
-} from "@moritzbrantner/input-bindings-web";
 import type { MobileControlsOverlay, MobileOverlayControl } from "./MobileControlsView.tsx";
 
-export interface MobileAxis2D {
+export type MobileAxis2D = {
   x: number;
   y: number;
-}
+};
 
-export interface MobileActionInputEvent {
+export type MobileActionInputEvent = {
   controlId: string;
   action: string;
   phase: "press" | "release";
-}
+};
 
-export interface MobileAnalogInputEvent {
+export type MobileAnalogInputEvent = {
   controlId: string;
   action: string;
   phase: "update" | "release";
   value: MobileAxis2D;
-}
+};
 
-export interface MobileControlsRuntimeSurfaceProps {
+export type MobileControlsRuntimeSurfaceProps = {
   overlay: MobileControlsOverlay;
-  onActionInput?: (event: MobileActionInputEvent) => void;
-  onAnalogInput?: (event: MobileAnalogInputEvent) => void;
-  className?: string;
-}
+  onActionInput?: ((event: MobileActionInputEvent) => void) | undefined;
+  onAnalogInput?: ((event: MobileAnalogInputEvent) => void) | undefined;
+  className?: string | undefined;
+};
 
-interface ActivePointer {
+type ActivePointer = {
   pointerId: number;
   originX: number;
   originY: number;
   control: MobileOverlayControl;
-}
+};
 
 export function MobileControlsRuntimeSurface({
   overlay,
@@ -86,7 +83,9 @@ export function MobileControlsRuntimeSurface({
     }
 
     const pointer = activePointers.current.get(control.id);
-    if (!pointer) return { x: 0, y: 0 };
+    if (!pointer) {
+      return { x: 0, y: 0 };
+    }
     return pointerAxisFromOrigin(
       event.currentTarget,
       event,
@@ -98,11 +97,10 @@ export function MobileControlsRuntimeSurface({
     );
   };
 
-  const start = (
-    control: MobileOverlayControl,
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => {
-    if (activePointers.current.has(control.id)) return;
+  const start = (control: MobileOverlayControl, event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (activePointers.current.has(control.id)) {
+      return;
+    }
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const activeControl = { ...control };
@@ -116,9 +114,7 @@ export function MobileControlsRuntimeSurface({
     if (activeControl.kind === "stick" || activeControl.kind === "gestureZone") {
       emitAxis(
         activeControl,
-        activeControl.kind === "stick"
-          ? axisForEvent(activeControl, event)
-          : { x: 0, y: 0 },
+        activeControl.kind === "stick" ? axisForEvent(activeControl, event) : { x: 0, y: 0 },
       );
       return;
     }
@@ -132,24 +128,24 @@ export function MobileControlsRuntimeSurface({
     }
   };
 
-  const move = (
-    control: MobileOverlayControl,
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => {
+  const move = (control: MobileOverlayControl, event: ReactPointerEvent<HTMLButtonElement>) => {
     const pointer = activePointers.current.get(control.id);
-    if (!pointer || pointer.pointerId !== event.pointerId) return;
+    if (!pointer || pointer.pointerId !== event.pointerId) {
+      return;
+    }
     const activeControl = pointer.control;
-    if (activeControl.kind !== "stick" && activeControl.kind !== "gestureZone") return;
+    if (activeControl.kind !== "stick" && activeControl.kind !== "gestureZone") {
+      return;
+    }
     event.preventDefault();
     emitAxis(activeControl, axisForEvent(activeControl, event));
   };
 
-  const stop = (
-    control: MobileOverlayControl,
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => {
+  const stop = (control: MobileOverlayControl, event: ReactPointerEvent<HTMLButtonElement>) => {
     const pointer = activePointers.current.get(control.id);
-    if (!pointer || pointer.pointerId !== event.pointerId) return;
+    if (!pointer || pointer.pointerId !== event.pointerId) {
+      return;
+    }
     event.preventDefault();
     if (event.type !== "lostpointercapture") {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -163,18 +159,16 @@ export function MobileControlsRuntimeSurface({
         [activeControl.id]: { x: 0, y: 0 },
       }));
     }
-    emitRuntimeRelease(
-      activeControl,
-      actionInputRef.current,
-      analogInputRef.current,
-    );
+    emitRuntimeRelease(activeControl, actionInputRef.current, analogInputRef.current);
   };
 
   const keyboardActivate = (
     control: MobileOverlayControl,
     event: ReactMouseEvent<HTMLButtonElement>,
   ) => {
-    if (event.detail !== 0 || !control.actionId) return;
+    if (event.detail !== 0 || !control.actionId) {
+      return;
+    }
     onActionInput?.({
       controlId: control.id,
       action: control.actionId,
@@ -188,19 +182,15 @@ export function MobileControlsRuntimeSurface({
   };
 
   useEffect(() => {
-    const currentControls = new Map(
-      overlay.controls.map((control) => [control.id, control]),
-    );
+    const currentControls = new Map(overlay.controls.map((control) => [control.id, control]));
     for (const [controlId, pointer] of [...activePointers.current.entries()]) {
       const current = currentControls.get(controlId);
-      if (current && hasSameRuntimeMapping(pointer.control, current)) continue;
+      if (current && hasSameRuntimeMapping(pointer.control, current)) {
+        continue;
+      }
 
       activePointers.current.delete(controlId);
-      emitRuntimeRelease(
-        pointer.control,
-        actionInputRef.current,
-        analogInputRef.current,
-      );
+      emitRuntimeRelease(pointer.control, actionInputRef.current, analogInputRef.current);
       setAxisByControl((currentAxis) => {
         const next = { ...currentAxis };
         delete next[controlId];
@@ -212,11 +202,7 @@ export function MobileControlsRuntimeSurface({
   useEffect(() => {
     return () => {
       for (const pointer of activePointers.current.values()) {
-        emitRuntimeRelease(
-          pointer.control,
-          actionInputRef.current,
-          analogInputRef.current,
-        );
+        emitRuntimeRelease(pointer.control, actionInputRef.current, analogInputRef.current);
       }
       activePointers.current.clear();
     };
@@ -255,7 +241,9 @@ export function MobileControlsRuntimeSurface({
                 "is-runtime",
                 `is-${control.kind}`,
                 Math.hypot(axis.x, axis.y) > 0 ? "is-active" : "",
-              ].filter(Boolean).join(" ")}
+              ]
+                .filter(Boolean)
+                .join(" ")}
               style={style}
               aria-label={`${control.label} runtime control`}
               title={mapped ? `${control.label} → ${mapped}` : control.label}
@@ -277,11 +265,7 @@ export function MobileControlsRuntimeSurface({
               )}
               <strong>{control.label}</strong>
               {(control.kind === "stick" || control.kind === "gestureZone") &&
-                control.analogActionId && (
-                  <small>
-                    {formatAxis(axis)}
-                  </small>
-                )}
+                control.analogActionId && <small>{formatAxis(axis)}</small>}
             </button>
           );
         })}
@@ -290,10 +274,7 @@ export function MobileControlsRuntimeSurface({
   );
 }
 
-function hasSameRuntimeMapping(
-  left: MobileOverlayControl,
-  right: MobileOverlayControl,
-): boolean {
+function hasSameRuntimeMapping(left: MobileOverlayControl, right: MobileOverlayControl): boolean {
   return (
     left.kind === right.kind &&
     left.actionId === right.actionId &&
@@ -306,10 +287,7 @@ function emitRuntimeRelease(
   onActionInput: MobileControlsRuntimeSurfaceProps["onActionInput"],
   onAnalogInput: MobileControlsRuntimeSurfaceProps["onAnalogInput"],
 ): void {
-  if (
-    (control.kind === "stick" || control.kind === "gestureZone") &&
-    control.analogActionId
-  ) {
+  if ((control.kind === "stick" || control.kind === "gestureZone") && control.analogActionId) {
     onAnalogInput?.({
       controlId: control.id,
       action: control.analogActionId,

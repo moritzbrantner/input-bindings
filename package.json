@@ -1,34 +1,62 @@
 {
   "name": "input-bindings-workspace",
   "private": true,
-  "type": "module",
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "scripts": {
-    "build:packages": "node scripts/build-npm-packages.mjs",
-    "pack:packages": "node scripts/pack-npm-packages.mjs",
-    "test:ts": "npm run build:packages && node --experimental-strip-types --test packages/input-bindings/test/*.test.ts packages/input-bindings-runtime/test/*.test.ts packages/input-bindings-web/test/*.test.ts packages/input-bindings-react/test/*.test.ts",
-    "build:pages": "npm run build:packages && npm run build --workspace @moritzbrantner/input-bindings-demo",
-    "bench:ts": "node --experimental-strip-types packages/input-bindings/benchmark/run.ts",
+    "build:packages": "bun scripts/build-npm-packages.ts",
+    "pack:packages": "bun scripts/pack-npm-packages.ts",
+    "test:ts": "bun run build:packages && bun test packages/input-bindings/test/*.test.ts packages/input-bindings-runtime/test/*.test.ts packages/input-bindings-web/test/*.test.ts packages/input-bindings-react/test/*.test.ts scripts/*.test.ts",
+    "build:pages": "bun run build:packages && bun run --cwd packages/input-bindings-demo build",
+    "bench:ts": "bun packages/input-bindings/benchmark/run.ts",
     "bench:rust": "cargo run --locked --release -p input-bindings-core --example benchmark --",
-    "release:artifacts": "node scripts/build-release-artifacts.mjs",
+    "release:artifacts": "bun scripts/build-release-artifacts.ts",
     "storybook": "storybook dev -p 6006",
     "build:storybook": "storybook build --output-dir storybook-static",
-    "test:storybook": "npm run build:storybook && npm run test:storybook:built",
+    "test:storybook": "bun run build:storybook && bun run test:storybook:built",
     "test:storybook:built": "playwright test -c playwright.storybook.config.ts",
-    "test:pages": "npm run build:pages && npm run test:pages:built",
-    "test:pages:built": "playwright test -c playwright.pages.config.ts"
+    "test:pages": "bun run build:pages && bun run test:pages:built",
+    "test:pages:built": "playwright test -c playwright.pages.config.ts",
+    "dist:git": "bun run build:packages && bun run pack:packages && bun scripts/publish-git-dist.ts",
+    "format": "oxfmt . && cargo fmt --all",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint --deny-warnings .",
+    "lint:fix": "oxlint --fix .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:unit": "bun run test:ts",
+    "build": "bun run build:pages",
+    "check:fast": "bun run format:check && bun run lint && bun run typecheck",
+    "check": "bun run check:fast && cargo fmt --all --check && bun run secrets:check && bun run test:unit && cargo test --locked --workspace --all-targets && cargo clippy --locked --workspace --all-targets -- -D warnings && bun run build",
+    "check:full": "bun run check && bun run test:storybook && bun run test:pages",
+    "secrets:check": "secretlint \"**/*\"",
+    "secrets:staged": "bun scripts/check-staged-secrets.ts",
+    "hooks:install": "git config --local core.hooksPath .githooks",
+    "check:commit": "bun run format:check && cargo fmt --all --check && bun run lint && bun run secrets:staged",
+    "check:push": "bun run typecheck && bun run test:unit && cargo test --locked --workspace --all-targets",
+    "test:e2e": "bun run test:storybook && bun run test:pages"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "1.63.0",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.6",
     "@storybook/react-vite": "10.4.1",
     "@testing-library/dom": "10.4.2",
+    "@types/node": "^26.6.3",
     "@types/react": "19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "oxlint-tsgolint": "^7.0.2003",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "secretlint": "^13.0.6",
     "storybook": "10.6.0",
     "typescript": "7.0.2"
   },
   "engines": {
-    "node": ">=22.6"
-  }
+    "node": ">=22.12"
+  },
+  "packageManager": "bun@1.4.2"
 }

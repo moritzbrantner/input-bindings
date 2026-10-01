@@ -13,6 +13,6 @@ The current scenarios exercise four public-core costs:
 
 Both implementations emit JSON containing scenario ids, operation counts, elapsed time, nanoseconds per operation, and a deterministic checksum. The checksum is semantic evidence, not a performance score: investigate checksum changes before comparing timings because they may indicate that the workload or result changed.
 
-Run TypeScript benchmarks with `npm run bench:ts` and Rust benchmarks with `npm run bench:rust`. Pass an output file as the final argument to either command to write JSON directly, for example `npm run bench:ts -- benchmark-results/typescript.json`.
+Run TypeScript benchmarks with `bun run bench:ts` and Rust benchmarks with `bun run bench:rust`. Pass an output file as the final argument to either command to write JSON directly, for example `bun run bench:ts benchmark-results/typescript.json`.
 
 The `Benchmarks` GitHub Actions workflow is manual (`workflow_dispatch`) and uploads Rust/TypeScript JSON plus runner metadata. Compare measurements only when the scenario id and generator version match, and prefer repeated runs on similar runner/runtime versions. Cross-language timings can be informative, but they are not a release criterion and should not by themselves justify moving browser execution across a TypeScript/WASM boundary.

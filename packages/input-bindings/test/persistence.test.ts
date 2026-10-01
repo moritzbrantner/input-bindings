@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import type { ActionRegistry } from "../src/registry.ts";
 import {
   canonicalizePortableConfiguration,
   portableConfigurationFromProfile,
@@ -13,8 +12,9 @@ import {
   type PortableConfigurationV1,
   type PresetDefinition,
 } from "../src/persistence.ts";
+import type { ActionRegistry } from "../src/registry.ts";
 
-interface FixtureCase {
+type FixtureCase = {
   name: string;
   configuration: PortableConfigurationV1;
   expected: {
@@ -25,7 +25,7 @@ interface FixtureCase {
     effectiveBindingIds: string[];
     bindingSources: Array<{ bindingId: string; layer: string; sourceId: string }>;
   };
-}
+};
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../../fixtures/persistence.json", import.meta.url), "utf8"),
@@ -100,9 +100,7 @@ test("portable export is deterministic and round-trips a profile", () => {
         binding: {
           id: "save.default",
           action: "editor.save",
-          sequence: [
-            { key: { kind: "logical" as const, value: "s" }, modifiers: { meta: true } },
-          ],
+          sequence: [{ key: { kind: "logical" as const, value: "s" }, modifiers: { meta: true } }],
         },
       },
     ],

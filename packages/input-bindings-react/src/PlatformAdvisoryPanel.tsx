@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import {
   analyzePlatformConflicts,
   type ActionRegistry,
@@ -10,30 +8,24 @@ import {
   DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG,
   detectPlatformConflictEnvironment,
 } from "@moritzbrantner/input-bindings-web/platform-conflicts";
+import { useMemo } from "react";
 
 import { formatSequence } from "./model.ts";
+
 import "./platform-advisories.css";
 
-export interface PlatformAdvisoryPanelProps {
+export type PlatformAdvisoryPanelProps = {
   registry: ActionRegistry;
   bindings: readonly Binding[];
-}
+};
 
 export function PlatformAdvisoryPanel({ registry, bindings }: PlatformAdvisoryPanelProps) {
   const environment = useMemo(
-    () =>
-      detectPlatformConflictEnvironment(
-        typeof navigator === "undefined" ? {} : navigator,
-      ),
+    () => detectPlatformConflictEnvironment(typeof navigator === "undefined" ? {} : navigator),
     [],
   );
   const diagnostics = useMemo(
-    () =>
-      analyzePlatformConflicts(
-        bindings,
-        DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG,
-        environment,
-      ),
+    () => analyzePlatformConflicts(bindings, DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG, environment),
     [bindings, environment],
   );
   const actionById = useMemo(
@@ -78,19 +70,13 @@ export function PlatformAdvisoryPanel({ registry, bindings }: PlatformAdvisoryPa
                 <ul>
                   {entries.map((diagnostic, index) => (
                     <li key={`${diagnostic.kind}-${diagnostic.ruleId ?? "derived"}-${index}`}>
-                      <span
-                        className={`ib-advisory-severity is-${diagnostic.severity}`}
-                      >
+                      <span className={`ib-advisory-severity is-${diagnostic.severity}`}>
                         {diagnostic.severity}
                       </span>
                       <div>
                         <strong>{diagnostic.title}</strong>
                         {diagnostic.note && <p>{diagnostic.note}</p>}
-                        <a
-                          href={diagnostic.source.url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                        <a href={diagnostic.source.url} target="_blank" rel="noreferrer">
                           Source: {diagnostic.source.title}
                           {diagnostic.source.verifiedOn
                             ? ` · verified ${diagnostic.source.verifiedOn}`
@@ -122,7 +108,11 @@ function groupByBinding(
 }
 
 function pretty(value: string): string {
-  if (value === "macos") return "macOS";
-  if (value === "ios") return "iOS";
+  if (value === "macos") {
+    return "macOS";
+  }
+  if (value === "ios") {
+    return "iOS";
+  }
   return value.replace(/^./u, (character) => character.toLocaleUpperCase());
 }

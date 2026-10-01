@@ -45,7 +45,9 @@ export function profileFromBindings(
   for (const [bindingId, binding] of [...effective.entries()].sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
-    if (!defaults.has(bindingId)) patches.push({ op: "add", binding });
+    if (!defaults.has(bindingId)) {
+      patches.push({ op: "add", binding });
+    }
   }
 
   return { id: profileId, patches };
@@ -63,17 +65,21 @@ export function actionIsChanged(
   const effective = effectiveBindings
     .filter((binding) => binding.action === action.id)
     .sort((a, b) => a.id.localeCompare(b.id));
-  if (defaults.length !== effective.length) return true;
-  return defaults.some((binding, index) => !bindingEquals(binding, effective[index]));
+  if (defaults.length !== effective.length) {
+    return true;
+  }
+  return defaults.some(
+    (binding, index) => effective[index] === undefined || !bindingEquals(binding, effective[index]),
+  );
 }
 
-export interface ActionEditorIndexEntry {
+export type ActionEditorIndexEntry = {
   bindings: readonly Binding[];
   changed: boolean;
   contexts: ReadonlySet<string>;
   conflictKinds: ReadonlySet<ConflictKind>;
   searchText: string;
-}
+};
 
 export function createActionEditorIndex(
   registry: ActionRegistry,
@@ -85,8 +91,11 @@ export function createActionEditorIndex(
 
   for (const binding of effectiveBindings) {
     const entries = bindingsByAction.get(binding.action);
-    if (entries) entries.push(binding);
-    else bindingsByAction.set(binding.action, [binding]);
+    if (entries) {
+      entries.push(binding);
+    } else {
+      bindingsByAction.set(binding.action, [binding]);
+    }
     actionByBindingId.set(binding.id, binding.action);
   }
 
@@ -98,10 +107,15 @@ export function createActionEditorIndex(
   for (const conflict of conflicts) {
     for (const bindingId of [conflict.leftBindingId, conflict.rightBindingId]) {
       const actionId = actionByBindingId.get(bindingId);
-      if (!actionId) continue;
+      if (!actionId) {
+        continue;
+      }
       const kinds = conflictKindsByAction.get(actionId);
-      if (kinds) kinds.add(conflict.kind);
-      else conflictKindsByAction.set(actionId, new Set([conflict.kind]));
+      if (kinds) {
+        kinds.add(conflict.kind);
+      } else {
+        conflictKindsByAction.set(actionId, new Set([conflict.kind]));
+      }
     }
   }
 
@@ -176,7 +190,9 @@ export function formatSequence(sequence: readonly InputStroke[]): string {
 }
 
 export function describeWhen(expression: WhenExpr | undefined): string {
-  if (!expression || expression.op === "always") return "Always";
+  if (!expression || expression.op === "always") {
+    return "Always";
+  }
   switch (expression.op) {
     case "context":
       return expression.id;
@@ -190,7 +206,9 @@ export function describeWhen(expression: WhenExpr | undefined): string {
 }
 
 export function contextsForWhen(expression: WhenExpr | undefined): string[] {
-  if (!expression || expression.op === "always") return [];
+  if (!expression || expression.op === "always") {
+    return [];
+  }
   switch (expression.op) {
     case "context":
       return [expression.id];
@@ -208,7 +226,10 @@ export function sequenceStartsWith(
 ): boolean {
   return (
     prefix.length <= sequence.length &&
-    prefix.every((stroke, index) => inputStrokeEquals(stroke, sequence[index]))
+    prefix.every(
+      (stroke, index) =>
+        sequence[index] !== undefined && inputStrokeEquals(stroke, sequence[index]),
+    )
   );
 }
 
@@ -217,7 +238,9 @@ function canonicalBinding(binding: Binding) {
     id: binding.id,
     action: binding.action,
     sequence: binding.sequence.map((stroke) => {
-      if (!isKeyStroke(stroke)) return structuredClone(stroke);
+      if (!isKeyStroke(stroke)) {
+        return structuredClone(stroke);
+      }
       return {
         key: stroke.key,
         modifiers: {
@@ -249,11 +272,21 @@ function formatModifiers(modifiers: Modifiers | undefined): string {
 }
 
 function mouseButtonLabel(button: number): string {
-  if (button === 0) return "Mouse Left";
-  if (button === 1) return "Mouse Middle";
-  if (button === 2) return "Mouse Right";
-  if (button === 3) return "Mouse Back";
-  if (button === 4) return "Mouse Forward";
+  if (button === 0) {
+    return "Mouse Left";
+  }
+  if (button === 1) {
+    return "Mouse Middle";
+  }
+  if (button === 2) {
+    return "Mouse Right";
+  }
+  if (button === 3) {
+    return "Mouse Back";
+  }
+  if (button === 4) {
+    return "Mouse Forward";
+  }
   return `Mouse Button ${button}`;
 }
 

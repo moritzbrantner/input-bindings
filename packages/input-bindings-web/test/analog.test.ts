@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import {
-  AnalogInputController,
-  type AnalogDispatch,
-} from "@moritzbrantner/input-bindings-runtime";
+import { AnalogInputController, type AnalogDispatch } from "@moritzbrantner/input-bindings-runtime";
+
 import {
   attachGyroscopeAnalog,
   attachTouchLookAnalog,
@@ -43,7 +41,9 @@ class FakePointerTarget {
   }
 
   emit(type: string, event: Partial<AnalogPointerEventLike> & Record<string, unknown>): void {
-    for (const listener of this.listeners.get(type) ?? []) listener(event);
+    for (const listener of this.listeners.get(type) ?? []) {
+      listener(event);
+    }
   }
 }
 
@@ -61,7 +61,9 @@ class FakeMotionTarget {
   }
 
   emit(type: string, event: unknown): void {
-    for (const listener of this.listeners.get(type) ?? []) listener(event);
+    for (const listener of this.listeners.get(type) ?? []) {
+      listener(event);
+    }
   }
 }
 
@@ -77,20 +79,12 @@ function analogController(dispatches: AnalogDispatch[] = []) {
 
 test("pointer center normalization is radial and exact at the control edges", () => {
   const target = new FakePointerTarget();
+  assert.deepEqual(pointerAxisFromCenter(target, { clientX: 100, clientY: 50 }, { deadzone: 0 }), {
+    x: 1,
+    y: 0,
+  });
   assert.deepEqual(
-    pointerAxisFromCenter(
-      target,
-      { clientX: 100, clientY: 50 },
-      { deadzone: 0 },
-    ),
-    { x: 1, y: 0 },
-  );
-  assert.deepEqual(
-    pointerAxisFromCenter(
-      target,
-      { clientX: 50, clientY: 0 },
-      { deadzone: 0, invertY: true },
-    ),
+    pointerAxisFromCenter(target, { clientX: 50, clientY: 0 }, { deadzone: 0, invertY: true }),
     { x: 0, y: 1 },
   );
 });
@@ -264,7 +258,6 @@ test("gyroscope and touch can feed the same semantic look axis", () => {
   detachMotion();
   assert.deepEqual(controller.value("game.look"), { x: 0, y: 0 });
 });
-
 
 test("motion permission helper preserves the platform request receiver", async () => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, "DeviceMotionEvent");

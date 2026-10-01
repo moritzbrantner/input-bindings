@@ -1,6 +1,3 @@
-import { StrictMode, useEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
-
 import type { ActionRegistry, Binding, KeyStroke, WhenExpr } from "@moritzbrantner/input-bindings";
 import {
   InputRuntimeController,
@@ -8,14 +5,17 @@ import {
   type RuntimeDispatch,
 } from "@moritzbrantner/input-bindings-runtime";
 import { attachKeyboardRuntime } from "@moritzbrantner/input-bindings-web";
+import { StrictMode, useEffect, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import "./site.css";
 import "./runtime.css";
 
 const runtimeContext: WhenExpr = { op: "context", id: "runtimeDemo" };
-const physicalStroke = (
-  code: string,
-  modifiers: KeyStroke["modifiers"] = {},
-): KeyStroke => ({ key: { kind: "physical", value: code }, modifiers });
+const physicalStroke = (code: string, modifiers: KeyStroke["modifiers"] = {}): KeyStroke => ({
+  key: { kind: "physical", value: code },
+  modifiers,
+});
 const physicalBinding = (
   id: string,
   action: string,
@@ -44,7 +44,8 @@ const registry: ActionRegistry = {
     {
       id: "runtime.leader",
       title: "Shortcut leader",
-      description: "Ctrl+K is also the prefix of a longer chord, so it fires only after the timeout.",
+      description:
+        "Ctrl+K is also the prefix of a longer chord, so it fires only after the timeout.",
       allowedDevices: ["keyboard"],
       repeatPolicy: "never",
       defaults: [
@@ -72,9 +73,7 @@ const registry: ActionRegistry = {
       description: "Repeat-enabled held control with a release event on key-up or focus reset.",
       allowedDevices: ["keyboard"],
       repeatPolicy: "allow",
-      defaults: [
-        physicalBinding("runtime.move.default", "runtime.move", [{ code: "KeyW" }]),
-      ],
+      defaults: [physicalBinding("runtime.move.default", "runtime.move", [{ code: "KeyW" }])],
     },
     {
       id: "runtime.jump",
@@ -82,9 +81,7 @@ const registry: ActionRegistry = {
       description: "Non-repeating physical Space binding.",
       allowedDevices: ["keyboard"],
       repeatPolicy: "never",
-      defaults: [
-        physicalBinding("runtime.jump.default", "runtime.jump", [{ code: "Space" }]),
-      ],
+      defaults: [physicalBinding("runtime.jump.default", "runtime.jump", [{ code: "Space" }])],
     },
   ],
 };
@@ -131,7 +128,9 @@ function App() {
           <p className="site-eyebrow">input-bindings / runtime controller dogfood</p>
           <h1>Runtime input controller</h1>
           <p>
-            This page attaches one browser adapter to one normalized runtime controller. The controller owns chord state, timeout resolution, repeat policy, press/release lifecycle, consumption decisions, and structured explanations.
+            This page attaches one browser adapter to one normalized runtime controller. The
+            controller owns chord state, timeout resolution, repeat policy, press/release lifecycle,
+            consumption decisions, and structured explanations.
           </p>
         </div>
         <nav className="runtime-nav" aria-label="Demo pages">
@@ -144,26 +143,50 @@ function App() {
       <section className="runtime-instructions" aria-labelledby="try-heading">
         <div>
           <h2 id="try-heading">Try the controller</h2>
-          <p>Keyboard capture is {attached ? "active" : "detached"}. Form controls remain untouched.</p>
+          <p>
+            Keyboard capture is {attached ? "active" : "detached"}. Form controls remain untouched.
+          </p>
         </div>
         <div className="runtime-actions">
           <button type="button" onClick={() => setAttached((value) => !value)}>
             {attached ? "Detach controller" : "Attach controller"}
           </button>
-          <button type="button" onClick={() => controllerRef.current?.cancelChord("demoButton")} disabled={!attached}>
+          <button
+            type="button"
+            onClick={() => controllerRef.current?.cancelChord("demoButton")}
+            disabled={!attached}
+          >
             Cancel pending chord
           </button>
-          <button type="button" onClick={() => setDispatches([])}>Clear log</button>
+          <button type="button" onClick={() => setDispatches([])}>
+            Clear log
+          </button>
         </div>
         <dl className="runtime-shortcuts">
-          <div><dt>Ctrl+S</dt><dd>Immediate save</dd></div>
-          <div><dt>Ctrl+K</dt><dd>Leader fires after 800 ms</dd></div>
-          <div><dt>Ctrl+K, Ctrl+C</dt><dd>Chord completes before timeout</dd></div>
-          <div><dt>Hold W</dt><dd>Press, repeat, release lifecycle</dd></div>
-          <div><dt>Space</dt><dd>Repeat-suppressed one-shot action</dd></div>
+          <div>
+            <dt>Ctrl+S</dt>
+            <dd>Immediate save</dd>
+          </div>
+          <div>
+            <dt>Ctrl+K</dt>
+            <dd>Leader fires after 800 ms</dd>
+          </div>
+          <div>
+            <dt>Ctrl+K, Ctrl+C</dt>
+            <dd>Chord completes before timeout</dd>
+          </div>
+          <div>
+            <dt>Hold W</dt>
+            <dd>Press, repeat, release lifecycle</dd>
+          </div>
+          <div>
+            <dt>Space</dt>
+            <dd>Repeat-suppressed one-shot action</dd>
+          </div>
         </dl>
         <p className="site-note">
-          Hold W and switch tabs or blur the window: the adapter resets the controller and emits a release so held gameplay state cannot remain stuck.
+          Hold W and switch tabs or blur the window: the adapter resets the controller and emits a
+          release so held gameplay state cannot remain stuck.
         </p>
       </section>
 
@@ -206,7 +229,9 @@ function App() {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {
+  throw new Error("Missing #root element");
+}
 createRoot(root).render(
   <StrictMode>
     <App />

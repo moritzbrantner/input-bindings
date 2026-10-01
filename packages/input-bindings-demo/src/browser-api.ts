@@ -1,8 +1,4 @@
-export {
-  analyzeConflicts,
-  applyProfile,
-  validateRegistry,
-} from "@moritzbrantner/input-bindings";
+export { analyzeConflicts, applyProfile, validateRegistry } from "@moritzbrantner/input-bindings";
 export {
   AnalogInputController,
   InputRuntimeController,

@@ -53,6 +53,29 @@ packages/
 fixtures/                    cross-language conformance cases
 ```
 
+## Development
+
+Install Bun 1.4.2 (declared in `package.json`), Node 24 for browser tooling, and
+stable Rust with rustfmt and Clippy.
+
+```sh
+bun install --frozen-lockfile
+bun run hooks:install
+bun run check:fast
+bun run check
+bunx --no-install playwright install chromium
+bun run check:full
+```
+
+`check:fast` checks formatting, lint, and types. `check` adds secret scanning,
+unit tests, Rust checks, and the production build. `check:full` also builds and
+tests Storybook and Pages, including an accessibility audit of every story.
+Use `bun run format` or `bun run lint:fix` for explicit source fixes.
+
+The pre-commit hook runs formatting, lint, and staged-secret checks; pre-push runs
+types and unit/Rust tests. Hooks and CI reuse repository commands. Shared policy
+resolves live as described in [AGENTS.md](AGENTS.md).
+
 ## Dogfood pages
 
 - Controls settings workbench: https://moritzbrantner.github.io/input-bindings/
