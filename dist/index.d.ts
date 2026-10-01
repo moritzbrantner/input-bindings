@@ -35,6 +35,11 @@ export type RuntimeGestureInput = {
     matches: readonly GestureMatch[];
     /** Structured-cloneable recognition evidence passed through to dispatches unchanged. */
     evidence?: unknown;
+    /**
+     * Contexts active for this gesture only, such as the overlay zone it started in. They are
+     * added to the consumer's active contexts and, with a context stack, as non-blocking top layers.
+     */
+    contexts?: readonly string[] | undefined;
 };
 export type RuntimeExplanation = {
     reason: RuntimeDecisionReason;

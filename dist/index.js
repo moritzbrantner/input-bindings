@@ -140,8 +140,12 @@ export class InputRuntimeController {
      * release immediately, so gestures never hold an action. A pending keyboard chord is cancelled.
      */
     handleGesture(input) {
-        const contextStack = this.contextStack();
-        const contexts = this.contexts(contextStack);
+        const extraContexts = [...new Set(input.contexts ?? [])];
+        const baseStack = this.contextStack();
+        const contextStack = baseStack
+            ? [...baseStack, ...extraContexts.map((id) => ({ id }))]
+            : undefined;
+        const contexts = [...new Set([...this.contexts(baseStack), ...extraContexts])].sort();
         if (!this.report.valid) {
             return this.emit(this.decision("invalidConfiguration", [], contexts, [], false, {
                 reason: "invalidConfiguration",
