@@ -1,11 +1,24 @@
 import { gestureMatchesFromPrimitives, recognizeGesturePrimitives, } from "./gesture-primitives.js";
+import { gestureMatchesFromSymbols, recognizeGestureSymbols, } from "./gesture-templates.js";
 import { normalizePointerKind } from "./pointer-stroke.js";
 export const GESTURE_TRACE_FORMAT = "input-bindings/gesture-trace";
 export const GESTURE_TRACE_VERSION = 1;
-/** Replays a trace through primitive recognition without any real-time input. */
-export function analyzeGestureTrace(trace, options) {
-    const primitives = recognizeGesturePrimitives(trace, options);
-    return { primitives, matches: gestureMatchesFromPrimitives(primitives.candidates) };
+/**
+ * Recognizes a stroke or a replayed trace without any real-time input. Authored symbols are more
+ * specific than primitives, so accepted symbols precede primitive matches.
+ */
+export function analyzeGestureTrace(trace, options = {}) {
+    const primitives = recognizeGesturePrimitives(trace, options.primitives);
+    const primitiveMatches = gestureMatchesFromPrimitives(primitives.candidates);
+    if (!options.templates) {
+        return { primitives, matches: primitiveMatches };
+    }
+    const symbols = recognizeGestureSymbols(trace, options.templates, options.symbols);
+    return {
+        primitives,
+        symbols,
+        matches: [...gestureMatchesFromSymbols(symbols), ...primitiveMatches],
+    };
 }
 /** The regression expectation recorded when a trace is promoted into a fixture. */
 export function gestureTraceExpectation(analysis) {

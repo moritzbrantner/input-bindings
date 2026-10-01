@@ -1,6 +1,7 @@
 import type { GestureMatch } from "@moritzbrantner/input-bindings";
-import type { StrokePoint } from "./gesture-features.js";
+import type { StrokePoint, StrokeTrace } from "./gesture-features.js";
 import { type GesturePrimitiveKind, type GesturePrimitiveOptions, type GesturePrimitiveRecognition } from "./gesture-primitives.js";
+import { type CompiledGestureTemplate, type GestureSymbolOptions, type GestureSymbolRecognition } from "./gesture-templates.js";
 import { type PointerKind, type PointerStroke } from "./pointer-stroke.js";
 export declare const GESTURE_TRACE_FORMAT = "input-bindings/gesture-trace";
 export declare const GESTURE_TRACE_VERSION = 1;
@@ -26,12 +27,23 @@ export type GestureTraceExpectation = {
     primitives: GesturePrimitiveKind[];
     matches: GestureMatch[];
 };
+export type GestureTraceAnalysisOptions = {
+    primitives?: GesturePrimitiveOptions | undefined;
+    /** Compiled symbol templates. Without templates no symbol recognition runs. */
+    templates?: readonly CompiledGestureTemplate[] | undefined;
+    symbols?: GestureSymbolOptions | undefined;
+};
 export type GestureTraceAnalysis = {
     primitives: GesturePrimitiveRecognition;
+    symbols?: GestureSymbolRecognition;
+    /** Accepted symbols (closest first), then primitives (most specific first). */
     matches: GestureMatch[];
 };
-/** Replays a trace through primitive recognition without any real-time input. */
-export declare function analyzeGestureTrace(trace: Pick<GestureTrace, "samples">, options?: GesturePrimitiveOptions): GestureTraceAnalysis;
+/**
+ * Recognizes a stroke or a replayed trace without any real-time input. Authored symbols are more
+ * specific than primitives, so accepted symbols precede primitive matches.
+ */
+export declare function analyzeGestureTrace(trace: StrokeTrace, options?: GestureTraceAnalysisOptions): GestureTraceAnalysis;
 /** The regression expectation recorded when a trace is promoted into a fixture. */
 export declare function gestureTraceExpectation(analysis: GestureTraceAnalysis): GestureTraceExpectation;
 export declare function gestureTraceFromStroke(stroke: PointerStroke, id?: string): GestureTrace;
