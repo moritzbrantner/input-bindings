@@ -1,3 +1,4 @@
+export * from "./analog.js";
 import { type ActionRegistry, type Binding, type ContextLayer, type InputStroke, type KeyStroke, type Profile, type RegistryValidationReport, type Resolution } from "@moritzbrantner/input-bindings";
 export type RuntimeActionPhase = "press" | "repeat" | "release";
 export type RuntimeConsumePolicy = "never" | "matched" | "dispatched";
