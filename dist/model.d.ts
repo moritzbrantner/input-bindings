@@ -1,4 +1,4 @@
-import { type ActionDefinition, type ActionRegistry, type Binding, type Conflict, type ConflictKind, type InputStroke, type Profile, type WhenExpr } from "@moritzbrantner/input-bindings";
+import { type ActionDefinition, type ActionRegistry, type Binding, type Conflict, type ConflictKind, type GestureMatch, type InputStroke, type Profile, type WhenExpr } from "@moritzbrantner/input-bindings";
 export declare function flattenDefaults(registry: ActionRegistry): Binding[];
 export declare function profileFromBindings(registry: ActionRegistry, effectiveBindings: readonly Binding[], profileId: string): Profile;
 export declare function bindingEquals(left: Binding, right: Binding): boolean;
@@ -13,6 +13,7 @@ export type ActionEditorIndexEntry = {
 export declare function createActionEditorIndex(registry: ActionRegistry, effectiveBindings: readonly Binding[], conflicts: readonly Conflict[]): ReadonlyMap<string, ActionEditorIndexEntry>;
 export declare function nextBindingId(actionId: string, bindings: readonly Binding[]): string;
 export declare function formatStroke(stroke: InputStroke): string;
+export declare function formatGesture(gesture: GestureMatch): string;
 export declare function formatSequence(sequence: readonly InputStroke[]): string;
 export declare function describeWhen(expression: WhenExpr | undefined): string;
 export declare function contextsForWhen(expression: WhenExpr | undefined): string[];
