@@ -69,6 +69,14 @@ The tracker is single-pointer by default. A pointer that begins while the active
 
 `attachPointerStrokeCapture` adapts browser Pointer Events to the tracker. It captures the pointer, cancels on `pointercancel`, `lostpointercapture`, window blur, hidden visibility, and detach, and finishes a stroke before releasing capture so the browser's release notification cannot cancel a completed stroke. Coalesced events follow an explicit policy: ignored by default, or included in the order the browser returns them. Capture never recognizes gestures, hit-tests application objects, or dispatches actions.
 
+## Gesture features and primitives
+
+`extractStrokeFeatures` turns a captured stroke into deterministic metrics: duration, displacement, path length, maximum travel, bounds and aspect ratio, straightness, start/end/displacement angles, average speed, peak speed over an explicit minimum window, signed turning, closure, orientation, and an equidistant resampled path plus its centroid/scale-normalized form. Shape metrics use the resampled path so sampling density (dense mouse versus sparse touch events) does not change them. Features read only the provided samples and never a clock.
+
+`recognizeGesturePrimitives` classifies one completed single-pointer stroke into `circle`, `slash`, `swipe`, `drag`, `hold`, and `tap`. Every threshold is an explicit, overridable value in CSS pixels, milliseconds, px/ms, degrees, or unitless ratios; shape criteria use ratios so they are translation and scale invariant above minimum sizes. Every satisfied primitive is reported, most specific first, with parameters such as direction, speed class, orientation, closure, center, radius, and bounds. Scores are relative margins past each gating threshold and are evidence only; they never reorder candidates. Stationary strokes between the tap and hold limits deliberately match neither.
+
+Recognition does not decide what a slash hits, what a circle encloses, or whether an object was caught. It returns path and bounds evidence for the consumer to interpret.
+
 ## Conflict analysis
 
 Conflict reporting is separate from runtime resolution because users need explanations, not merely a winning action. The analyzer distinguishes duplicate bindings, equal-rank exact ambiguities, intentional/contextual exact overrides, chord-prefix overlaps, and potential conflicts when a context expression is too large for exhaustive analysis.

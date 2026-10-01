@@ -128,10 +128,11 @@ Acceptance: release artifacts are reproducible and versioned, serialization comp
 Pointer gestures are tracked in #55. Implemented so far:
 
 - One Pointer Events stroke-capture path for mouse, touch, and pen with explicit lifecycle and cancellation evidence, exercised in the Pages gesture lab (#56).
+- Deterministic stroke features and single-stroke primitive recognition with explicit thresholds and evidence (#57).
 
 Remaining:
 
-- Deterministic stroke features and primitive recognition (#57), first-class gesture bindings (#58), template recognition (#59), trace replay (#60), mobile gesture zones (#61), multi-pointer gestures (#62), and the slash/encircle/rune dogfood (#63).
+- First-class gesture bindings (#58), template recognition (#59), trace replay (#60), mobile gesture zones (#61), multi-pointer gestures (#62), and the slash/encircle/rune dogfood (#63).
 - Tap versus hold and press/release-specific bindings.
 - Double-tap and ordered key/button sequences beyond the current chord model.
 - Analog threshold and directional-axis gestures with deterministic hysteresis rules where needed.
