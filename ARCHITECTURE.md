@@ -61,6 +61,14 @@ Consumers remain authoritative for what an analog action means and when a source
 
 Pointer/touch adapters normalize virtual sticks and touch-look regions. Motion input uses browser gyroscope rotation-rate data, applies screen-orientation normalization plus configurable deadzone/sensitivity/smoothing, and feeds the same semantic look axis. Motion permission is always requested explicitly from a user action; merely rendering settings never prompts for sensor access.
 
+## Pointer strokes
+
+Pointer gestures start from one capture path shared by mouse, touch, and pen. The TypeScript `PointerStrokeTracker` owns the stroke lifecycle (`start`, `update`, `complete`, `cancel`) and records element-local samples relative to the surface rectangle frozen at stroke start, while retaining raw viewport coordinates and timestamps as evidence. Stroke time never runs backwards: out-of-order or non-finite timestamps contribute a zero delta.
+
+The tracker is single-pointer by default. A pointer that begins while the active limit is reached is ignored rather than displacing the current stroke, and a repeated start for an already active pointer id cancels the stale stroke as `superseded`. Multi-pointer interpretation is deliberately not part of capture.
+
+`attachPointerStrokeCapture` adapts browser Pointer Events to the tracker. It captures the pointer, cancels on `pointercancel`, `lostpointercapture`, window blur, hidden visibility, and detach, and finishes a stroke before releasing capture so the browser's release notification cannot cancel a completed stroke. Coalesced events follow an explicit policy: ignored by default, or included in the order the browser returns them. Capture never recognizes gestures, hit-tests application objects, or dispatches actions.
+
 ## Conflict analysis
 
 Conflict reporting is separate from runtime resolution because users need explanations, not merely a winning action. The analyzer distinguishes duplicate bindings, equal-rank exact ambiguities, intentional/contextual exact overrides, chord-prefix overlaps, and potential conflicts when a context expression is too large for exhaustive analysis.

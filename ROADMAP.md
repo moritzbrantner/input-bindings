@@ -123,8 +123,15 @@ Acceptance: opening a modal menu can suppress gameplay controls, ordinary overla
 
 Acceptance: release artifacts are reproducible and versioned, serialization compatibility is guarded, determinism properties are exercised beyond hand-written examples, and consumer repos can replace the temporary bridge with pinned published/release artifacts without changing semantics.
 
-## 11. Rich gestures and temporal input — planned
+## 11. Rich gestures and temporal input — in progress
 
+Pointer gestures are tracked in #55. Implemented so far:
+
+- One Pointer Events stroke-capture path for mouse, touch, and pen with explicit lifecycle and cancellation evidence, exercised in the Pages gesture lab (#56).
+
+Remaining:
+
+- Deterministic stroke features and primitive recognition (#57), first-class gesture bindings (#58), template recognition (#59), trace replay (#60), mobile gesture zones (#61), multi-pointer gestures (#62), and the slash/encircle/rune dogfood (#63).
 - Tap versus hold and press/release-specific bindings.
 - Double-tap and ordered key/button sequences beyond the current chord model.
 - Analog threshold and directional-axis gestures with deterministic hysteresis rules where needed.
