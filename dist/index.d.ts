@@ -1,3 +1,4 @@
+export * from "./analog.js";
 import { type GamepadAxisStroke, type GamepadButtonStroke, type KeyStroke, type MouseButtonStroke, type WheelStroke } from "@moritzbrantner/input-bindings";
 import type { InputRuntimeController } from "@moritzbrantner/input-bindings-runtime";
 export type KeyboardEventLike = {

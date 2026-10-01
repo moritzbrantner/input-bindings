@@ -1,3 +1,4 @@
+export * from "./analog.js";
 import { inputStrokeIdentity, } from "@moritzbrantner/input-bindings";
 const MODIFIER_ONLY_KEYS = new Set(["Alt", "AltGraph", "Control", "Meta", "Shift"]);
 const MODIFIER_ONLY_CODES = new Set([
