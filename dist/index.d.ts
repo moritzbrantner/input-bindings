@@ -1,4 +1,6 @@
 export * from "./analog.js";
+export * from "./gesture-features.js";
+export * from "./gesture-primitives.js";
 export * from "./pointer-stroke.js";
 import { type ActionRegistry, type Binding, type ContextLayer, type InputStroke, type KeyStroke, type Profile, type RegistryValidationReport, type Resolution } from "@moritzbrantner/input-bindings";
 export type RuntimeActionPhase = "press" | "repeat" | "release";
