@@ -92,7 +92,7 @@ test("a captured slash shows recognition evidence and the semantic decision", as
   await page.mouse.up();
 
   await expect(page.getByLabel("Decision outcome")).toHaveText("dispatched");
-  await expect(page.getByLabel("Dispatched action")).toHaveText("lab.slash");
+  await expect(page.getByLabel("Dispatched action")).toHaveText("combat.slash");
   await expect(page.getByLabel("Matched gesture")).toHaveText("Slash");
   const candidates = page.getByRole("list", { name: "Candidates" });
   await expect(candidates.getByRole("listitem").first()).toContainText("slash");
@@ -121,7 +121,7 @@ test("recording is explicit and exported traces replay to the same decision at a
   };
 
   await drawLoop();
-  await expect(page.getByLabel("Dispatched action")).toHaveText("lab.encircle");
+  await expect(page.getByLabel("Dispatched action")).toHaveText("selection.encircle");
   await expect(exportButton).toBeDisabled();
   await expect(page.getByLabel("Recorded traces")).toHaveText("0 recorded");
 
@@ -146,7 +146,7 @@ test("recording is explicit and exported traces replay to the same decision at a
     await page.getByLabel("Replay scale").selectOption(scale);
     await page.getByRole("button", { name: "Replay", exact: true }).click();
     await expect(page.getByLabel("Source")).toHaveText(`replay ${scale}×`);
-    await expect(page.getByLabel("Dispatched action")).toHaveText("lab.encircle");
+    await expect(page.getByLabel("Dispatched action")).toHaveText("selection.encircle");
     await expect(page.getByLabel("Matched gesture")).toHaveText("Circle");
   }
 
