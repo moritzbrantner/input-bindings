@@ -1,5 +1,6 @@
 export * from "./analog.js";
 export * from "./gesture-runtime.js";
+export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
 import { inputStrokeIdentity, } from "@moritzbrantner/input-bindings";
 const MODIFIER_ONLY_KEYS = new Set(["Alt", "AltGraph", "Control", "Meta", "Shift"]);

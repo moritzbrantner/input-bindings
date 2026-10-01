@@ -33,6 +33,12 @@ export function attachPointerStrokeCapture(options) {
         if (kind === "mouse" && !mouseButtons.has(event.button ?? 0)) {
             return;
         }
+        if (options.cancelOnAdditionalPointer && tracker.activeStrokes().length > 0) {
+            if (!tracker.isActive(event.pointerId)) {
+                tracker.cancelAll("multiPointer");
+                return;
+            }
+        }
         const rect = target.getBoundingClientRect();
         tracker.begin(toInput(event), {
             left: rect.left,

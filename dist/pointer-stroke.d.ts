@@ -38,6 +38,11 @@ export type PointerStrokeCaptureOptions = {
     mouseButtons?: readonly number[] | undefined;
     coalesced?: CoalescedPointerPolicy | undefined;
     maxActiveStrokes?: number | undefined;
+    /**
+     * Cancel active strokes as `multiPointer` when another pointer goes down, so a two-pointer
+     * adapter on the same element can take over. Defaults to false (the extra pointer is ignored).
+     */
+    cancelOnAdditionalPointer?: boolean | undefined;
     capturePointer?: boolean | undefined;
     preventDefault?: boolean | undefined;
     focusTarget?: RuntimeEventTargetLike | undefined;
