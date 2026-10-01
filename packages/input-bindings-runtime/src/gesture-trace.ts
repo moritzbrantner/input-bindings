@@ -1,6 +1,6 @@
 import type { GestureMatch } from "@moritzbrantner/input-bindings";
 
-import type { StrokePoint } from "./gesture-features.ts";
+import type { StrokePoint, StrokeTrace } from "./gesture-features.ts";
 import {
   gestureMatchesFromPrimitives,
   recognizeGesturePrimitives,
@@ -8,6 +8,13 @@ import {
   type GesturePrimitiveOptions,
   type GesturePrimitiveRecognition,
 } from "./gesture-primitives.ts";
+import {
+  gestureMatchesFromSymbols,
+  recognizeGestureSymbols,
+  type CompiledGestureTemplate,
+  type GestureSymbolOptions,
+  type GestureSymbolRecognition,
+} from "./gesture-templates.ts";
 import { normalizePointerKind, type PointerKind, type PointerStroke } from "./pointer-stroke.ts";
 
 export const GESTURE_TRACE_FORMAT = "input-bindings/gesture-trace";
@@ -34,18 +41,39 @@ export type GestureTraceExpectation = {
   matches: GestureMatch[];
 };
 
+export type GestureTraceAnalysisOptions = {
+  primitives?: GesturePrimitiveOptions | undefined;
+  /** Compiled symbol templates. Without templates no symbol recognition runs. */
+  templates?: readonly CompiledGestureTemplate[] | undefined;
+  symbols?: GestureSymbolOptions | undefined;
+};
+
 export type GestureTraceAnalysis = {
   primitives: GesturePrimitiveRecognition;
+  symbols?: GestureSymbolRecognition;
+  /** Accepted symbols (closest first), then primitives (most specific first). */
   matches: GestureMatch[];
 };
 
-/** Replays a trace through primitive recognition without any real-time input. */
+/**
+ * Recognizes a stroke or a replayed trace without any real-time input. Authored symbols are more
+ * specific than primitives, so accepted symbols precede primitive matches.
+ */
 export function analyzeGestureTrace(
-  trace: Pick<GestureTrace, "samples">,
-  options?: GesturePrimitiveOptions,
+  trace: StrokeTrace,
+  options: GestureTraceAnalysisOptions = {},
 ): GestureTraceAnalysis {
-  const primitives = recognizeGesturePrimitives(trace, options);
-  return { primitives, matches: gestureMatchesFromPrimitives(primitives.candidates) };
+  const primitives = recognizeGesturePrimitives(trace, options.primitives);
+  const primitiveMatches = gestureMatchesFromPrimitives(primitives.candidates);
+  if (!options.templates) {
+    return { primitives, matches: primitiveMatches };
+  }
+  const symbols = recognizeGestureSymbols(trace, options.templates, options.symbols);
+  return {
+    primitives,
+    symbols,
+    matches: [...gestureMatchesFromSymbols(symbols), ...primitiveMatches],
+  };
 }
 
 /** The regression expectation recorded when a trace is promoted into a fixture. */

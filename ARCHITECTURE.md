@@ -79,6 +79,10 @@ The tracker is single-pointer by default. A pointer that begins while the active
 
 Recognition does not decide what a slash hits, what a circle encloses, or whether an object was caught. It returns path and bounds evidence for the consumer to interpret.
 
+### Symbol templates
+
+`recognizeGestureSymbols` compares a single stroke against named templates without any learned model: resample to 64 points, translate the centroid to the origin, scale uniformly by the longer bounds side, and compare mean point distance. Rotation and direction are explicit per-template policies (`fixed`/`invariant`, `directed`/`either`); an invariant template aligns the indicative angle and then runs a bounded, fixed-precision rotation search. Every template is ranked closest first with ties ordered by template id, never registration order, and each candidate reports its distance, score, acceptance against the template's `maxDistance`, fitted rotation, reversal, and provenance. Templates are validated and normalized once by `compileGestureTemplates`; they never contain application actions and are never adapted from user input. `analyzeGestureTrace` places accepted symbols before primitive matches, so a bound rune wins over the drag the same stroke also satisfies.
+
 ### Gesture traces and replay
 
 A gesture trace (`input-bindings/gesture-trace` v1) is a saved stroke: pointer type, surface size, and element-local samples rounded to 0.01 px and 0.1 ms relative to the first sample, serialized with a fixed key order so the same trace always produces the same bytes. `analyzeGestureTrace` replays a trace through recognition without real-time input, and `scaleGestureTrace` replays it at another presentation size; shape decisions are scale invariant above the minimum sizes, while tap/hold stationary tolerances are deliberately absolute pixels.

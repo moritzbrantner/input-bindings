@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
 import {
+  compileGestureTemplates,
   InputRuntimeController,
   type RuntimeDispatch,
 } from "@moritzbrantner/input-bindings-runtime";
@@ -160,4 +161,60 @@ test("a custom recognizer replaces primitive recognition", () => {
     [11, 10, 400],
   ]);
   assert.deepEqual(seen, ["dispatched"]);
+});
+
+test("symbol templates bind through the default recognizer before primitives", () => {
+  const dispatches: RuntimeDispatch[] = [];
+  const controller = new InputRuntimeController({
+    registry: {
+      actions: [
+        {
+          id: "spell.shield",
+          title: "Shield",
+          allowedDevices: ["pointer"],
+          defaults: [
+            {
+              id: "shield.caret",
+              action: "spell.shield",
+              sequence: [{ device: "gesture", gesture: { kind: "symbol", id: "caret" } }],
+            },
+          ],
+        },
+        ...registry.actions,
+      ],
+    },
+    getActiveContexts: () => new Set(),
+    onDispatch: (dispatch) => dispatches.push(dispatch),
+  });
+  const surface = new FakeSurface();
+  attachGestureRuntime(controller, {
+    target: surface,
+    focusTarget: idleTarget,
+    visibilityTarget: idleTarget,
+    recognition: {
+      templates: compileGestureTemplates([
+        {
+          id: "caret",
+          points: [
+            { x: 0, y: 100 },
+            { x: 50, y: 0 },
+            { x: 100, y: 100 },
+          ],
+          rotation: "fixed",
+          direction: "either",
+          maxDistance: 0.1,
+          provenance: { source: "test", version: "1" },
+        },
+      ]),
+    },
+  });
+  drag(surface, "touch", [
+    [20, 220, 0],
+    [70, 120, 30],
+    [120, 20, 60],
+    [170, 120, 90],
+    [220, 220, 120],
+  ]);
+  assert.equal(dispatches[0]?.action, "spell.shield");
+  assert.deepEqual(dispatches[0]?.gesture?.match, { kind: "symbol", id: "caret" });
 });

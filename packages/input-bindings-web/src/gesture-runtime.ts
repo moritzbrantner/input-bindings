@@ -1,7 +1,6 @@
 import {
-  gestureMatchesFromPrimitives,
-  recognizeGesturePrimitives,
-  type GesturePrimitiveOptions,
+  analyzeGestureTrace,
+  type GestureTraceAnalysisOptions,
   type InputRuntimeController,
   type PointerStroke,
   type PointerStrokeEvent,
@@ -14,10 +13,10 @@ import { attachPointerStrokeCapture, type PointerStrokeCaptureOptions } from "./
 export type GestureRecognizer = (stroke: PointerStroke) => RuntimeGestureInput;
 
 export type GestureRuntimeAdapterOptions = Omit<PointerStrokeCaptureOptions, "onStroke"> & {
-  /** Turns a completed stroke into recognized gestures. Defaults to primitive recognition. */
+  /** Turns a completed stroke into recognized gestures. Defaults to `strokeGestureRecognizer`. */
   recognize?: GestureRecognizer | undefined;
-  /** Options for the default primitive recognizer. */
-  primitives?: GesturePrimitiveOptions | undefined;
+  /** Options for the default recognizer, including symbol templates. */
+  recognition?: GestureTraceAnalysisOptions | undefined;
   /** Receives every stroke lifecycle event, including start, update, and cancel. */
   onStroke?: ((event: PointerStrokeEvent) => void) | undefined;
   /** Receives the recognition and the runtime decision for every completed stroke. */
@@ -39,7 +38,7 @@ export function attachGestureRuntime(
   controller: InputRuntimeController,
   options: GestureRuntimeAdapterOptions,
 ): () => void {
-  const recognize = options.recognize ?? primitiveGestureRecognizer(options.primitives);
+  const recognize = options.recognize ?? strokeGestureRecognizer(options.recognition);
   return attachPointerStrokeCapture({
     ...options,
     onStroke(event) {
@@ -54,13 +53,13 @@ export function attachGestureRuntime(
   });
 }
 
-/** The default recognizer: primitive candidates, with the recognition as evidence. */
-export function primitiveGestureRecognizer(options?: GesturePrimitiveOptions): GestureRecognizer {
+/** The default recognizer: accepted symbols, then primitives, with the analysis as evidence. */
+export function strokeGestureRecognizer(options?: GestureTraceAnalysisOptions): GestureRecognizer {
   return (stroke) => {
-    const primitives = recognizeGesturePrimitives(stroke, options);
+    const analysis = analyzeGestureTrace(stroke, options);
     return {
-      matches: gestureMatchesFromPrimitives(primitives.candidates),
-      evidence: { strokeId: stroke.id, pointerType: stroke.pointerType, primitives },
+      matches: analysis.matches,
+      evidence: { strokeId: stroke.id, pointerType: stroke.pointerType, ...analysis },
     };
   };
 }
