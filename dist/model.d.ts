@@ -3,13 +3,13 @@ export declare function flattenDefaults(registry: ActionRegistry): Binding[];
 export declare function profileFromBindings(registry: ActionRegistry, effectiveBindings: readonly Binding[], profileId: string): Profile;
 export declare function bindingEquals(left: Binding, right: Binding): boolean;
 export declare function actionIsChanged(action: ActionDefinition, effectiveBindings: readonly Binding[]): boolean;
-export interface ActionEditorIndexEntry {
+export type ActionEditorIndexEntry = {
     bindings: readonly Binding[];
     changed: boolean;
     contexts: ReadonlySet<string>;
     conflictKinds: ReadonlySet<ConflictKind>;
     searchText: string;
-}
+};
 export declare function createActionEditorIndex(registry: ActionRegistry, effectiveBindings: readonly Binding[], conflicts: readonly Conflict[]): ReadonlyMap<string, ActionEditorIndexEntry>;
 export declare function nextBindingId(actionId: string, bindings: readonly Binding[]): string;
 export declare function formatStroke(stroke: InputStroke): string;

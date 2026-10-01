@@ -1,19 +1,19 @@
 import { type Binding, type Conflict, type ContextLayer } from "@moritzbrantner/input-bindings";
 export type InputBindingsKeyboardMode = "logical" | "physical";
-export interface InputBindingsContextScenario {
+export type InputBindingsContextScenario = {
     id: string;
     label: string;
     description?: string;
     activeContexts?: readonly string[];
     stack?: readonly ContextLayer[];
     defaultKeyboardMode?: InputBindingsKeyboardMode;
-}
+};
 export type ConflictScenarioOutcome = "notSimultaneouslyActive" | "orderedByStack" | "orderedByRank" | "ambiguous" | "chordWait";
-export interface ConflictScenarioAssessment {
+export type ConflictScenarioAssessment = {
     scenarioId: string;
     scenarioLabel: string;
     outcome: ConflictScenarioOutcome;
-}
+};
 export declare function deriveContextScenarios(bindings: readonly Binding[]): InputBindingsContextScenario[];
 export declare function scenarioContextFacts(scenario: InputBindingsContextScenario): ReadonlySet<string>;
 export declare function bindingsForScenario(bindings: readonly Binding[], scenario: InputBindingsContextScenario): Binding[];

@@ -19,8 +19,9 @@ export function profileFromBindings(registry, effectiveBindings, profileId) {
         }
     }
     for (const [bindingId, binding] of [...effective.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        if (!defaults.has(bindingId))
+        if (!defaults.has(bindingId)) {
             patches.push({ op: "add", binding });
+        }
     }
     return { id: profileId, patches };
 }
@@ -32,19 +33,22 @@ export function actionIsChanged(action, effectiveBindings) {
     const effective = effectiveBindings
         .filter((binding) => binding.action === action.id)
         .sort((a, b) => a.id.localeCompare(b.id));
-    if (defaults.length !== effective.length)
+    if (defaults.length !== effective.length) {
         return true;
-    return defaults.some((binding, index) => !bindingEquals(binding, effective[index]));
+    }
+    return defaults.some((binding, index) => effective[index] === undefined || !bindingEquals(binding, effective[index]));
 }
 export function createActionEditorIndex(registry, effectiveBindings, conflicts) {
     const bindingsByAction = new Map();
     const actionByBindingId = new Map();
     for (const binding of effectiveBindings) {
         const entries = bindingsByAction.get(binding.action);
-        if (entries)
+        if (entries) {
             entries.push(binding);
-        else
+        }
+        else {
             bindingsByAction.set(binding.action, [binding]);
+        }
         actionByBindingId.set(binding.id, binding.action);
     }
     for (const bindings of bindingsByAction.values()) {
@@ -54,13 +58,16 @@ export function createActionEditorIndex(registry, effectiveBindings, conflicts) 
     for (const conflict of conflicts) {
         for (const bindingId of [conflict.leftBindingId, conflict.rightBindingId]) {
             const actionId = actionByBindingId.get(bindingId);
-            if (!actionId)
+            if (!actionId) {
                 continue;
+            }
             const kinds = conflictKindsByAction.get(actionId);
-            if (kinds)
+            if (kinds) {
                 kinds.add(conflict.kind);
-            else
+            }
+            else {
                 conflictKindsByAction.set(actionId, new Set([conflict.kind]));
+            }
         }
     }
     const result = new Map();
@@ -127,8 +134,9 @@ export function formatSequence(sequence) {
     return sequence.map(formatStroke).join(" then ");
 }
 export function describeWhen(expression) {
-    if (!expression || expression.op === "always")
+    if (!expression || expression.op === "always") {
         return "Always";
+    }
     switch (expression.op) {
         case "context":
             return expression.id;
@@ -141,8 +149,9 @@ export function describeWhen(expression) {
     }
 }
 export function contextsForWhen(expression) {
-    if (!expression || expression.op === "always")
+    if (!expression || expression.op === "always") {
         return [];
+    }
     switch (expression.op) {
         case "context":
             return [expression.id];
@@ -155,15 +164,16 @@ export function contextsForWhen(expression) {
 }
 export function sequenceStartsWith(sequence, prefix) {
     return (prefix.length <= sequence.length &&
-        prefix.every((stroke, index) => inputStrokeEquals(stroke, sequence[index])));
+        prefix.every((stroke, index) => sequence[index] !== undefined && inputStrokeEquals(stroke, sequence[index])));
 }
 function canonicalBinding(binding) {
     return {
         id: binding.id,
         action: binding.action,
         sequence: binding.sequence.map((stroke) => {
-            if (!isKeyStroke(stroke))
+            if (!isKeyStroke(stroke)) {
                 return structuredClone(stroke);
+            }
             return {
                 key: stroke.key,
                 modifiers: {
@@ -193,16 +203,21 @@ function formatModifiers(modifiers) {
         .join("");
 }
 function mouseButtonLabel(button) {
-    if (button === 0)
+    if (button === 0) {
         return "Mouse Left";
-    if (button === 1)
+    }
+    if (button === 1) {
         return "Mouse Middle";
-    if (button === 2)
+    }
+    if (button === 2) {
         return "Mouse Right";
-    if (button === 3)
+    }
+    if (button === 3) {
         return "Mouse Back";
-    if (button === 4)
+    }
+    if (button === 4) {
         return "Mouse Forward";
+    }
     return `Mouse Button ${button}`;
 }
 function gamepadLabel(index) {

@@ -50,8 +50,9 @@ export function assessConflictsInScenarios(bindings, conflicts, scenarios) {
     return conflicts.map((conflict) => {
         const left = bindingById.get(conflict.leftBindingId);
         const right = bindingById.get(conflict.rightBindingId);
-        if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0)
+        if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) {
             return [];
+        }
         const sequence = left.sequence.length <= right.sequence.length ? left.sequence : right.sequence;
         const sequenceKey = JSON.stringify(sequence);
         return scenarioStates.map(({ scenario, activeContexts, stack, traces }) => {

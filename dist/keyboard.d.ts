@@ -1,9 +1,9 @@
 import { type Binding, type InputStroke, type KeyStroke } from "@moritzbrantner/input-bindings";
-export interface KeyboardKeyDefinition {
+export type KeyboardKeyDefinition = {
     code: string;
     label: string;
     width?: number;
-}
+};
 export declare const KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[];
 export declare function keyboardLabelForCode(code: string, layoutLabels?: ReadonlyMap<string, string>): string;
 export declare function codeForStroke(stroke: KeyStroke, layoutLabels?: ReadonlyMap<string, string>): string | undefined;

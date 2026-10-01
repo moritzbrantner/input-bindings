@@ -1,14 +1,14 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useEffect, useMemo, useRef, useState, } from "react";
 import { applyConflictRepair, compileActionRegistry, explainResolutionWithContextStack, validateCompiledRegistry, } from "@moritzbrantner/input-bindings";
 import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
+import { useEffect, useMemo, useRef, useState, } from "react";
 import { ConflictRepairPanel } from "./ConflictRepairPanel.js";
+import { KeyboardView, KeybindingEditor } from "./index.js";
 import { createStarterMobileControlsOverlay, MobileControlsView, } from "./MobileControlsView.js";
-import { KeyboardView, KeybindingEditor, } from "./index.js";
-import { describeWhen, formatSequence, profileFromBindings } from "./model.js";
-import { ResolutionInspector, } from "./ResolutionInspector.js";
+import { formatSequence, profileFromBindings } from "./model.js";
+import { ResolutionInspector } from "./ResolutionInspector.js";
 import { bindingsForScenario, deriveContextScenarios, scenarioContextFacts, } from "./workbench-model.js";
-export { createStarterMobileControlsOverlay, MobileControlsView, } from "./MobileControlsView.js";
+export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.js";
 const DEFAULT_SCENARIO = {
     id: "global",
     label: "Global",
@@ -27,20 +27,12 @@ export function InputBindingsWorkbench({ registry, profile, onProfileChange, con
     const scenarios = useMemo(() => contextScenarios && contextScenarios.length > 0
         ? contextScenarios.map((scenario) => cloneScenario(scenario))
         : deriveContextScenarios(effectiveBindings), [contextScenarios, effectiveBindings]);
-    const [mode, setMode] = useState(initialMode ??
-        (initialView === "conflicts"
-            ? "conflicts"
-            : initialView === "preview"
-                ? "preview"
-                : "shortcuts"));
+    const [mode, setMode] = useState(initialMode ?? modeForView(initialView));
     const [presentation, setPresentation] = useState(initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"));
     const compactPresentation = useCompactControlsPresentation();
     const visibleMode = compactPresentation && mode === "preview" ? "shortcuts" : mode;
-    const visiblePresentation = presentation === "list"
-        ? "list"
-        : compactPresentation
-            ? "mobile"
-            : "keyboard";
+    const keyboardPresentation = compactPresentation ? "mobile" : "keyboard";
+    const visiblePresentation = presentation === "list" ? "list" : keyboardPresentation;
     const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
     const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
     const [keyboardMode, setKeyboardMode] = useState(scenario.defaultKeyboardMode ?? "logical");
@@ -63,25 +55,46 @@ export function InputBindingsWorkbench({ registry, profile, onProfileChange, con
         const repaired = applyConflictRepair(effectiveBindings, repair);
         onProfileChange(profileFromBindings(registry, repaired, profile.id));
     };
-    return (_jsxs("section", { className: ["ib-workbench", className].filter(Boolean).join(" "), children: [_jsxs("header", { className: "ib-workbench-header", children: [_jsxs("div", { children: [_jsx("p", { className: "ib-workbench-eyebrow", children: "Input settings" }), _jsx("h1", { children: title }), _jsx("p", { children: description }), _jsxs("p", { className: "ib-workbench-summary", children: [registry.actions.length, " actions \u00B7 ", effectiveBindings.length, " bindings \u00B7 ", report.conflicts.length, " conflict", report.conflicts.length === 1 ? "" : "s"] })] }), _jsx(WorkbenchTabs, { mode: visibleMode, compact: compactPresentation, onChange: setMode })] }), visibleMode === "shortcuts" && (_jsxs("div", { id: "ib-workbench-panel-shortcuts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-shortcuts", className: "ib-workbench-panel", children: [_jsx(PresentationToolbar, { presentation: visiblePresentation, compact: compactPresentation, onChange: setPresentation }), visiblePresentation === "mobile" ? (_jsx(MobileControlsView, { registry: registry, overlay: mobileOverlay, onOverlayChange: onMobileOverlayChange })) : (_jsx(KeybindingEditor, { registry: registry, profile: profile, onProfileChange: onProfileChange, compiledRegistry: compiledRegistry, presentation: visiblePresentation }))] })), visibleMode === "conflicts" && (_jsx("div", { id: "ib-workbench-panel-conflicts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-conflicts", className: "ib-workbench-panel", children: _jsx(ConflictRepairPanel, { bindings: effectiveBindings, conflicts: report.conflicts, actions: actionById, scenarios: scenarios, onApplyRepair: applyRepair }) })), visibleMode === "preview" && (_jsxs("div", { id: "ib-workbench-panel-preview", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-preview", className: "ib-workbench-panel", children: [_jsx(ScenarioToolbar, { scenarios: scenarios, scenario: scenario, onScenarioChange: setScenarioId, keyboardMode: keyboardMode, onKeyboardModeChange: setKeyboardMode }), _jsx(PreviewMode, { bindings: effectiveBindings, activeBindings: activeBindings, actions: actionById, bindingById: bindingById, conflicts: report.conflicts, activeContexts: activeContexts, scenario: scenario, keyboardMode: keyboardMode })] }))] }));
+    return (_jsxs("section", { className: ["ib-workbench", className].filter(Boolean).join(" "), children: [_jsxs("header", { className: "ib-workbench-header", children: [_jsxs("div", { children: [_jsx("p", { className: "ib-workbench-eyebrow", children: "Input settings" }), _jsx("h1", { children: title }), _jsx("p", { children: description }), _jsxs("p", { className: "ib-workbench-summary", children: [registry.actions.length, " actions \u00B7 ", effectiveBindings.length, " bindings \u00B7", " ", report.conflicts.length, " conflict", report.conflicts.length === 1 ? "" : "s"] })] }), _jsx(WorkbenchTabs, { mode: visibleMode, compact: compactPresentation, onChange: setMode })] }), visibleMode === "shortcuts" && (_jsxs("div", { id: "ib-workbench-panel-shortcuts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-shortcuts", className: "ib-workbench-panel", children: [_jsx(PresentationToolbar, { presentation: visiblePresentation, compact: compactPresentation, onChange: setPresentation }), visiblePresentation === "mobile" ? (_jsx(MobileControlsView, { registry: registry, overlay: mobileOverlay, onOverlayChange: onMobileOverlayChange })) : (_jsx(KeybindingEditor, { registry: registry, profile: profile, onProfileChange: onProfileChange, compiledRegistry: compiledRegistry, presentation: visiblePresentation }))] })), visibleMode === "conflicts" && (_jsx("div", { id: "ib-workbench-panel-conflicts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-conflicts", className: "ib-workbench-panel", children: _jsx(ConflictRepairPanel, { bindings: effectiveBindings, conflicts: report.conflicts, actions: actionById, scenarios: scenarios, onApplyRepair: applyRepair }) })), visibleMode === "preview" && (_jsxs("div", { id: "ib-workbench-panel-preview", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-preview", className: "ib-workbench-panel", children: [_jsx(ScenarioToolbar, { scenarios: scenarios, scenario: scenario, onScenarioChange: setScenarioId, keyboardMode: keyboardMode, onKeyboardModeChange: setKeyboardMode }), _jsx(PreviewMode, { bindings: effectiveBindings, activeBindings: activeBindings, actions: actionById, bindingById: bindingById, conflicts: report.conflicts, activeContexts: activeContexts, scenario: scenario, keyboardMode: keyboardMode })] }))] }));
 }
 function WorkbenchTabs({ mode, compact, onChange, }) {
     const tabs = compact
         ? [
-            { id: "shortcuts", label: "Bindings", description: "Browse bindings or arrange the mobile control overlay." },
-            { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
+            {
+                id: "shortcuts",
+                label: "Bindings",
+                description: "Browse bindings or arrange the mobile control overlay.",
+            },
+            {
+                id: "conflicts",
+                label: "Conflicts",
+                description: "Understand overlaps and apply explicit deterministic repairs.",
+            },
         ]
         : [
-            { id: "shortcuts", label: "Shortcuts", description: "Browse and edit shortcuts in either list or keyboard presentation." },
-            { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
-            { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
+            {
+                id: "shortcuts",
+                label: "Shortcuts",
+                description: "Browse and edit shortcuts in either list or keyboard presentation.",
+            },
+            {
+                id: "conflicts",
+                label: "Conflicts",
+                description: "Understand overlaps and apply explicit deterministic repairs.",
+            },
+            {
+                id: "preview",
+                label: "Try shortcuts",
+                description: "Press real keys and inspect exactly why the current context resolves them.",
+            },
         ];
     const tabRefs = useRef([]);
     const activate = (index) => {
         const normalizedIndex = (index + tabs.length) % tabs.length;
         const tab = tabs[normalizedIndex];
-        if (!tab)
+        if (!tab) {
             return;
+        }
         onChange(tab.id);
         queueMicrotask(() => tabRefs.current[normalizedIndex]?.focus());
     };
@@ -133,7 +146,7 @@ function ContextStackSummary({ scenario }) {
     if (stack.length === 0 && facts.length === 0) {
         return _jsx("small", { children: "No application context is active." });
     }
-    return (_jsxs("small", { children: [stack.length > 0 && (_jsxs("span", { className: "ib-context-stack", children: ["Stack: ", stack.map((layer) => `${layer.id}${layer.blocksLower ? " (modal)" : ""}`).join(" → ")] })), facts.length > 0 && _jsxs("span", { children: ["Facts: ", facts.join(", ")] })] }));
+    return (_jsxs("small", { children: [stack.length > 0 && (_jsxs("span", { className: "ib-context-stack", children: ["Stack:", " ", stack.map((layer) => `${layer.id}${layer.blocksLower ? " (modal)" : ""}`).join(" → ")] })), facts.length > 0 && _jsxs("span", { children: ["Facts: ", facts.join(", ")] })] }));
 }
 function PreviewMode({ bindings, activeBindings, actions, bindingById, conflicts, activeContexts, scenario, keyboardMode, }) {
     const captureRef = useRef(null);
@@ -160,22 +173,25 @@ function PreviewMode({ bindings, activeBindings, actions, bindingById, conflicts
         setPressedCodes(new Set());
     };
     const onKeyDown = (event) => {
-        if (!capturing)
+        if (!capturing) {
             return;
+        }
         event.preventDefault();
         event.stopPropagation();
         if (event.code) {
             setPressedCodes((current) => new Set([...current, event.code]));
         }
-        if (event.repeat || event.nativeEvent.isComposing)
+        if (event.repeat || event.nativeEvent.isComposing) {
             return;
+        }
         const stroke = keyboardEventToStroke(event.nativeEvent, {
             mode: keyboardMode,
             respectDefaultPrevented: false,
             ignoreComposing: true,
         });
-        if (!stroke)
+        if (!stroke) {
             return;
+        }
         let nextSequence = trace.resolution.kind === "pending" ? [...sequence, stroke] : [stroke];
         let nextTrace = explainResolutionWithContextStack(bindings, nextSequence, activeContexts, scenario.stack ?? []);
         if (trace.resolution.kind === "pending" && nextTrace.resolution.kind === "none") {
@@ -194,8 +210,9 @@ function PreviewMode({ bindings, activeBindings, actions, bindingById, conflicts
         setHistory((current) => [historyEntry, ...current].slice(0, 8));
     };
     const onKeyUp = (event) => {
-        if (!event.code)
+        if (!event.code) {
             return;
+        }
         setPressedCodes((current) => {
             const next = new Set(current);
             next.delete(event.code);
@@ -209,7 +226,9 @@ function PreviewMode({ bindings, activeBindings, actions, bindingById, conflicts
         historyIdRef.current = 0;
         captureRef.current?.focus();
     };
-    return (_jsx("div", { className: "ib-preview-layout", children: _jsxs("section", { ref: captureRef, className: ["ib-preview-surface", capturing ? "is-capturing" : ""].filter(Boolean).join(" "), tabIndex: 0, onKeyDown: onKeyDown, onKeyUp: onKeyUp, onBlur: () => setPressedCodes(new Set()), "aria-label": "Interactive keyboard shortcut preview", children: [_jsxs("div", { className: "ib-section-heading", children: [_jsxs("div", { children: [_jsx("p", { className: "ib-workbench-eyebrow", children: "Interactive preview" }), _jsx("h2", { children: "Press your actual keyboard" })] }), _jsxs("div", { className: "ib-preview-actions", children: [!capturing ? (_jsx("button", { type: "button", className: "ib-primary-button", onClick: startCapture, children: "Start preview" })) : (_jsx("button", { type: "button", onClick: stopCapture, children: "Stop preview" })), _jsx("button", { type: "button", onClick: clearTrace, children: "Clear" })] })] }), _jsx("p", { className: "ib-preview-instruction", children: capturing
+    return (_jsx("div", { className: "ib-preview-layout", children: _jsxs("section", { ref: captureRef, className: ["ib-preview-surface", capturing ? "is-capturing" : ""]
+                .filter(Boolean)
+                .join(" "), tabIndex: 0, onKeyDown: onKeyDown, onKeyUp: onKeyUp, onBlur: () => setPressedCodes(new Set()), "aria-label": "Interactive keyboard shortcut preview", children: [_jsxs("div", { className: "ib-section-heading", children: [_jsxs("div", { children: [_jsx("p", { className: "ib-workbench-eyebrow", children: "Interactive preview" }), _jsx("h2", { children: "Press your actual keyboard" })] }), _jsxs("div", { className: "ib-preview-actions", children: [!capturing ? (_jsx("button", { type: "button", className: "ib-primary-button", onClick: startCapture, children: "Start preview" })) : (_jsx("button", { type: "button", onClick: stopCapture, children: "Stop preview" })), _jsx("button", { type: "button", onClick: clearTrace, children: "Clear" })] })] }), _jsx("p", { className: "ib-preview-instruction", children: capturing
                         ? "Preview is active. Browser shortcuts are suppressed while this panel has focus."
                         : "Start preview, then press a shortcut. The physical keys will light up and the resolver evidence will be explained below." }), _jsx(KeyboardView, { bindings: activeBindings, conflicts: conflicts, pressedCodes: pressedCodes, highlightedSequence: sequence.filter((stroke) => "key" in stroke) }), _jsx(ResolutionPanel, { resolution: trace.resolution, sequence: sequence, actions: actions, bindingById: bindingById, keyboardMode: keyboardMode }), _jsx(ResolutionInspector, { trace: trace, history: history, actions: actions, bindingById: bindingById })] }) }));
 }
@@ -284,4 +303,10 @@ function cloneScenario(scenario) {
         activeContexts: [...(scenario.activeContexts ?? [])],
         stack: (scenario.stack ?? []).map((layer) => ({ ...layer })),
     };
+}
+function modeForView(view) {
+    if (view === "conflicts" || view === "preview") {
+        return view;
+    }
+    return "shortcuts";
 }

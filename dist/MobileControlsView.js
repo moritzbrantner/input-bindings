@@ -86,21 +86,24 @@ export function MobileControlsView({ registry, overlay, onOverlayChange, }) {
         }
     }, [overlay.controls, selectedId]);
     const updateControl = (id, patch) => {
-        if (!onOverlayChange)
+        if (!onOverlayChange) {
             return;
+        }
         onOverlayChange({
             ...overlay,
             controls: overlay.controls.map((control) => control.id === id ? constrainControl({ ...control, ...patch }) : control),
         });
     };
     const setOrientation = (orientation) => {
-        if (!onOverlayChange || overlay.orientation === orientation)
+        if (!onOverlayChange || overlay.orientation === orientation) {
             return;
+        }
         onOverlayChange({ ...overlay, orientation });
     };
     const addControl = (kind) => {
-        if (!onOverlayChange)
+        if (!onOverlayChange) {
             return;
+        }
         const id = nextControlId(kind, overlay.controls);
         const offset = (overlay.controls.length % 4) * 2;
         const control = constrainControl({
@@ -113,16 +116,18 @@ export function MobileControlsView({ registry, overlay, onOverlayChange, }) {
         setSelectedId(id);
     };
     const removeSelected = () => {
-        if (!onOverlayChange || !selected)
+        if (!onOverlayChange || !selected) {
             return;
+        }
         const nextControls = overlay.controls.filter((control) => control.id !== selected.id);
         onOverlayChange({ ...overlay, controls: nextControls });
         setSelectedId(nextControls[0]?.id);
     };
     const startDrag = (event, control) => {
         setSelectedId(control.id);
-        if (!editable)
+        if (!editable) {
             return;
+        }
         const controlRect = event.currentTarget.getBoundingClientRect();
         dragRef.current = {
             id: control.id,
@@ -138,8 +143,9 @@ export function MobileControlsView({ registry, overlay, onOverlayChange, }) {
         const control = drag
             ? overlay.controls.find((candidate) => candidate.id === drag.id)
             : undefined;
-        if (!drag || !frame || !control || drag.pointerId !== event.pointerId)
+        if (!drag || !frame || !control || drag.pointerId !== event.pointerId) {
             return;
+        }
         const frameRect = frame.getBoundingClientRect();
         const x = ((event.clientX - frameRect.left - drag.offsetX) / frameRect.width) * 100;
         const y = ((event.clientY - frameRect.top - drag.offsetY) / frameRect.height) * 100;
@@ -151,8 +157,9 @@ export function MobileControlsView({ registry, overlay, onOverlayChange, }) {
         }
     };
     const nudgeControl = (event, control) => {
-        if (!editable)
+        if (!editable) {
             return;
+        }
         const step = event.shiftKey ? 5 : 1;
         let x = control.x;
         let y = control.y;
@@ -187,7 +194,9 @@ export function MobileControlsView({ registry, overlay, onOverlayChange, }) {
                                                 "ib-mobile-overlay-control",
                                                 `is-${control.kind}`,
                                                 selectedId === control.id ? "is-selected" : "",
-                                            ].filter(Boolean).join(" "), style: style, "aria-pressed": selectedId === control.id, "aria-label": `${control.label} mobile control`, title: action ? `${control.label} → ${action.title}` : control.label, onClick: () => setSelectedId(control.id), onPointerDown: (event) => startDrag(event, control), onPointerMove: moveDrag, onPointerUp: stopDrag, onPointerCancel: stopDrag, onKeyDown: (event) => nudgeControl(event, control), children: [control.kind === "stick" && _jsx("span", { className: "ib-mobile-stick-knob", "aria-hidden": "true" }), _jsx("strong", { children: control.label }), control.kind === "gestureZone" && _jsx("small", { children: "drag / swipe" }), action && _jsx("small", { children: action.title })] }, control.id));
+                                            ]
+                                                .filter(Boolean)
+                                                .join(" "), style: style, "aria-pressed": selectedId === control.id, "aria-label": `${control.label} mobile control`, title: action ? `${control.label} → ${action.title}` : control.label, onClick: () => setSelectedId(control.id), onPointerDown: (event) => startDrag(event, control), onPointerMove: moveDrag, onPointerUp: stopDrag, onPointerCancel: stopDrag, onKeyDown: (event) => nudgeControl(event, control), children: [control.kind === "stick" && (_jsx("span", { className: "ib-mobile-stick-knob", "aria-hidden": "true" })), _jsx("strong", { children: control.label }), control.kind === "gestureZone" && _jsx("small", { children: "drag / swipe" }), action && _jsx("small", { children: action.title })] }, control.id));
                                     })] }), _jsxs("div", { className: "ib-mobile-control-palette", "aria-label": "Mobile control palette", children: [_jsx("button", { type: "button", disabled: !editable, onClick: () => addControl("stick"), children: "Add stick" }), _jsx("button", { type: "button", disabled: !editable, onClick: () => addControl("button"), children: "Add action button" }), _jsx("button", { type: "button", disabled: !editable, onClick: () => addControl("gestureZone"), children: "Add gesture zone" }), _jsx("button", { type: "button", disabled: !editable, onClick: () => addControl("dock"), children: "Add command dock" })] })] }), _jsxs("aside", { className: "ib-mobile-control-inspector", "aria-label": "Selected mobile control", children: [selected ? (_jsxs(_Fragment, { children: [_jsxs("div", { className: "ib-mobile-control-inspector-heading", children: [_jsxs("div", { children: [_jsx("span", { children: controlKindLabel(selected.kind) }), _jsx("strong", { children: selected.label })] }), _jsx("button", { type: "button", disabled: !editable, onClick: removeSelected, children: "Remove" })] }), _jsxs("label", { children: [_jsx("span", { children: "Label" }), _jsx("input", { value: selected.label, disabled: !editable, onChange: (event) => updateControl(selected.id, { label: event.target.value }) })] }), _jsxs("label", { children: [_jsx("span", { children: "Semantic action" }), _jsxs("select", { value: selected.actionId ?? "", disabled: !editable, onChange: (event) => updateControl(selected.id, {
                                                     actionId: event.target.value || undefined,
                                                 }), children: [_jsx("option", { value: "", children: "No direct action" }), sortedActions.map((action) => (_jsx("option", { value: action.id, children: action.title }, action.id)))] })] }), _jsxs("fieldset", { className: "ib-mobile-control-geometry", children: [_jsx("legend", { children: "Position and size (%)" }), _jsx(ExactNumberField, { label: "X", value: selected.x, disabled: !editable, onChange: (value) => updateControl(selected.id, { x: value }) }), _jsx(ExactNumberField, { label: "Y", value: selected.y, disabled: !editable, onChange: (value) => updateControl(selected.id, { y: value }) }), _jsx(ExactNumberField, { label: "Width", value: selected.width, min: 4, disabled: !editable, onChange: (value) => updateControl(selected.id, { width: value }) }), _jsx(ExactNumberField, { label: "Height", value: selected.height, min: 4, disabled: !editable, onChange: (value) => updateControl(selected.id, { height: value }) })] }), _jsx("p", { className: "ib-mobile-control-hint", children: "Arrow keys nudge by 1%; hold Shift for 5%. Touch and pointer dragging use the same controlled layout values." })] })) : (_jsxs("div", { className: "ib-mobile-control-empty", children: [_jsx("strong", { children: "No control selected" }), _jsx("span", { children: "Add or select a control to edit its exact placement." })] })), !editable && (_jsx("p", { className: "ib-mobile-control-hint", children: "This overlay is read-only until the consumer provides onMobileOverlayChange." }))] })] })] }));
@@ -195,20 +204,24 @@ export function MobileControlsView({ registry, overlay, onOverlayChange, }) {
 function ExactNumberField({ label, value, onChange, disabled, min = 0, }) {
     return (_jsxs("label", { children: [_jsx("span", { children: label }), _jsx("input", { type: "number", min: min, max: 100, step: 1, value: roundPercent(value), disabled: disabled, onChange: (event) => {
                     const parsed = Number(event.target.value);
-                    if (Number.isFinite(parsed))
+                    if (Number.isFinite(parsed)) {
                         onChange(parsed);
+                    }
                 } })] }));
 }
 function nextControlId(kind, controls) {
-    const stem = kind === "gestureZone"
-        ? "gesture-zone"
-        : kind === "button"
-            ? "action-button"
-            : kind;
+    const stems = {
+        gestureZone: "gesture-zone",
+        button: "action-button",
+        stick: "stick",
+        dock: "dock",
+    };
+    const stem = stems[kind];
     let suffix = 1;
     const ids = new Set(controls.map((control) => control.id));
-    while (ids.has(`${stem}-${suffix}`))
+    while (ids.has(`${stem}-${suffix}`)) {
         suffix += 1;
+    }
     return `${stem}-${suffix}`;
 }
 function constrainControl(control) {

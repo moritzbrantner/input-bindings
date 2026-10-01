@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { compileActionRegistry, validateCompiledRegistry } from "@moritzbrantner/input-bindings";
 import { useMemo } from "react";
-import { compileActionRegistry, validateCompiledRegistry, } from "@moritzbrantner/input-bindings";
-import { KeybindingEditor, } from "./index.js";
+import { KeybindingEditor } from "./index.js";
 import { PlatformAdvisoryPanel } from "./PlatformAdvisoryPanel.js";
 export function PlatformAwareKeybindingEditor(props) {
     const compiledRegistry = useMemo(() => props.compiledRegistry ?? compileActionRegistry(props.registry), [props.compiledRegistry, props.registry]);

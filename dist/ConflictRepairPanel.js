@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useMemo } from "react";
 import { planConflictRepairs, } from "@moritzbrantner/input-bindings";
+import { useMemo } from "react";
 import { describeWhen, formatSequence } from "./model.js";
 import { assessConflictsInScenarios, } from "./workbench-model.js";
 export function ConflictRepairPanel({ bindings, conflicts, actions, scenarios = [], onApplyRepair, }) {
@@ -14,8 +14,9 @@ export function ConflictRepairPanel({ bindings, conflicts, actions, scenarios = 
                 }) }))] }));
 }
 function ScenarioEvidence({ assessments }) {
-    if (assessments.length === 0)
+    if (assessments.length === 0) {
         return null;
+    }
     const observed = assessments.filter((assessment) => assessment.outcome !== "notSimultaneouslyActive");
     if (observed.length === 0) {
         return (_jsxs("div", { className: "ib-scenario-evidence", children: [_jsx("strong", { children: "Declared scenarios" }), _jsx("span", { children: "This overlap is not simultaneously active in any supplied application scenario." })] }));
@@ -24,35 +25,51 @@ function ScenarioEvidence({ assessments }) {
 }
 function scenarioOutcomeLabel(outcome) {
     switch (outcome) {
-        case "notSimultaneouslyActive": return "not active together";
-        case "orderedByStack": return "ordered by context stack";
-        case "orderedByRank": return "ordered by priority / specificity";
-        case "ambiguous": return "still ambiguous";
-        case "chordWait": return "chord wait remains";
+        case "notSimultaneouslyActive":
+            return "not active together";
+        case "orderedByStack":
+            return "ordered by context stack";
+        case "orderedByRank":
+            return "ordered by priority / specificity";
+        case "ambiguous":
+            return "still ambiguous";
+        case "chordWait":
+            return "chord wait remains";
     }
 }
 function BindingSummary({ binding, actions, }) {
-    if (!binding)
-        return _jsx("div", { className: "ib-conflict-binding", children: _jsx("strong", { children: "Missing binding" }) });
+    if (!binding) {
+        return (_jsx("div", { className: "ib-conflict-binding", children: _jsx("strong", { children: "Missing binding" }) }));
+    }
     const action = actions.get(binding.action);
     return (_jsxs("div", { className: "ib-conflict-binding", children: [_jsx("strong", { children: action?.title ?? binding.action }), _jsx("kbd", { children: formatSequence(binding.sequence) }), _jsx("span", { children: describeWhen(binding.when) }), _jsxs("small", { children: [binding.id, " \u00B7 priority ", binding.priority ?? 0] })] }));
 }
 function dispositionLabel(disposition) {
     switch (disposition) {
-        case "redundant": return "Redundant";
-        case "ambiguous": return "Needs a decision";
-        case "orderedOverride": return "Ordered override";
-        case "chordPrefix": return "Chord overlap";
-        case "potential": return "Potential overlap";
+        case "redundant":
+            return "Redundant";
+        case "ambiguous":
+            return "Needs a decision";
+        case "orderedOverride":
+            return "Ordered override";
+        case "chordPrefix":
+            return "Chord overlap";
+        case "potential":
+            return "Potential overlap";
     }
 }
 function dispositionTitle(disposition) {
     switch (disposition) {
-        case "redundant": return "Two equivalent bindings do the same job";
-        case "ambiguous": return "Two actions have the same winning rank";
-        case "orderedOverride": return "Existing precedence already chooses a winner";
-        case "chordPrefix": return "One shortcut is a prefix of another";
-        case "potential": return "The context space is too large to prove the overlap exhaustively";
+        case "redundant":
+            return "Two equivalent bindings do the same job";
+        case "ambiguous":
+            return "Two actions have the same winning rank";
+        case "orderedOverride":
+            return "Existing precedence already chooses a winner";
+        case "chordPrefix":
+            return "One shortcut is a prefix of another";
+        case "potential":
+            return "The context space is too large to prove the overlap exhaustively";
     }
 }
 function dispositionExplanation(disposition) {
@@ -71,9 +88,12 @@ function dispositionExplanation(disposition) {
 }
 function keepLabel(reason) {
     switch (reason) {
-        case "existingPrecedence": return "Keep the existing precedence";
-        case "potentialConflict": return "Keep the potential overlap";
-        case "redundantSameAction": return "Keep both equivalent bindings";
+        case "existingPrecedence":
+            return "Keep the existing precedence";
+        case "potentialConflict":
+            return "Keep the potential overlap";
+        case "redundantSameAction":
+            return "Keep both equivalent bindings";
     }
 }
 function repairTarget(repair) {
@@ -83,9 +103,12 @@ function repairLabel(repair, bindings, actions) {
     const target = bindings.get(repair.bindingId);
     const title = target ? (actions.get(target.action)?.title ?? target.action) : repair.bindingId;
     switch (repair.kind) {
-        case "unbind": return `Unbind ${title}`;
-        case "prefer": return `Prefer ${title}`;
-        case "narrowContext": return `Separate ${title} by context`;
+        case "unbind":
+            return `Unbind ${title}`;
+        case "prefer":
+            return `Prefer ${title}`;
+        case "narrowContext":
+            return `Separate ${title} by context`;
     }
 }
 function repairDescription(repair, bindings, actions) {

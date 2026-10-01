@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useMemo } from "react";
 import { analyzePlatformConflicts, } from "@moritzbrantner/input-bindings";
 import { DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG, detectPlatformConflictEnvironment, } from "@moritzbrantner/input-bindings-web/platform-conflicts";
+import { useMemo } from "react";
 import { formatSequence } from "./model.js";
 import "./platform-advisories.css";
 export function PlatformAdvisoryPanel({ registry, bindings }) {
@@ -29,9 +29,11 @@ function groupByBinding(diagnostics) {
     return result;
 }
 function pretty(value) {
-    if (value === "macos")
+    if (value === "macos") {
         return "macOS";
-    if (value === "ios")
+    }
+    if (value === "ios") {
         return "iOS";
+    }
     return value.replace(/^./u, (character) => character.toLocaleUpperCase());
 }
