@@ -11,11 +11,15 @@ import {
   type GesturePrimitiveCandidate,
   type GestureTrace,
   type GestureTraceAnalysis,
+  type MultiPointerSession,
   type PointerStroke,
   type PointerStrokeEvent,
   type RuntimeDecision,
 } from "@moritzbrantner/input-bindings-runtime";
-import { attachGestureRuntime } from "@moritzbrantner/input-bindings-web";
+import {
+  attachGestureRuntime,
+  attachMultiPointerGestures,
+} from "@moritzbrantner/input-bindings-web";
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -54,6 +58,8 @@ type Analysis = {
 
 type LabContexts = { casting: boolean; menuOpen: boolean };
 
+type TwoFinger = { session: MultiPointerSession; decision: RuntimeDecision | undefined };
+
 type TraceEvidence = { trace: GestureTrace; result: GestureTraceAnalysis };
 
 function App() {
@@ -63,6 +69,7 @@ function App() {
   const contextsRef = useRef<LabContexts>({ casting: false, menuOpen: false });
   const [contexts, setContexts] = useState<LabContexts>(contextsRef.current);
   const [profileId, setProfileId] = useState("default");
+  const [twoFinger, setTwoFinger] = useState<TwoFinger | undefined>();
   const [stroke, setStroke] = useState<PointerStroke | undefined>();
   const [lifecycle, setLifecycle] = useState<LifecycleEntry[]>([]);
   const [analysis, setAnalysis] = useState<Analysis | undefined>();
@@ -86,9 +93,21 @@ function App() {
     controllerRef.current = controller;
     let entry = 0;
     let recordedCount = 0;
+    const detachTwoFinger = attachMultiPointerGestures(controller, {
+      target: surface,
+      sourceId: "gesture-lab-pair",
+      onSession(event) {
+        if (event.phase !== "complete") {
+          setTwoFinger({ session: event.session, decision: undefined });
+        }
+      },
+      onGesture: ({ session, decision }) => setTwoFinger({ session, decision }),
+    });
     const detach = attachGestureRuntime(controller, {
       target: surface,
       sourceId: "gesture-lab",
+      // A second finger hands the gesture over to the two-pointer session.
+      cancelOnAdditionalPointer: true,
       // Recognize from the rounded trace so live input and replayed exports decide identically.
       recognize(completed) {
         const trace = gestureTraceFromStroke(completed);
@@ -133,6 +152,7 @@ function App() {
     });
     return () => {
       detach();
+      detachTwoFinger();
       controllerRef.current = null;
     };
   }, []);
@@ -258,6 +278,7 @@ function App() {
           </div>
 
           <DecisionPanel analysis={analysis} />
+          <TwoFingerPanel twoFinger={twoFinger} />
         </div>
 
         <aside className="gesture-evidence" aria-label="Gesture evidence">
@@ -497,6 +518,36 @@ function DecisionPanel({ analysis }: { analysis: Analysis | undefined }) {
         {(decision.explanation.gestureCandidates ?? []).map(formatGesture).join(" → ") ||
           "nothing recognized"}
       </p>
+    </section>
+  );
+}
+
+function TwoFingerPanel({ twoFinger }: { twoFinger: TwoFinger | undefined }) {
+  if (!twoFinger) {
+    return null;
+  }
+  const { session, decision } = twoFinger;
+  const active = (Object.keys(session.active) as Array<keyof typeof session.active>).filter(
+    (mode) => session.active[mode],
+  );
+  return (
+    <section className="runtime-panel" aria-labelledby="gesture-two-finger-heading">
+      <h2 id="gesture-two-finger-heading">Two-finger session</h2>
+      <dl className="gesture-metrics">
+        <Metric label="Status" name="Two-finger status" value={session.status} />
+        <Metric label="Scale" value={format(session.metrics.scale, 2)} />
+        <Metric label="Rotation" value={`${format(session.metrics.rotation, 0)}°`} />
+        <Metric
+          label="Translation"
+          value={`${format(session.metrics.translation.distance, 0)} px`}
+        />
+        <Metric label="Active" name="Two-finger modes" value={active.join(", ") || "—"} />
+        <Metric
+          label="Action"
+          name="Two-finger action"
+          value={decision?.dispatches[0]?.action ?? (decision ? decision.kind : "—")}
+        />
+      </dl>
     </section>
   );
 }
