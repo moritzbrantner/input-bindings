@@ -38,6 +38,7 @@ The List and Keyboard presentations are peers within one Shortcuts task on deskt
 - Support portrait and landscape previews and keep a visible safe-area inset.
 - Let users drag controls for coarse placement, but always pair that with exact X/Y/width/height percentage fields and keyboard nudging for precision.
 - Let discrete buttons point at semantic actions and sticks/gesture zones point at semantic analog actions without turning overlay layout into a second binding resolver.
+- A gesture zone's **Zone input** is either _Analog look_ (drives an analog action) or _Gestures_ (strokes starting in the zone resolve through gesture bindings with the zone's gesture context active). The zone never names a gesture itself; bindings own gesture semantics.
 - Keep the overlay controlled by the consumer through `mobileOverlay` / `onMobileOverlayChange`; the consumer owns persistence and application behavior.
 - Keep Edit and Test modes distinct. Test mode executes the real touch surface, including stick/look Axis2D values, rather than simulating keyboard input.
 - Do not pretend touch gestures are keyboard shortcuts. Overlay geometry and analog mappings remain separate from `Profile` key-binding deltas.
