@@ -39,7 +39,7 @@ These rules govern how work is sliced and when expensive checks run. They never 
 - **Decide and continue.** When a task leaves a design choice open, pick the simplest option consistent with this file, record it in the PR description (or an ADR in `docs/adr/` when consequential) and keep going.
 - **Short PR descriptions.** At most about 15 lines: what changed, schema/API/compatibility changes, one line naming the checks that ran, and anything not verified. Leave detailed evidence to CI and the tests. Never write a closing keyword next to an issue you do not close ("not close #N" still closes it); write "part of #N" instead.
 
-Tasks arrive as GitHub issues in the format, labels and pickup rules of `docs/AGENT_TASKS.md`; implement only `spec:ready` issues labeled for you. Claude Opus runs the loop with the `/agent-loop` skill (`.claude/skills/agent-loop/`); Sol runs the Codex `implementer-loop` skill (`.agents/skills/implementer-loop/`).
+Tasks arrive as GitHub issues in the format, labels and pickup rules of `docs/AGENT_TASKS.md`; implement only `spec:ready` issues labeled for you. Claude Opus orchestrates with the `/orchestrate` skill (`.claude/skills/orchestrate/`), preferably under `/goal` (see the skill's Pacing section); Sol runs the Codex `implementer-loop` skill (`.agents/skills/implementer-loop/`).
 
 ## Done means
 
