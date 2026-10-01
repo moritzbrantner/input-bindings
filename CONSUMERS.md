@@ -104,3 +104,22 @@ Until the packages are published, browser-only consumers use:
 `https://moritzbrantner.github.io/input-bindings/input-bindings-browser.js`
 
 The bridge is a self-contained ESM build of the runtime and browser adapters. It is a dogfood transport, not a separate implementation. Roadmap slice 9 should replace this temporary cross-repository URL dependency with versioned package/release artifacts while retaining the same authority boundaries.
+
+## MMORPG — held gameplay state and fixed-tick intent (planned adoption)
+
+Repository: `moritzbrantner/mmorpg` (tracked there as mmorpg#41; upstream #53)
+
+Consumer-owned:
+
+- the action catalog (movement, jump, targeting, auto-attack, abilities, camera, menus, chat) and keyboard/gamepad defaults,
+- the context stack: gameplay, non-blocking overlays such as a map, and modal menu/settings/chat layers,
+- retiring held input when opening chat or a modal (`controller.reset("chatOpened")`),
+- sampling on its fixed simulation tick and deriving `Move { forward, strafe, facing }`; camera orbit and pointer-delta look stay presentation-owned.
+
+Shared foundation:
+
+- normalized keyboard and gamepad runtime adapters, text-entry exclusion, blur/visibility/disconnect release,
+- ordered-context resolution, profiles, and press/release pairing by activation identity,
+- `SemanticControlState`, which mirrors runtime dispatches into multi-holder held state (`isHeld`, `axis`) and queues one-shot presses (`drainPresses`) so a tick never misses a press that was released between ticks.
+
+`packages/input-bindings-web/test/mmorpg-consumer.test.ts` proves the pattern through the public adapters: keyboard and gamepad produce the same movement intent, several devices hold one action, chat/menu transitions cannot leak gameplay input, non-blocking overlays fall through, and context or profile changes while a key is held cannot strand the action. The binding editor reaches MMORPG settings through the settings repository's composition seam rather than mirrored setting values.
