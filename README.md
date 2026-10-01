@@ -33,11 +33,12 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
 - Sibling semantic analog runtime for normalized Axis1D/Axis2D actions, including deterministic multi-source aggregation so touch and gyroscope can feed the same action without synthesizing keyboard input.
 - Browser virtual-stick, touch-look, and gyroscope adapters with deadzone/sensitivity/smoothing/orientation processing and explicit motion-permission handling.
+- Pointer-stroke capture for mouse, touch, and pen through one Pointer Events path, with explicit start/update/complete/cancel lifecycle, element-local samples that retain raw evidence, and cancellation on pointer cancel, lost capture, blur, hidden visibility, and detach.
 - Normalized keyboard, mouse, wheel, and gamepad inputs, with browser adapters for keyboard/mouse/gamepad runtime attachment.
 - Versioned portable configuration with inherited presets, explicit action/binding migrations, deterministic serialization, stale-override diagnostics, and provenance for every effective binding.
 - Advisory browser/OS/layout/AltGr/IME conflict analysis with environment targeting and source provenance, kept separate from internal binding conflicts.
 - Shared JSON conformance fixtures used by Rust and TypeScript so semantic implementations cannot intentionally drift unnoticed.
-- GitHub Pages dogfood surfaces for configuration, internal conflicts, runtime behavior, devices, persistence/schema evolution, and platform/layout advisories.
+- GitHub Pages dogfood surfaces for configuration, internal conflicts, runtime behavior, devices, pointer gestures, persistence/schema evolution, and platform/layout advisories.
 
 ## Repository layout
 
