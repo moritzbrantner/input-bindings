@@ -27,13 +27,18 @@ if (!browserBundleStat?.isFile()) {
 
   const browserApi = await import(browserBundleUrl.href);
   for (const exportName of [
+    "AnalogInputController",
     "InputRuntimeController",
     "analyzeConflicts",
     "applyProfile",
     "attachGamepadRuntime",
+    "attachGyroscopeAnalog",
     "attachKeyboardRuntime",
     "attachMouseRuntime",
+    "attachTouchLookAnalog",
+    "attachVirtualStickAnalog",
     "keyboardEventToStroke",
+    "requestDeviceMotionPermission",
     "validateRegistry",
   ]) {
     if (typeof browserApi[exportName] !== "function") {

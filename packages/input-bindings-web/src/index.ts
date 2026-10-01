@@ -1,3 +1,5 @@
+export * from "./analog.ts";
+
 import {
   inputStrokeIdentity,
   type GamepadAxisStroke,

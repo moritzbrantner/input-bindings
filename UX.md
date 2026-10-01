@@ -37,10 +37,12 @@ The List and Keyboard presentations are peers within one Shortcuts task on deskt
 - Preview the application's touch layer directly: virtual thumbsticks, action buttons, gesture zones, and compact command docks.
 - Support portrait and landscape previews and keep a visible safe-area inset.
 - Let users drag controls for coarse placement, but always pair that with exact X/Y/width/height percentage fields and keyboard nudging for precision.
-- Let an overlay control point at a semantic action without turning the overlay layout into a second binding resolver.
-- Keep the overlay controlled by the consumer through `mobileOverlay` / `onMobileOverlayChange`; the consumer owns persistence and runtime interpretation of that layout.
-- Do not pretend touch gestures are keyboard shortcuts. Until touch strokes are modeled explicitly in the core semantics, overlay geometry and gesture-region design remain separate from `Profile` key-binding deltas.
-- Omit the keyboard-only **Try shortcuts** task on narrow screens. A future touch-input preview should be based on real touch semantics rather than simulated key presses.
+- Let discrete buttons point at semantic actions and sticks/gesture zones point at semantic analog actions without turning overlay layout into a second binding resolver.
+- Keep the overlay controlled by the consumer through `mobileOverlay` / `onMobileOverlayChange`; the consumer owns persistence and application behavior.
+- Keep Edit and Test modes distinct. Test mode executes the real touch surface, including stick/look Axis2D values, rather than simulating keyboard input.
+- Do not pretend touch gestures are keyboard shortcuts. Overlay geometry and analog mappings remain separate from `Profile` key-binding deltas.
+- Omit the keyboard-only **Try shortcuts** task on narrow screens; the mobile overlay's Test mode is the device-appropriate live preview.
+- Never request gyroscope permission merely because settings rendered. Motion access begins only from an explicit user action.
 
 ### Conflicts
 
@@ -99,7 +101,8 @@ If no scenarios are supplied, the React package derives a useful global scenario
 - Conflict repairs are proposed by `input-bindings`, but the user/application explicitly chooses whether to apply them.
 - A broader settings repository may host this workbench through an adapter, but it must not fork binding semantics or become the resolver authority.
 - The workbench may visualize context stacks and evaluate declared scenarios, but it does not invent the application's runtime stack.
-- The mobile overlay editor arranges consumer-owned controls and can reference semantic action ids; it does not add an implicit touch-stroke resolver or mutate keyboard profiles.
+- The mobile overlay editor arranges consumer-owned controls and can reference discrete or analog semantic action ids. Its runtime surface emits those semantics directly; it does not add an implicit touch-stroke resolver or mutate keyboard profiles.
+- The analog runtime owns normalization and multi-source combination only. Applications remain authoritative for how move/look vectors affect gameplay and for when touch or motion adapters are enabled.
 
 ## Usability requirements
 
@@ -117,7 +120,7 @@ If no scenarios are supplied, the React package derives a useful global scenario
 
 ## Next UX slices
 
-The workbench now covers ordinary editing with orthogonal desktop list/keyboard presentation, a narrow-screen mobile-overlay editor, conflict repair, and explainable desktop keyboard preview. The next product-level additions should build on this one surface rather than creating separate demos:
+The workbench now covers ordinary editing with orthogonal desktop list/keyboard presentation, a narrow-screen mobile-overlay editor with executable touch test mode, conflict repair, and explainable desktop keyboard preview. The next product-level additions should build on this one surface rather than creating separate demos:
 
 - richer conflict repair operations where useful, such as swapping shortcuts or replacing one binding directly from another action;
 - command-oriented search such as “show everything bound to Space” and “show everything reachable in this modal context”;

@@ -22,9 +22,14 @@ import {
 
 import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
 import { KeyboardView, KeybindingEditor } from "./index.tsx";
+import type {
+  MobileActionInputEvent,
+  MobileAnalogInputEvent,
+} from "./MobileControlsRuntimeSurface.tsx";
 import {
   createStarterMobileControlsOverlay,
   MobileControlsView,
+  type MobileAnalogActionOption,
   type MobileControlsOverlay,
 } from "./MobileControlsView.tsx";
 import { formatSequence, profileFromBindings } from "./model.ts";
@@ -39,13 +44,21 @@ import {
 
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
 export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.tsx";
+export { MobileControlsRuntimeSurface } from "./MobileControlsRuntimeSurface.tsx";
 export type {
+  MobileAnalogActionOption,
   MobileControlKind,
   MobileControlsOrientation,
   MobileControlsOverlay,
   MobileControlsViewProps,
   MobileOverlayControl,
 } from "./MobileControlsView.tsx";
+export type {
+  MobileActionInputEvent,
+  MobileAnalogInputEvent,
+  MobileAxis2D,
+  MobileControlsRuntimeSurfaceProps,
+} from "./MobileControlsRuntimeSurface.tsx";
 
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
@@ -62,7 +75,10 @@ export type InputBindingsWorkbenchProps = {
   initialMode?: InputBindingsWorkbenchMode;
   initialPresentation?: InputBindingsWorkbenchPresentation;
   mobileOverlay?: MobileControlsOverlay;
+  mobileAnalogActions?: readonly MobileAnalogActionOption[];
   onMobileOverlayChange?: (overlay: MobileControlsOverlay) => void;
+  onMobileActionInput?: (event: MobileActionInputEvent) => void;
+  onMobileAnalogInput?: (event: MobileAnalogInputEvent) => void;
   className?: string;
 };
 
@@ -88,7 +104,10 @@ export function InputBindingsWorkbench({
   initialMode,
   initialPresentation,
   mobileOverlay = DEFAULT_MOBILE_OVERLAY,
+  mobileAnalogActions,
   onMobileOverlayChange,
+  onMobileActionInput,
+  onMobileAnalogInput,
   className,
 }: InputBindingsWorkbenchProps) {
   const compiledRegistry = useMemo(() => compileActionRegistry(registry), [registry]);
@@ -189,7 +208,10 @@ export function InputBindingsWorkbench({
             <MobileControlsView
               registry={registry}
               overlay={mobileOverlay}
+              analogActions={mobileAnalogActions}
               onOverlayChange={onMobileOverlayChange}
+              onActionInput={onMobileActionInput}
+              onAnalogInput={onMobileAnalogInput}
             />
           ) : (
             <KeybindingEditor
