@@ -1,0 +1,32 @@
+{
+  "format": "input-bindings/gesture-trace",
+  "version": 1,
+  "id": "tap-touch",
+  "pointerType": "touch",
+  "surface": {
+    "width": 381,
+    "height": 403.84
+  },
+  "samples": [
+    {
+      "x": 100,
+      "y": 100,
+      "t": 0
+    },
+    {
+      "x": 100,
+      "y": 100,
+      "t": 54.1
+    }
+  ],
+  "expected": {
+    "primitives": [
+      "tap"
+    ],
+    "matches": [
+      {
+        "kind": "tap"
+      }
+    ]
+  }
+}

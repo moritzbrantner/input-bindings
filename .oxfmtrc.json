@@ -4,6 +4,7 @@
   "sortImports": true,
   "ignorePatterns": [
     "fixtures/**",
+    "packages/*/test/fixtures/**",
     "bun.lock",
     "Cargo.lock",
     "target/**",
