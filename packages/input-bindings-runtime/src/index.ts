@@ -1,4 +1,5 @@
 export * from "./analog.ts";
+export * from "./pointer-stroke.ts";
 
 import {
   compileActionRegistry,

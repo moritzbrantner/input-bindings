@@ -14,6 +14,7 @@ const registry: ActionRegistry = {
     navigation("site.conflicts", "Conflict lab", "2"),
     navigation("site.runtime", "Runtime lab", "3"),
     navigation("site.devices", "Device lab", "4"),
+    navigation("site.gestures", "Gesture lab", "5"),
     {
       id: "site.help",
       title: "Show site shortcuts",
@@ -41,6 +42,7 @@ const destinations: Readonly<Record<string, string>> = {
   "site.conflicts": "./conflicts.html",
   "site.runtime": "./runtime.html",
   "site.devices": "./devices.html",
+  "site.gestures": "./gestures.html",
 };
 
 const controller = new InputRuntimeController({
@@ -104,6 +106,7 @@ function toggleHelp(): void {
         <div><dt><kbd>Alt</kbd> + <kbd>2</kbd></dt><dd>Conflict lab</dd></div>
         <div><dt><kbd>Alt</kbd> + <kbd>3</kbd></dt><dd>Runtime lab</dd></div>
         <div><dt><kbd>Alt</kbd> + <kbd>4</kbd></dt><dd>Device lab</dd></div>
+        <div><dt><kbd>Alt</kbd> + <kbd>5</kbd></dt><dd>Gesture lab</dd></div>
         <div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div>
       </dl>
     </div>`;
