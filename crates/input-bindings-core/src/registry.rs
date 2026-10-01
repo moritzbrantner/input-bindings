@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Binding, BindingPatch, Conflict, DeviceStroke, InputStroke, KeyMatch, Profile,
+    Binding, BindingPatch, Conflict, DeviceStroke, GestureMatch, InputStroke, KeyMatch, Profile,
     ProfileDiagnosticKind, analyze_conflicts, apply_profile,
 };
 
@@ -76,6 +76,8 @@ pub enum ValidationDiagnosticKind {
     InvalidGamepadIndex,
     InvalidThreshold,
     InvalidDeadzone,
+    InvalidGestureSymbol,
+    InvalidGestureSequence,
     ProfileAddCollision,
     ProfileMissingBinding,
     ProfileReplacementIdMismatch,
@@ -378,6 +380,16 @@ fn validate_binding(
             ));
         }
 
+        if stroke.is_gesture() && binding.sequence.len() > 1 {
+            diagnostics.push(diagnostic(
+                ValidationDiagnosticKind::InvalidGestureSequence,
+                Some(binding.action.clone()),
+                Some(binding.id.clone()),
+                patch_index,
+                Some(stroke_index),
+            ));
+        }
+
         if let Some(kind) = invalid_stroke_kind(stroke) {
             diagnostics.push(diagnostic(
                 kind,
@@ -399,6 +411,7 @@ fn stroke_device_class(stroke: &InputStroke) -> DeviceClass {
         InputStroke::Device(
             DeviceStroke::GamepadButton { .. } | DeviceStroke::GamepadAxis { .. },
         ) => DeviceClass::Gamepad,
+        InputStroke::Device(DeviceStroke::Gesture { .. }) => DeviceClass::Pointer,
     }
 }
 
@@ -451,6 +464,10 @@ fn invalid_stroke_kind(stroke: &InputStroke) -> Option<ValidationDiagnosticKind>
                 None
             }
         }
+        InputStroke::Device(DeviceStroke::Gesture {
+            gesture: GestureMatch::Symbol { id },
+        }) => (!valid_gesture_symbol(id)).then_some(ValidationDiagnosticKind::InvalidGestureSymbol),
+        InputStroke::Device(DeviceStroke::Gesture { .. }) => None,
     }
 }
 
@@ -458,6 +475,7 @@ fn binding_is_resolvable(binding: &Binding, known_actions: &BTreeSet<String>) ->
     !binding.id.is_empty()
         && known_actions.contains(&binding.action)
         && !binding.sequence.is_empty()
+        && (binding.sequence.len() == 1 || !binding.sequence.iter().any(InputStroke::is_gesture))
         && binding
             .sequence
             .iter()
@@ -466,6 +484,10 @@ fn binding_is_resolvable(binding: &Binding, known_actions: &BTreeSet<String>) ->
 
 fn valid_logical_key(value: &str) -> bool {
     !value.is_empty() && value != "Unidentified" && !value.chars().any(char::is_control)
+}
+
+fn valid_gesture_symbol(id: &str) -> bool {
+    !id.trim().is_empty() && !id.chars().any(char::is_control)
 }
 
 fn valid_physical_key(value: &str) -> bool {

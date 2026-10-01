@@ -48,6 +48,77 @@ pub enum AxisDirection {
     Negative,
 }
 
+/// Eight-way screen direction; north is up on screen.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum CompassDirection {
+    #[serde(rename = "N")]
+    North,
+    #[serde(rename = "NE")]
+    NorthEast,
+    #[serde(rename = "E")]
+    East,
+    #[serde(rename = "SE")]
+    SouthEast,
+    #[serde(rename = "S")]
+    South,
+    #[serde(rename = "SW")]
+    SouthWest,
+    #[serde(rename = "W")]
+    West,
+    #[serde(rename = "NW")]
+    NorthWest,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum GestureOrientation {
+    Clockwise,
+    CounterClockwise,
+}
+
+/// A recognized pointer gesture, or a binding pattern for one. In a binding, an omitted
+/// direction or orientation matches any value; a recognizer reports the concrete value.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum GestureMatch {
+    Tap,
+    Hold,
+    Drag {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        direction: Option<CompassDirection>,
+    },
+    Swipe {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        direction: Option<CompassDirection>,
+    },
+    Slash {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        direction: Option<CompassDirection>,
+    },
+    Circle {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        orientation: Option<GestureOrientation>,
+    },
+    Symbol {
+        id: String,
+    },
+}
+
+impl GestureMatch {
+    /// The same gesture with its optional parameter removed, when it had one.
+    pub fn generalized(&self) -> Option<Self> {
+        match self {
+            Self::Drag { direction: Some(_) } => Some(Self::Drag { direction: None }),
+            Self::Swipe { direction: Some(_) } => Some(Self::Swipe { direction: None }),
+            Self::Slash { direction: Some(_) } => Some(Self::Slash { direction: None }),
+            Self::Circle {
+                orientation: Some(_),
+            } => Some(Self::Circle { orientation: None }),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(tag = "device", rename_all = "camelCase")]
 pub enum DeviceStroke {
@@ -75,6 +146,14 @@ pub enum DeviceStroke {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         gamepad: Option<u8>,
     },
+    /// A completed pointer gesture. Gestures are event-like and must be a binding's only stroke.
+    Gesture { gesture: GestureMatch },
+}
+
+impl InputStroke {
+    pub fn is_gesture(&self) -> bool {
+        matches!(self, Self::Device(DeviceStroke::Gesture { .. }))
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

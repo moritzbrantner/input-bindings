@@ -1,5 +1,6 @@
 mod conflict;
 mod context_stack;
+mod gesture;
 mod model;
 mod persistence;
 mod platform;
@@ -14,9 +15,10 @@ pub use context_stack::{
     ResolutionCandidateTrace, ResolutionTrace, explain_resolution_with_context_stack,
     reachable_bindings_with_context_stack, resolve_with_context_stack,
 };
+pub use gesture::{GestureResolution, gesture_match_candidates, resolve_gesture};
 pub use model::{
-    AxisDirection, Binding, DeviceStroke, InputStroke, KeyMatch, KeyStroke, Modifiers,
-    WheelDirection, WhenExpr,
+    AxisDirection, Binding, CompassDirection, DeviceStroke, GestureMatch, GestureOrientation,
+    InputStroke, KeyMatch, KeyStroke, Modifiers, WheelDirection, WhenExpr,
 };
 pub use persistence::{
     ConfigurationDiagnostic, ConfigurationDiagnosticKind, ConfigurationDiagnosticSeverity,
