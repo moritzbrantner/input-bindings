@@ -4,11 +4,11 @@ export type RuntimeConsumePolicy = "never" | "matched" | "dispatched";
 export type RuntimeDispatchReason = "direct" | "chord" | "timeout" | "keyUp" | "reset";
 export type RuntimeDecisionKind = "none" | "pending" | "dispatched" | "released" | "ambiguous" | "repeatSuppressed" | "cancelled" | "reset" | "invalidConfiguration";
 export type RuntimeDecisionReason = "unmatched" | "pendingChord" | "resolved" | "ambiguous" | "repeatSuppressed" | "keyReleased" | "chordMismatch" | "chordCancelled" | "timeoutResolved" | "timeoutAmbiguous" | "timeoutExpired" | "reset" | "invalidConfiguration";
-export interface RuntimeScheduler {
+export type RuntimeScheduler = {
     setTimeout(callback: () => void, delayMs: number): unknown;
     clearTimeout(handle: unknown): void;
-}
-export interface RuntimeDispatch {
+};
+export type RuntimeDispatch = {
     action: string;
     bindingId: string;
     phase: RuntimeActionPhase;
@@ -16,15 +16,15 @@ export interface RuntimeDispatch {
     reason: RuntimeDispatchReason;
     sequence: InputStroke[];
     activeContexts: string[];
-}
-export interface RuntimeExplanation {
+};
+export type RuntimeExplanation = {
     reason: RuntimeDecisionReason;
     bindingIds?: string[];
     continuationBindingIds?: string[];
     cancelledSequence?: InputStroke[];
     resetReason?: string;
-}
-export interface RuntimeDecision {
+};
+export type RuntimeDecision = {
     kind: RuntimeDecisionKind;
     sequence: InputStroke[];
     activeContexts: string[];
@@ -32,8 +32,8 @@ export interface RuntimeDecision {
     dispatches: RuntimeDispatch[];
     consumed: boolean;
     explanation: RuntimeExplanation;
-}
-export interface RuntimeControllerOptions {
+};
+export type RuntimeControllerOptions = {
     registry: ActionRegistry;
     profile?: Profile;
     getActiveContexts: () => ReadonlySet<string>;
@@ -44,10 +44,10 @@ export interface RuntimeControllerOptions {
     scheduler?: RuntimeScheduler;
     onDispatch?: (dispatch: RuntimeDispatch) => void;
     onDecision?: (decision: RuntimeDecision) => void;
-}
-export interface InputDownOptions {
+};
+export type InputDownOptions = {
     repeat?: boolean;
-}
+};
 export type KeyDownOptions = InputDownOptions;
 export declare class InputRuntimeController {
     private registry;
@@ -55,13 +55,13 @@ export declare class InputRuntimeController {
     private profile;
     private report;
     private readonly getActiveContexts;
-    private readonly getContextStack?;
+    private readonly getContextStack;
     private readonly chordTimeoutMs;
     private readonly consumePolicy;
     private readonly retryOnChordMismatch;
     private readonly scheduler;
-    private readonly onDispatch?;
-    private readonly onDecision?;
+    private readonly onDispatch;
+    private readonly onDecision;
     private pending;
     private pendingExactBindingIds;
     private timer;

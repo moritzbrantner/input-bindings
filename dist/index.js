@@ -75,7 +75,9 @@ export class InputRuntimeController {
         const contextStack = this.contextStack();
         const contexts = this.contexts(contextStack);
         if (!this.report.valid) {
-            return this.emit(this.decision("invalidConfiguration", [stroke], contexts, [], false, { reason: "invalidConfiguration" }));
+            return this.emit(this.decision("invalidConfiguration", [stroke], contexts, [], false, {
+                reason: "invalidConfiguration",
+            }));
         }
         if (repeat && this.pending.length > 0) {
             return this.emit(this.decision("repeatSuppressed", structuredClone(this.pending), contexts, [], this.shouldConsume(true, false), { reason: "repeatSuppressed" }));
@@ -100,7 +102,9 @@ export class InputRuntimeController {
         const triggerKey = inputStrokeIdentity(stroke);
         this.pressedInputs.delete(triggerKey);
         if (!this.report.valid) {
-            return this.emit(this.decision("invalidConfiguration", [stroke], contexts, [], false, { reason: "invalidConfiguration" }));
+            return this.emit(this.decision("invalidConfiguration", [stroke], contexts, [], false, {
+                reason: "invalidConfiguration",
+            }));
         }
         const activations = this.active.get(triggerKey) ?? [];
         this.active.delete(triggerKey);
@@ -128,7 +132,11 @@ export class InputRuntimeController {
         const contexts = this.contexts(this.contextStack());
         const cancelledSequence = structuredClone(this.pending);
         this.clearPending();
-        return this.emit(this.decision("cancelled", cancelledSequence, contexts, [], false, { reason: "chordCancelled", cancelledSequence, resetReason: reason }));
+        return this.emit(this.decision("cancelled", cancelledSequence, contexts, [], false, {
+            reason: "chordCancelled",
+            cancelledSequence,
+            resetReason: reason,
+        }));
     }
     reset(reason = "explicit") {
         const contexts = this.contexts(this.contextStack());
@@ -148,7 +156,10 @@ export class InputRuntimeController {
             activeContexts: contexts,
         }));
         this.active.clear();
-        return this.emit(this.decision("reset", sequence, contexts, dispatches, false, { reason: "reset", resetReason: reason }));
+        return this.emit(this.decision("reset", sequence, contexts, dispatches, false, {
+            reason: "reset",
+            resetReason: reason,
+        }));
     }
     processFreshStroke(stroke, repeat, contexts, contextStack, cancelledSequence) {
         const sequence = [structuredClone(stroke)];
@@ -182,7 +193,8 @@ export class InputRuntimeController {
                 ...(cancelledSequence ? { cancelledSequence } : {}),
             }, resolution));
         }
-        const repeatPolicy = this.registry.actions.find((action) => action.id === resolution.action)?.repeatPolicy ?? "never";
+        const repeatPolicy = this.registry.actions.find((action) => action.id === resolution.action)?.repeatPolicy ??
+            "never";
         if (repeat && repeatPolicy !== "allow") {
             return this.emit(this.decision("repeatSuppressed", sequence, contexts, [], this.shouldConsume(true, false), {
                 reason: "repeatSuppressed",
@@ -199,8 +211,9 @@ export class InputRuntimeController {
             sequence: structuredClone(sequence),
             activeContexts: contexts,
         };
-        if (!repeat)
+        if (!repeat) {
             this.activate(dispatch, triggerStroke);
+        }
         return this.emit(this.decision("dispatched", sequence, contexts, [dispatch], this.shouldConsume(true, true), {
             reason: "resolved",
             bindingIds: [resolution.bindingId],
@@ -208,16 +221,18 @@ export class InputRuntimeController {
         }, resolution));
     }
     scheduleTimeout() {
-        if (this.timer !== undefined)
+        if (this.timer !== undefined) {
             this.scheduler.clearTimeout(this.timer);
+        }
         this.timer = this.scheduler.setTimeout(() => {
             this.timer = undefined;
             this.flushPendingTimeout();
         }, this.chordTimeoutMs);
     }
     flushPendingTimeout() {
-        if (this.pending.length === 0 || !this.report.valid)
+        if (this.pending.length === 0 || !this.report.valid) {
             return;
+        }
         const sequence = structuredClone(this.pending);
         const pendingExactBindingIds = new Set(this.pendingExactBindingIds);
         this.pending = [];
@@ -274,8 +289,9 @@ export class InputRuntimeController {
     }
     contexts(contextStack) {
         const contexts = new Set(this.getActiveContexts());
-        for (const layer of contextStack ?? [])
+        for (const layer of contextStack ?? []) {
             contexts.add(layer.id);
+        }
         return [...contexts].sort();
     }
     clearPending() {
@@ -308,8 +324,9 @@ export class InputRuntimeController {
         };
     }
     emit(decision) {
-        for (const dispatch of decision.dispatches)
+        for (const dispatch of decision.dispatches) {
             this.onDispatch?.(structuredClone(dispatch));
+        }
         this.onDecision?.(structuredClone(decision));
         return decision;
     }
