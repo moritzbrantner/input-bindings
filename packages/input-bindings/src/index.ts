@@ -44,6 +44,7 @@ export type GamepadAxisStroke = {
 /** Eight-way screen direction; north is up on screen. */
 export type CompassDirection = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
 export type GestureOrientation = "clockwise" | "counterClockwise";
+export type PinchDirection = "in" | "out";
 
 /**
  * A recognized pointer gesture, or a binding pattern for one. In a binding, an omitted direction
@@ -56,7 +57,10 @@ export type GestureMatch =
   | { kind: "swipe"; direction?: CompassDirection }
   | { kind: "slash"; direction?: CompassDirection }
   | { kind: "circle"; orientation?: GestureOrientation }
-  | { kind: "symbol"; id: string };
+  | { kind: "symbol"; id: string }
+  | { kind: "pinch"; direction?: PinchDirection }
+  | { kind: "rotate"; orientation?: GestureOrientation }
+  | { kind: "twoFingerSwipe"; direction?: CompassDirection };
 
 /** A completed pointer gesture. Gestures are event-like and must be a binding's only stroke. */
 export type GestureStroke = {
@@ -169,8 +173,11 @@ export function gestureMatchIdentity(gesture: GestureMatch): string {
     case "drag":
     case "swipe":
     case "slash":
+    case "pinch":
+    case "twoFingerSwipe":
       return [gesture.kind, gesture.direction ?? "any"].join(":");
     case "circle":
+    case "rotate":
       return [gesture.kind, gesture.orientation ?? "any"].join(":");
     case "symbol":
       return [gesture.kind, gesture.id].join(":");

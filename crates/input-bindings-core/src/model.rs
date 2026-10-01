@@ -76,6 +76,13 @@ pub enum GestureOrientation {
     CounterClockwise,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum PinchDirection {
+    In,
+    Out,
+}
+
 /// A recognized pointer gesture, or a binding pattern for one. In a binding, an omitted
 /// direction or orientation matches any value; a recognizer reports the concrete value.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -102,6 +109,21 @@ pub enum GestureMatch {
     Symbol {
         id: String,
     },
+    /// Two pointers moving apart (`out`) or together (`in`).
+    Pinch {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        direction: Option<PinchDirection>,
+    },
+    /// Two pointers turning around their midpoint.
+    Rotate {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        orientation: Option<GestureOrientation>,
+    },
+    /// Two pointers translating together.
+    TwoFingerSwipe {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        direction: Option<CompassDirection>,
+    },
 }
 
 impl GestureMatch {
@@ -114,6 +136,13 @@ impl GestureMatch {
             Self::Circle {
                 orientation: Some(_),
             } => Some(Self::Circle { orientation: None }),
+            Self::Pinch { direction: Some(_) } => Some(Self::Pinch { direction: None }),
+            Self::Rotate {
+                orientation: Some(_),
+            } => Some(Self::Rotate { orientation: None }),
+            Self::TwoFingerSwipe { direction: Some(_) } => {
+                Some(Self::TwoFingerSwipe { direction: None })
+            }
             _ => None,
         }
     }
