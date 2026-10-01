@@ -201,3 +201,35 @@ test("an invalid configuration refuses gestures", () => {
   assert.equal(runtime.handleGesture({ matches: [{ kind: "tap" }] }).kind, "invalidConfiguration");
   assert.deepEqual(dispatches, []);
 });
+
+test("per-gesture contexts scope bindings to where the gesture started", () => {
+  const zoned: ActionRegistry = {
+    actions: [
+      action("spell.ward", [gesture("zone.ward", "spell.ward", { kind: "circle" }, "zone.spells")]),
+    ],
+  };
+  const plain = controller({ registry: zoned });
+  assert.equal(plain.runtime.handleGesture({ matches: [{ kind: "circle" }] }).kind, "none");
+  const zone = plain.runtime.handleGesture({
+    matches: [{ kind: "circle" }],
+    contexts: ["zone.spells"],
+  });
+  assert.equal(zone.kind, "dispatched");
+  assert.deepEqual(zone.activeContexts, ["zone.spells"]);
+
+  const modal = controller({
+    registry: zoned,
+    stack: () => [{ id: "gameplay" }, { id: "menu", blocksLower: true }],
+  });
+  const stacked = modal.runtime.handleGesture({
+    matches: [{ kind: "circle" }],
+    contexts: ["zone.spells"],
+  });
+  assert.equal(stacked.kind, "dispatched", "the zone layer sits above the modal barrier");
+  assert.deepEqual(stacked.activeContexts, ["gameplay", "menu", "zone.spells"]);
+  assert.equal(
+    modal.runtime.handleGesture({ matches: [{ kind: "circle" }] }).kind,
+    "none",
+    "the zone context does not persist",
+  );
+});
