@@ -1,0 +1,68 @@
+{
+  "format": "input-bindings/gesture-trace",
+  "version": 1,
+  "id": "slash-ne-touch",
+  "pointerType": "touch",
+  "surface": {
+    "width": 381,
+    "height": 403.84
+  },
+  "samples": [
+    {
+      "x": 40,
+      "y": 300,
+      "t": 0
+    },
+    {
+      "x": 80,
+      "y": 260,
+      "t": 31.5
+    },
+    {
+      "x": 120,
+      "y": 220,
+      "t": 75.6
+    },
+    {
+      "x": 160,
+      "y": 180,
+      "t": 107.7
+    },
+    {
+      "x": 200,
+      "y": 140,
+      "t": 141.9
+    },
+    {
+      "x": 240,
+      "y": 100,
+      "t": 176.5
+    },
+    {
+      "x": 240,
+      "y": 100,
+      "t": 209.7
+    }
+  ],
+  "expected": {
+    "primitives": [
+      "slash",
+      "swipe",
+      "drag"
+    ],
+    "matches": [
+      {
+        "kind": "slash",
+        "direction": "NE"
+      },
+      {
+        "kind": "swipe",
+        "direction": "NE"
+      },
+      {
+        "kind": "drag",
+        "direction": "NE"
+      }
+    ]
+  }
+}

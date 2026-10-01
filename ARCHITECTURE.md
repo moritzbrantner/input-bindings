@@ -79,6 +79,12 @@ The tracker is single-pointer by default. A pointer that begins while the active
 
 Recognition does not decide what a slash hits, what a circle encloses, or whether an object was caught. It returns path and bounds evidence for the consumer to interpret.
 
+### Gesture traces and replay
+
+A gesture trace (`input-bindings/gesture-trace` v1) is a saved stroke: pointer type, surface size, and element-local samples rounded to 0.01 px and 0.1 ms relative to the first sample, serialized with a fixed key order so the same trace always produces the same bytes. `analyzeGestureTrace` replays a trace through recognition without real-time input, and `scaleGestureTrace` replays it at another presentation size; shape decisions are scale invariant above the minimum sizes, while tap/hold stationary tolerances are deliberately absolute pixels.
+
+The Pages gesture lab recognizes live input from the same rounded trace it would export, so a replayed export reaches the same decision as the live stroke. Recording is explicit: nothing is retained until **Record** is on. To promote a capture into a regression fixture, export it, give it a descriptive `id`, and save it as `packages/input-bindings-runtime/test/fixtures/traces/<id>.json`; the runtime tests replay every saved trace against its recorded `expected` primitives and matches, at its original and at scaled sizes.
+
 `InputRuntimeController.handleGesture` resolves recognized gestures through the normal context/profile path using the canonical gesture candidate order, dispatching press then release with the matched pattern and the recognizer's evidence attached. `attachGestureRuntime` composes capture, recognition (primitives by default, or a supplied recognizer), and `handleGesture`, so consumers need no gesture-specific dispatcher.
 
 ## Conflict analysis
