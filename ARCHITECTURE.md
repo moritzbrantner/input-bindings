@@ -18,6 +18,8 @@ Keyboard bindings distinguish logical keys from physical positions. A logical `z
 
 `AltGraph` is represented independently rather than being silently collapsed into `Ctrl+Alt`. This prevents common European keyboard layouts from accidentally triggering unrelated shortcuts while entering characters.
 
+Recognized pointer gestures are `pointer`-class strokes (`{ device: "gesture", gesture: { kind, ... } }`) and must be a binding's only stroke. Omitting a slash/swipe/drag direction or a circle orientation matches any value. See [ADR 0002](docs/adr/0002-gesture-bindings.md) for the resolution order.
+
 ## Context model
 
 Boolean contexts are application-owned facts such as `editorFocused`, `textInputFocused`, `gameplay`, `menuOpen`, or `unitSelected`. Bindings use an expression tree made from `always`, `context`, `not`, `all`, and `any`. The core only evaluates names supplied by the consumer; it does not own global mutable context state.
@@ -76,6 +78,8 @@ The tracker is single-pointer by default. A pointer that begins while the active
 `recognizeGesturePrimitives` classifies one completed single-pointer stroke into `circle`, `slash`, `swipe`, `drag`, `hold`, and `tap`. Every threshold is an explicit, overridable value in CSS pixels, milliseconds, px/ms, degrees, or unitless ratios; shape criteria use ratios so they are translation and scale invariant above minimum sizes. Every satisfied primitive is reported, most specific first, with parameters such as direction, speed class, orientation, closure, center, radius, and bounds. Scores are relative margins past each gating threshold and are evidence only; they never reorder candidates. Stationary strokes between the tap and hold limits deliberately match neither.
 
 Recognition does not decide what a slash hits, what a circle encloses, or whether an object was caught. It returns path and bounds evidence for the consumer to interpret.
+
+`InputRuntimeController.handleGesture` resolves recognized gestures through the normal context/profile path using the canonical gesture candidate order, dispatching press then release with the matched pattern and the recognizer's evidence attached. `attachGestureRuntime` composes capture, recognition (primitives by default, or a supplied recognizer), and `handleGesture`, so consumers need no gesture-specific dispatcher.
 
 ## Conflict analysis
 

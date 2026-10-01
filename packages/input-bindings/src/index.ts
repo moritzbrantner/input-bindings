@@ -41,14 +41,38 @@ export type GamepadAxisStroke = {
   gamepad?: number;
 };
 
+/** Eight-way screen direction; north is up on screen. */
+export type CompassDirection = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
+export type GestureOrientation = "clockwise" | "counterClockwise";
+
+/**
+ * A recognized pointer gesture, or a binding pattern for one. In a binding, an omitted direction
+ * or orientation matches any value; a recognizer reports the concrete value.
+ */
+export type GestureMatch =
+  | { kind: "tap" }
+  | { kind: "hold" }
+  | { kind: "drag"; direction?: CompassDirection }
+  | { kind: "swipe"; direction?: CompassDirection }
+  | { kind: "slash"; direction?: CompassDirection }
+  | { kind: "circle"; orientation?: GestureOrientation }
+  | { kind: "symbol"; id: string };
+
+/** A completed pointer gesture. Gestures are event-like and must be a binding's only stroke. */
+export type GestureStroke = {
+  device: "gesture";
+  gesture: GestureMatch;
+};
+
 export type InputStroke =
   | KeyStroke
   | MouseButtonStroke
   | WheelStroke
   | GamepadButtonStroke
-  | GamepadAxisStroke;
+  | GamepadAxisStroke
+  | GestureStroke;
 
-export type InputDeviceClass = "keyboard" | "mouse" | "gamepad";
+export type InputDeviceClass = "keyboard" | "mouse" | "gamepad" | "pointer";
 
 export type WhenExpr =
   | { op: "always" }
@@ -127,7 +151,34 @@ export function inputDeviceClass(stroke: InputStroke): InputDeviceClass {
   if (stroke.device === "mouseButton" || stroke.device === "wheel") {
     return "mouse";
   }
+  if (stroke.device === "gesture") {
+    return "pointer";
+  }
   return "gamepad";
+}
+
+export function isGestureStroke(stroke: InputStroke): stroke is GestureStroke {
+  return !isKeyStroke(stroke) && stroke.device === "gesture";
+}
+
+export function gestureMatchIdentity(gesture: GestureMatch): string {
+  switch (gesture.kind) {
+    case "tap":
+    case "hold":
+      return gesture.kind;
+    case "drag":
+    case "swipe":
+    case "slash":
+      return [gesture.kind, gesture.direction ?? "any"].join(":");
+    case "circle":
+      return [gesture.kind, gesture.orientation ?? "any"].join(":");
+    case "symbol":
+      return [gesture.kind, gesture.id].join(":");
+  }
+}
+
+export function gestureMatchEquals(left: GestureMatch, right: GestureMatch): boolean {
+  return gestureMatchIdentity(left) === gestureMatchIdentity(right);
 }
 
 export function inputStrokeIdentity(stroke: InputStroke): string {
@@ -150,6 +201,8 @@ export function inputStrokeIdentity(stroke: InputStroke): string {
         stroke.threshold,
         stroke.deadzone,
       ].join(":");
+    case "gesture":
+      return ["gesture", gestureMatchIdentity(stroke.gesture)].join(":");
   }
 }
 
@@ -437,6 +490,8 @@ function conflictStrokeKey(stroke: InputStroke): string {
         stroke.threshold,
         stroke.deadzone,
       ]);
+    case "gesture":
+      return JSON.stringify(["gesture", gestureMatchIdentity(stroke.gesture)]);
   }
 }
 
@@ -516,6 +571,8 @@ export function inputStrokeEquals(left: InputStroke, right: InputStroke): boolea
         left.deadzone === right.deadzone &&
         left.gamepad === right.gamepad
       );
+    case "gesture":
+      return right.device === "gesture" && gestureMatchEquals(left.gesture, right.gesture);
   }
 }
 

@@ -1,0 +1,152 @@
+{
+  "bindings": [
+    {"id": "slash.ne", "action": "game.attack.slashNe", "sequence": [{"device": "gesture", "gesture": {"kind": "slash", "direction": "NE"}}]},
+    {"id": "slash.any", "action": "game.attack.slash", "sequence": [{"device": "gesture", "gesture": {"kind": "slash"}}]},
+    {"id": "loop", "action": "selection.lasso", "sequence": [{"device": "gesture", "gesture": {"kind": "circle"}}]},
+    {"id": "loop.cw", "action": "spell.ward", "sequence": [{"device": "gesture", "gesture": {"kind": "circle", "orientation": "clockwise"}}], "when": {"op": "context", "id": "casting"}},
+    {"id": "rune.fire", "action": "spell.fire", "sequence": [{"device": "gesture", "gesture": {"kind": "symbol", "id": "fire-rune"}}], "when": {"op": "context", "id": "casting"}},
+    {"id": "rune.fire.copy", "action": "spell.fire", "sequence": [{"device": "gesture", "gesture": {"kind": "symbol", "id": "fire-rune"}}], "when": {"op": "context", "id": "casting"}},
+    {"id": "tap", "action": "ui.select", "sequence": [{"device": "gesture", "gesture": {"kind": "tap"}}]},
+    {"id": "drag.scroll", "action": "menu.scroll", "sequence": [{"device": "gesture", "gesture": {"kind": "drag"}}], "when": {"op": "context", "id": "menu"}},
+    {"id": "drag.page", "action": "menu.page", "sequence": [{"device": "gesture", "gesture": {"kind": "drag"}}], "when": {"op": "context", "id": "menu"}}
+  ],
+  "resolutionCases": [
+    {
+      "name": "a direction-specific binding wins over the generic slash",
+      "recognized": [{"kind": "slash", "direction": "NE"}, {"kind": "swipe", "direction": "NE"}, {"kind": "drag", "direction": "NE"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "slash.ne", "action": "game.attack.slashNe"},
+        "matched": {"kind": "slash", "direction": "NE"},
+        "candidates": [
+          {"kind": "slash", "direction": "NE"}, {"kind": "slash"},
+          {"kind": "swipe", "direction": "NE"}, {"kind": "swipe"},
+          {"kind": "drag", "direction": "NE"}, {"kind": "drag"}
+        ]
+      }
+    },
+    {
+      "name": "an unbound direction falls back to the generic slash",
+      "recognized": [{"kind": "slash", "direction": "E"}, {"kind": "swipe", "direction": "E"}, {"kind": "drag", "direction": "E"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "slash.any", "action": "game.attack.slash"},
+        "matched": {"kind": "slash"},
+        "candidates": [
+          {"kind": "slash", "direction": "E"}, {"kind": "slash"},
+          {"kind": "swipe", "direction": "E"}, {"kind": "swipe"},
+          {"kind": "drag", "direction": "E"}, {"kind": "drag"}
+        ]
+      }
+    },
+    {
+      "name": "context-gated drags do not match outside their context",
+      "recognized": [{"kind": "swipe", "direction": "N"}, {"kind": "drag", "direction": "N"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "none"},
+        "candidates": [{"kind": "swipe", "direction": "N"}, {"kind": "swipe"}, {"kind": "drag", "direction": "N"}, {"kind": "drag"}]
+      }
+    },
+    {
+      "name": "equal-rank bindings for different actions are reported as ambiguous",
+      "recognized": [{"kind": "swipe", "direction": "N"}, {"kind": "drag", "direction": "N"}],
+      "activeContexts": ["menu"],
+      "expected": {
+        "resolution": {"kind": "ambiguous", "bindingIds": ["drag.page", "drag.scroll"]},
+        "matched": {"kind": "drag"},
+        "candidates": [{"kind": "swipe", "direction": "N"}, {"kind": "swipe"}, {"kind": "drag", "direction": "N"}, {"kind": "drag"}]
+      }
+    },
+    {
+      "name": "a generic circle matches when the orientation-specific binding is out of context",
+      "recognized": [{"kind": "circle", "orientation": "clockwise"}, {"kind": "drag", "direction": "S"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "loop", "action": "selection.lasso"},
+        "matched": {"kind": "circle"},
+        "candidates": [{"kind": "circle", "orientation": "clockwise"}, {"kind": "circle"}, {"kind": "drag", "direction": "S"}, {"kind": "drag"}]
+      }
+    },
+    {
+      "name": "the orientation-specific circle wins inside its context",
+      "recognized": [{"kind": "circle", "orientation": "clockwise"}, {"kind": "drag", "direction": "S"}],
+      "activeContexts": ["casting"],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "loop.cw", "action": "spell.ward"},
+        "matched": {"kind": "circle", "orientation": "clockwise"},
+        "candidates": [{"kind": "circle", "orientation": "clockwise"}, {"kind": "circle"}, {"kind": "drag", "direction": "S"}, {"kind": "drag"}]
+      }
+    },
+    {
+      "name": "the best-ranked recognized symbol resolves first",
+      "recognized": [{"kind": "symbol", "id": "fire-rune"}, {"kind": "symbol", "id": "water-rune"}],
+      "activeContexts": ["casting"],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "rune.fire", "action": "spell.fire"},
+        "matched": {"kind": "symbol", "id": "fire-rune"},
+        "candidates": [{"kind": "symbol", "id": "fire-rune"}, {"kind": "symbol", "id": "water-rune"}]
+      }
+    },
+    {
+      "name": "an unbound symbol resolves to none",
+      "recognized": [{"kind": "symbol", "id": "water-rune"}],
+      "activeContexts": ["casting"],
+      "expected": {
+        "resolution": {"kind": "none"},
+        "candidates": [{"kind": "symbol", "id": "water-rune"}]
+      }
+    },
+    {
+      "name": "a tap resolves directly",
+      "recognized": [{"kind": "tap"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "tap", "action": "ui.select"},
+        "matched": {"kind": "tap"},
+        "candidates": [{"kind": "tap"}]
+      }
+    },
+    {
+      "name": "nothing recognized resolves to none",
+      "recognized": [],
+      "activeContexts": ["casting", "menu"],
+      "expected": {"resolution": {"kind": "none"}, "candidates": []}
+    }
+  ],
+  "expectedConflicts": [
+    {"leftBindingId": "rune.fire", "rightBindingId": "rune.fire.copy", "kind": "duplicate", "witnessContexts": ["casting"]},
+    {"leftBindingId": "drag.scroll", "rightBindingId": "drag.page", "kind": "ambiguousExact", "witnessContexts": ["menu"]}
+  ],
+  "validation": {
+    "registry": {
+      "actions": [
+        {
+          "id": "spell.cast",
+          "title": "Cast",
+          "allowedDevices": ["pointer"],
+          "defaults": [
+            {"id": "cast.blank", "action": "spell.cast", "sequence": [{"device": "gesture", "gesture": {"kind": "symbol", "id": " "}}]},
+            {"id": "cast.chord", "action": "spell.cast", "sequence": [{"device": "gesture", "gesture": {"kind": "tap"}}, {"device": "gesture", "gesture": {"kind": "hold"}}]},
+            {"id": "cast.rune", "action": "spell.cast", "sequence": [{"device": "gesture", "gesture": {"kind": "symbol", "id": "fire-rune"}}]}
+          ]
+        },
+        {
+          "id": "editor.save",
+          "title": "Save",
+          "allowedDevices": ["keyboard"],
+          "defaults": [
+            {"id": "save.slash", "action": "editor.save", "sequence": [{"device": "gesture", "gesture": {"kind": "slash", "direction": "S"}}]}
+          ]
+        }
+      ]
+    },
+    "expectedDiagnostics": [
+      {"kind": "defaultDeviceNotAllowed", "actionId": "editor.save", "bindingId": "save.slash", "strokeIndex": 0},
+      {"kind": "invalidGestureSymbol", "actionId": "spell.cast", "bindingId": "cast.blank", "strokeIndex": 0},
+      {"kind": "invalidGestureSequence", "actionId": "spell.cast", "bindingId": "cast.chord", "strokeIndex": 0},
+      {"kind": "invalidGestureSequence", "actionId": "spell.cast", "bindingId": "cast.chord", "strokeIndex": 1}
+    ],
+    "expectedEffectiveBindingIds": ["cast.blank", "cast.chord", "cast.rune", "save.slash"]
+  }
+}
