@@ -1,4 +1,4 @@
-import { analyzeConflicts, applyProfile, inputDeviceClass, isKeyStroke, } from "./index.js";
+import { analyzeConflicts, applyProfile, inputDeviceClass, isGestureStroke, isKeyStroke, } from "./index.js";
 export function compileActionRegistry(registry) {
     const actions = registry.actions
         .map((action) => structuredClone(action))
@@ -110,6 +110,9 @@ function validateBinding(binding, knownActions, allowedDevicesByAction, patchInd
         if (!allowed.includes(inputDeviceClass(stroke))) {
             diagnostics.push({ kind: "defaultDeviceNotAllowed", ...base, strokeIndex });
         }
+        if (isGestureStroke(stroke) && binding.sequence.length > 1) {
+            diagnostics.push({ kind: "invalidGestureSequence", ...base, strokeIndex });
+        }
         const invalidKind = invalidStrokeKind(stroke);
         if (invalidKind) {
             diagnostics.push({ kind: invalidKind, ...base, strokeIndex });
@@ -166,17 +169,25 @@ function invalidStrokeKind(stroke) {
                 return "invalidDeadzone";
             }
             return undefined;
+        case "gesture":
+            return stroke.gesture.kind === "symbol" && !validGestureSymbol(stroke.gesture.id)
+                ? "invalidGestureSymbol"
+                : undefined;
     }
 }
 function bindingIsResolvable(binding, knownActions) {
     return (binding.id.length > 0 &&
         knownActions.has(binding.action) &&
         binding.sequence.length > 0 &&
+        (binding.sequence.length === 1 || !binding.sequence.some(isGestureStroke)) &&
         binding.sequence.every((stroke) => invalidStrokeKind(stroke) === undefined));
 }
 function validLogicalKey(value) {
     // oxlint-disable-next-line no-control-regex -- Reject control characters at the logical-key validation boundary.
     return value.length > 0 && value !== "Unidentified" && !/[\u0000-\u001F\u007F]/u.test(value);
+}
+function validGestureSymbol(id) {
+    return id.trim().length > 0 && !/\p{Cc}/u.test(id);
 }
 function validPhysicalKey(value) {
     return value !== "Unidentified" && /^[A-Za-z][A-Za-z0-9]*$/u.test(value);

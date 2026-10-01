@@ -10,7 +10,31 @@ export function inputDeviceClass(stroke) {
     if (stroke.device === "mouseButton" || stroke.device === "wheel") {
         return "mouse";
     }
+    if (stroke.device === "gesture") {
+        return "pointer";
+    }
     return "gamepad";
+}
+export function isGestureStroke(stroke) {
+    return !isKeyStroke(stroke) && stroke.device === "gesture";
+}
+export function gestureMatchIdentity(gesture) {
+    switch (gesture.kind) {
+        case "tap":
+        case "hold":
+            return gesture.kind;
+        case "drag":
+        case "swipe":
+        case "slash":
+            return [gesture.kind, gesture.direction ?? "any"].join(":");
+        case "circle":
+            return [gesture.kind, gesture.orientation ?? "any"].join(":");
+        case "symbol":
+            return [gesture.kind, gesture.id].join(":");
+    }
+}
+export function gestureMatchEquals(left, right) {
+    return gestureMatchIdentity(left) === gestureMatchIdentity(right);
 }
 export function inputStrokeIdentity(stroke) {
     if (isKeyStroke(stroke)) {
@@ -32,6 +56,8 @@ export function inputStrokeIdentity(stroke) {
                 stroke.threshold,
                 stroke.deadzone,
             ].join(":");
+        case "gesture":
+            return ["gesture", gestureMatchIdentity(stroke.gesture)].join(":");
     }
 }
 export function evaluateWhen(expression, activeContexts) {
@@ -265,6 +291,8 @@ function conflictStrokeKey(stroke) {
                 stroke.threshold,
                 stroke.deadzone,
             ]);
+        case "gesture":
+            return JSON.stringify(["gesture", gestureMatchIdentity(stroke.gesture)]);
     }
 }
 export function applyProfile(base, profile) {
@@ -335,6 +363,8 @@ export function inputStrokeEquals(left, right) {
                 left.threshold === right.threshold &&
                 left.deadzone === right.deadzone &&
                 left.gamepad === right.gamepad);
+        case "gesture":
+            return right.device === "gesture" && gestureMatchEquals(left.gesture, right.gesture);
     }
 }
 export function strokeEquals(left, right) {

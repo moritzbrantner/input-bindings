@@ -18,7 +18,7 @@ export type ActionDefinition = {
 export type ActionRegistry = {
     actions: ActionDefinition[];
 };
-export type ValidationDiagnosticKind = "duplicateActionId" | "duplicateBindingId" | "emptyActionId" | "emptyBindingId" | "defaultDeviceNotAllowed" | "defaultActionMismatch" | "unknownAction" | "emptySequence" | "invalidLogicalKey" | "invalidPhysicalKey" | "invalidMouseButton" | "invalidWheelDirection" | "invalidGamepadButton" | "invalidGamepadAxis" | "invalidGamepadIndex" | "invalidThreshold" | "invalidDeadzone" | "profileAddCollision" | "profileMissingBinding" | "profileReplacementIdMismatch";
+export type ValidationDiagnosticKind = "duplicateActionId" | "duplicateBindingId" | "emptyActionId" | "emptyBindingId" | "defaultDeviceNotAllowed" | "defaultActionMismatch" | "unknownAction" | "emptySequence" | "invalidLogicalKey" | "invalidPhysicalKey" | "invalidMouseButton" | "invalidWheelDirection" | "invalidGamepadButton" | "invalidGamepadAxis" | "invalidGamepadIndex" | "invalidThreshold" | "invalidDeadzone" | "invalidGestureSymbol" | "invalidGestureSequence" | "profileAddCollision" | "profileMissingBinding" | "profileReplacementIdMismatch";
 export type ValidationDiagnostic = {
     kind: ValidationDiagnosticKind;
     actionId?: string;
