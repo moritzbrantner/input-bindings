@@ -7,12 +7,15 @@ import {
   compileActionRegistry,
   inputStrokeIdentity,
   resolve,
+  resolveGestureWith,
   resolveWithContextStack,
   validateCompiledRegistry,
   type ActionRegistry,
   type Binding,
   type CompiledActionRegistry,
   type ContextLayer,
+  type GestureMatch,
+  type GestureStroke,
   type InputStroke,
   type KeyStroke,
   type Profile,
@@ -22,7 +25,7 @@ import {
 
 export type RuntimeActionPhase = "press" | "repeat" | "release";
 export type RuntimeConsumePolicy = "never" | "matched" | "dispatched";
-export type RuntimeDispatchReason = "direct" | "chord" | "timeout" | "keyUp" | "reset";
+export type RuntimeDispatchReason = "direct" | "chord" | "timeout" | "keyUp" | "reset" | "gesture";
 export type RuntimeDecisionKind =
   | "none"
   | "pending"
@@ -61,6 +64,21 @@ export type RuntimeDispatch = {
   reason: RuntimeDispatchReason;
   sequence: InputStroke[];
   activeContexts: string[];
+  /** Present on gesture dispatches: the bound pattern that matched and the recognizer evidence. */
+  gesture?: RuntimeGestureEvidence;
+};
+
+export type RuntimeGestureEvidence = {
+  match: GestureMatch;
+  evidence?: unknown;
+};
+
+/** A completed, recognized gesture. Gestures are event-like: a match dispatches press then release. */
+export type RuntimeGestureInput = {
+  /** Recognized gestures, most specific primitive or best-ranked symbol first. */
+  matches: readonly GestureMatch[];
+  /** Structured-cloneable recognition evidence passed through to dispatches unchanged. */
+  evidence?: unknown;
 };
 
 export type RuntimeExplanation = {
@@ -69,6 +87,8 @@ export type RuntimeExplanation = {
   continuationBindingIds?: string[];
   cancelledSequence?: InputStroke[];
   resetReason?: string;
+  /** Gesture binding patterns tried, most specific first. */
+  gestureCandidates?: GestureMatch[];
 };
 
 export type RuntimeDecision = {
@@ -284,6 +304,99 @@ export class InputRuntimeController {
         bindingIds: dispatches.map((dispatch) => dispatch.bindingId),
       }),
     );
+  }
+
+  /**
+   * Resolves a completed gesture through the normal context/profile path. The most specific
+   * candidate pattern with a non-`none` resolution decides; a match dispatches press and then
+   * release immediately, so gestures never hold an action. A pending keyboard chord is cancelled.
+   */
+  handleGesture(input: RuntimeGestureInput): RuntimeDecision {
+    const contextStack = this.contextStack();
+    const contexts = this.contexts(contextStack);
+
+    if (!this.report.valid) {
+      return this.emit(
+        this.decision("invalidConfiguration", [], contexts, [], false, {
+          reason: "invalidConfiguration",
+        }),
+      );
+    }
+
+    if (this.pending.length > 0) {
+      this.cancelChord("gesture");
+    }
+
+    const { resolution, matched, candidates } = resolveGestureWith(input.matches, (candidate) =>
+      this.resolve([gestureStroke(candidate)], contexts, contextStack),
+    );
+    const sequence = matched ? [gestureStroke(matched)] : [];
+
+    if (!matched || resolution.kind === "none" || resolution.kind === "pending") {
+      return this.emit(
+        this.decision(
+          "none",
+          sequence,
+          contexts,
+          [],
+          false,
+          { reason: "unmatched", gestureCandidates: candidates },
+          resolution,
+        ),
+      );
+    }
+
+    if (resolution.kind === "ambiguous") {
+      return this.emit(
+        this.decision(
+          "ambiguous",
+          sequence,
+          contexts,
+          [],
+          this.shouldConsume(true, false),
+          { reason: "ambiguous", bindingIds: resolution.bindingIds, gestureCandidates: candidates },
+          resolution,
+        ),
+      );
+    }
+
+    const gesture: RuntimeGestureEvidence =
+      input.evidence === undefined
+        ? { match: matched }
+        : { match: matched, evidence: input.evidence };
+    const dispatch = (phase: "press" | "release"): RuntimeDispatch => ({
+      action: resolution.action,
+      bindingId: resolution.bindingId,
+      phase,
+      repeat: false,
+      reason: "gesture",
+      sequence: structuredClone(sequence),
+      activeContexts: contexts,
+      gesture,
+    });
+
+    const pressed = this.emit(
+      this.decision(
+        "dispatched",
+        sequence,
+        contexts,
+        [dispatch("press")],
+        this.shouldConsume(true, true),
+        { reason: "resolved", bindingIds: [resolution.bindingId], gestureCandidates: candidates },
+        resolution,
+      ),
+    );
+    this.emit(
+      this.decision(
+        "released",
+        sequence,
+        contexts,
+        [dispatch("release")],
+        this.shouldConsume(true, true),
+        { reason: "keyReleased", bindingIds: [resolution.bindingId] },
+      ),
+    );
+    return pressed;
   }
 
   cancelChord(reason = "explicit"): RuntimeDecision {
@@ -629,4 +742,8 @@ export class InputRuntimeController {
     this.onDecision?.(structuredClone(decision));
     return decision;
   }
+}
+
+function gestureStroke(gesture: GestureMatch): GestureStroke {
+  return { device: "gesture", gesture };
 }
