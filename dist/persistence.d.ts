@@ -15,19 +15,19 @@ export type PortableBindingPatch = {
     bindingId: string;
     binding: Binding;
 };
-export interface PortableConfigurationV1 {
+export type PortableConfigurationV1 = {
     schemaVersion: typeof PORTABLE_CONFIGURATION_SCHEMA_VERSION;
     registryVersion: number;
     profileId: string;
     presetId?: string;
     patches: PortableBindingPatch[];
-}
-export interface PresetDefinition {
+};
+export type PresetDefinition = {
     id: string;
     extends?: string;
     patches: PortableBindingPatch[];
     provenance?: Provenance;
-}
+};
 export type MigrationRule = {
     op: "renameAction";
     from: string;
@@ -40,14 +40,14 @@ export type MigrationRule = {
     from: string;
     to: string;
 };
-export interface MigrationStep {
+export type MigrationStep = {
     fromVersion: number;
     toVersion: number;
     rules: MigrationRule[];
-}
+};
 export type ConfigurationDiagnosticSeverity = "warning" | "error";
 export type ConfigurationDiagnosticKind = "unsupportedSchemaVersion" | "futureRegistryVersion" | "missingMigrationStep" | "invalidMigrationStep" | "removedActionOverride" | "unknownPreset" | "presetCycle" | "duplicatePatchTarget" | "unknownAction" | "patchActionMismatch" | "addCollision" | "missingBinding" | "replacementIdMismatch";
-export interface ConfigurationDiagnostic {
+export type ConfigurationDiagnostic = {
     severity: ConfigurationDiagnosticSeverity;
     kind: ConfigurationDiagnosticKind;
     source: string;
@@ -56,29 +56,29 @@ export interface ConfigurationDiagnostic {
     patchIndex?: number;
     fromVersion?: number;
     toVersion?: number;
-}
-export interface EffectiveBindingProvenance {
+};
+export type EffectiveBindingProvenance = {
     layer: "default" | "preset" | "user";
     sourceId: string;
-    source?: Provenance;
+    source?: Provenance | undefined;
     patchIndex?: number;
-}
-export interface EffectiveBindingWithProvenance {
+};
+export type EffectiveBindingWithProvenance = {
     binding: Binding;
     provenance: EffectiveBindingProvenance;
-}
-export interface PortableConfigurationReport {
+};
+export type PortableConfigurationReport = {
     valid: boolean;
     configuration?: PortableConfigurationV1;
     effectiveBindings: EffectiveBindingWithProvenance[];
     diagnostics: ConfigurationDiagnostic[];
-}
-export interface ResolvePortableConfigurationOptions {
+};
+export type ResolvePortableConfigurationOptions = {
     registry: ActionRegistry;
     currentRegistryVersion: number;
     presets?: readonly PresetDefinition[];
     migrations?: readonly MigrationStep[];
-}
+};
 export declare function resolvePortableConfiguration(configuration: PortableConfigurationV1, options: ResolvePortableConfigurationOptions): PortableConfigurationReport;
 export declare function canonicalizePortableConfiguration(configuration: PortableConfigurationV1): PortableConfigurationV1;
 export declare function serializePortableConfiguration(configuration: PortableConfigurationV1): string;

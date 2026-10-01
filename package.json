@@ -2,19 +2,20 @@
   "name": "@moritzbrantner/input-bindings",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE-MIT",
-    "LICENSE-APACHE"
-  ],
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/moritzbrantner/input-bindings.git",
     "directory": "packages/input-bindings"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "type": "module",
+  "types": "./dist/public.d.ts",
   "exports": {
     ".": {
       "types": "./dist/public.d.ts",
@@ -40,6 +41,5 @@
       "types": "./dist/platform.d.ts",
       "import": "./dist/platform.js"
     }
-  },
-  "types": "./dist/public.d.ts"
+  }
 }

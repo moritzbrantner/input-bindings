@@ -4,10 +4,12 @@ export function isKeyStroke(stroke) {
     return "key" in stroke;
 }
 export function inputDeviceClass(stroke) {
-    if (isKeyStroke(stroke))
+    if (isKeyStroke(stroke)) {
         return "keyboard";
-    if (stroke.device === "mouseButton" || stroke.device === "wheel")
+    }
+    if (stroke.device === "mouseButton" || stroke.device === "wheel") {
         return "mouse";
+    }
     return "gamepad";
 }
 export function inputStrokeIdentity(stroke) {
@@ -65,21 +67,25 @@ export function whenSpecificity(expression) {
     }
 }
 export function resolve(bindings, sequence, activeContexts) {
-    if (sequence.length === 0)
+    if (sequence.length === 0) {
         return { kind: "none" };
+    }
     const exact = [];
     const continuations = [];
     for (const binding of bindings) {
         if (!evaluateWhen(binding.when, activeContexts) || sequence.length > binding.sequence.length) {
             continue;
         }
-        if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
+        if (!sequence.every((stroke, index) => binding.sequence[index] !== undefined &&
+            inputStrokeEquals(stroke, binding.sequence[index]))) {
             continue;
         }
-        if (sequence.length === binding.sequence.length)
+        if (sequence.length === binding.sequence.length) {
             exact.push(binding);
-        else
+        }
+        else {
             continuations.push(binding);
+        }
     }
     if (continuations.length > 0) {
         return {
@@ -88,9 +94,13 @@ export function resolve(bindings, sequence, activeContexts) {
             continuationBindingIds: continuations.map((binding) => binding.id).sort(),
         };
     }
-    if (exact.length === 0)
+    if (exact.length === 0) {
         return { kind: "none" };
+    }
     const topRank = exact.map(bindingRank).sort(compareRankDescending)[0];
+    if (!topRank) {
+        return { kind: "none" };
+    }
     const top = exact
         .filter((binding) => rankEquals(bindingRank(binding), topRank))
         .sort((left, right) => left.id.localeCompare(right.id));
@@ -98,19 +108,28 @@ export function resolve(bindings, sequence, activeContexts) {
     if (actions.size > 1) {
         return { kind: "ambiguous", bindingIds: top.map((binding) => binding.id) };
     }
-    return { kind: "resolved", bindingId: top[0].id, action: top[0].action };
+    const winner = top[0];
+    if (!winner) {
+        return { kind: "none" };
+    }
+    return { kind: "resolved", bindingId: winner.id, action: winner.action };
 }
 export function analyzeConflicts(bindings) {
     const conflicts = [];
     for (const [leftIndex, rightIndex] of conflictCandidatePairs(bindings)) {
         const left = bindings[leftIndex];
         const right = bindings[rightIndex];
+        if (!left || !right) {
+            throw new Error("Conflict candidate index is outside the binding registry.");
+        }
         const relation = sequenceRelation(left.sequence, right.sequence);
-        if (relation === "separate")
+        if (relation === "separate") {
             continue;
+        }
         const overlap = contextOverlap(left.when, right.when);
-        if (overlap.kind === "disjoint")
+        if (overlap.kind === "disjoint") {
             continue;
+        }
         let kind;
         if (overlap.kind === "unknown") {
             kind = relation === "exact" ? "potentialExact" : "potentialPrefix";
@@ -157,20 +176,24 @@ function conflictCandidateIndices(root, sequence) {
     const result = new Set();
     let node = root;
     if (sequence.length === 0) {
-        for (const index of root.subtreeIndices)
+        for (const index of root.subtreeIndices) {
             result.add(index);
+        }
         return result;
     }
-    for (const index of root.terminalIndices)
+    for (const index of root.terminalIndices) {
         result.add(index);
-    for (let strokeIndex = 0; strokeIndex < sequence.length; strokeIndex += 1) {
-        const child = node.children.get(conflictStrokeKey(sequence[strokeIndex]));
-        if (!child)
+    }
+    for (const [strokeIndex, stroke] of sequence.entries()) {
+        const child = node.children.get(conflictStrokeKey(stroke));
+        if (!child) {
             return result;
+        }
         node = child;
         const candidates = strokeIndex === sequence.length - 1 ? node.subtreeIndices : node.terminalIndices;
-        for (const index of candidates)
+        for (const index of candidates) {
             result.add(index);
+        }
     }
     return result;
 }
@@ -288,8 +311,9 @@ export function inputStrokeEquals(left, right) {
     if (isKeyStroke(left) || isKeyStroke(right)) {
         return isKeyStroke(left) && isKeyStroke(right) && keyStrokeEquals(left, right);
     }
-    if (left.device !== right.device)
+    if (left.device !== right.device) {
         return false;
+    }
     switch (left.device) {
         case "mouseButton":
             return (right.device === "mouseButton" &&
@@ -339,11 +363,13 @@ function compareRankDescending(left, right) {
 }
 function sequenceRelation(left, right) {
     if (left.length === right.length &&
-        left.every((stroke, index) => inputStrokeEquals(stroke, right[index]))) {
+        left.every((stroke, index) => right[index] !== undefined && inputStrokeEquals(stroke, right[index]))) {
         return "exact";
     }
     const commonLength = Math.min(left.length, right.length);
-    const commonPrefix = Array.from({ length: commonLength }, (_, index) => index).every((index) => inputStrokeEquals(left[index], right[index]));
+    const commonPrefix = Array.from({ length: commonLength }, (_, index) => index).every((index) => left[index] !== undefined &&
+        right[index] !== undefined &&
+        inputStrokeEquals(left[index], right[index]));
     return commonPrefix ? "prefix" : "separate";
 }
 function contextOverlap(left, right) {
@@ -355,8 +381,9 @@ function contextOverlap(left, right) {
     for (let mask = 0; mask < assignmentCount; mask += 1) {
         const active = new Set();
         contexts.forEach((context, index) => {
-            if ((mask & 2 ** index) !== 0)
+            if ((mask & (2 ** index)) !== 0) {
                 active.add(context);
+            }
         });
         if (evaluateWhen(left, active) && evaluateWhen(right, active)) {
             return { kind: "overlap", witnessContexts: [...active].sort() };

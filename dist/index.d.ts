@@ -5,41 +5,41 @@ export type KeyMatch = {
     kind: "physical";
     value: string;
 };
-export interface Modifiers {
+export type Modifiers = {
     ctrl?: boolean;
     alt?: boolean;
     shift?: boolean;
     meta?: boolean;
     altGraph?: boolean;
-}
-export interface KeyStroke {
+};
+export type KeyStroke = {
     key: KeyMatch;
     modifiers?: Modifiers;
-}
-export interface MouseButtonStroke {
+};
+export type MouseButtonStroke = {
     device: "mouseButton";
     button: number;
     modifiers?: Modifiers;
-}
-export interface WheelStroke {
+};
+export type WheelStroke = {
     device: "wheel";
     direction: "up" | "down" | "left" | "right";
     modifiers?: Modifiers;
-}
-export interface GamepadButtonStroke {
+};
+export type GamepadButtonStroke = {
     device: "gamepadButton";
     button: number;
     threshold: number;
     gamepad?: number;
-}
-export interface GamepadAxisStroke {
+};
+export type GamepadAxisStroke = {
     device: "gamepadAxis";
     axis: number;
     direction: "positive" | "negative";
     threshold: number;
     deadzone: number;
     gamepad?: number;
-}
+};
 export type InputStroke = KeyStroke | MouseButtonStroke | WheelStroke | GamepadButtonStroke | GamepadAxisStroke;
 export type InputDeviceClass = "keyboard" | "mouse" | "gamepad";
 export type WhenExpr = {
@@ -57,13 +57,13 @@ export type WhenExpr = {
     op: "any";
     exprs: WhenExpr[];
 };
-export interface Binding {
+export type Binding = {
     id: string;
     action: string;
     sequence: InputStroke[];
     when?: WhenExpr;
     priority?: number;
-}
+};
 export type Resolution = {
     kind: "none";
 } | {
@@ -79,12 +79,12 @@ export type Resolution = {
     continuationBindingIds: string[];
 };
 export type ConflictKind = "duplicate" | "ambiguousExact" | "overrideExact" | "chordPrefix" | "potentialExact" | "potentialPrefix";
-export interface Conflict {
+export type Conflict = {
     leftBindingId: string;
     rightBindingId: string;
     kind: ConflictKind;
     witnessContexts?: string[];
-}
+};
 export type BindingPatch = {
     op: "add";
     binding: Binding;
@@ -96,20 +96,20 @@ export type BindingPatch = {
     bindingId: string;
     binding: Binding;
 };
-export interface Profile {
+export type Profile = {
     id: string;
     patches: BindingPatch[];
-}
+};
 export type ProfileDiagnosticKind = "addCollision" | "missingBinding" | "replacementIdMismatch";
-export interface ProfileDiagnostic {
+export type ProfileDiagnostic = {
     patchIndex: number;
     kind: ProfileDiagnosticKind;
     bindingId: string;
-}
-export interface ProfileApplication {
+};
+export type ProfileApplication = {
     bindings: Binding[];
     diagnostics: ProfileDiagnostic[];
-}
+};
 export declare function isKeyStroke(stroke: InputStroke): stroke is KeyStroke;
 export declare function inputDeviceClass(stroke: InputStroke): InputDeviceClass;
 export declare function inputStrokeIdentity(stroke: InputStroke): string;

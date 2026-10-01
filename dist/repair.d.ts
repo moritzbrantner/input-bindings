@@ -18,11 +18,11 @@ export type ConflictRepair = {
     againstBindingId: string;
     when: WhenExpr;
 };
-export interface ConflictRepairPlan {
+export type ConflictRepairPlan = {
     conflict: Conflict;
     disposition: ConflictDisposition;
     repairs: ConflictRepair[];
-}
+};
 /**
  * Returns deterministic repair alternatives without applying any of them.
  * The caller remains responsible for choosing a repair and persisting the resulting profile delta.

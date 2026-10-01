@@ -20,8 +20,9 @@ export function resolvePortableConfiguration(configuration, options) {
         return { valid: false, effectiveBindings: [], diagnostics };
     }
     const migrated = migrateConfiguration(canonicalizePortableConfiguration(configuration), options.currentRegistryVersion, options.migrations ?? [], diagnostics);
-    if (!migrated)
+    if (!migrated) {
         return { valid: false, effectiveBindings: [], diagnostics };
+    }
     const knownActions = new Set(options.registry.actions.map((action) => action.id));
     const effective = defaultBindingsWithProvenance(options.registry);
     const presets = new Map((options.presets ?? []).map((preset) => [preset.id, preset]));
@@ -53,8 +54,9 @@ export function canonicalizePortableConfiguration(configuration) {
         profileId: configuration.profileId,
         patches: canonicalizePatches(configuration.patches),
     };
-    if (configuration.presetId)
+    if (configuration.presetId) {
         canonical.presetId = configuration.presetId;
+    }
     return canonical;
 }
 export function serializePortableConfiguration(configuration) {
@@ -101,8 +103,9 @@ export function portableConfigurationFromProfile(profile, baseBindings, registry
         profileId: profile.id,
         patches,
     };
-    if (presetId)
+    if (presetId) {
         configuration.presetId = presetId;
+    }
     return { configuration: canonicalizePortableConfiguration(configuration), diagnostics };
 }
 export function profileFromPortableConfiguration(configuration) {
@@ -149,8 +152,9 @@ function migrateConfiguration(configuration, targetVersion, migrations, diagnost
             });
             return undefined;
         }
-        for (const rule of step.rules)
+        for (const rule of step.rules) {
             applyMigrationRule(migrated, rule, diagnostics);
+        }
         migrated.registryVersion = step.toVersion;
     }
     migrated.patches = canonicalizePatches(migrated.patches);
@@ -160,8 +164,9 @@ function applyMigrationRule(configuration, rule, diagnostics) {
     switch (rule.op) {
         case "renameAction":
             for (const patch of configuration.patches) {
-                if (patch.actionId === rule.from)
+                if (patch.actionId === rule.from) {
                     patch.actionId = rule.to;
+                }
                 if ((patch.op === "add" || patch.op === "replace") && patch.binding.action === rule.from) {
                     patch.binding.action = rule.to;
                 }
@@ -169,8 +174,9 @@ function applyMigrationRule(configuration, rule, diagnostics) {
             break;
         case "removeAction":
             configuration.patches = configuration.patches.filter((patch, patchIndex) => {
-                if (patch.actionId !== rule.actionId)
+                if (patch.actionId !== rule.actionId) {
                     return true;
+                }
                 diagnostics.push({
                     severity: "warning",
                     kind: "removedActionOverride",
@@ -185,14 +191,17 @@ function applyMigrationRule(configuration, rule, diagnostics) {
         case "renameBinding":
             for (const patch of configuration.patches) {
                 if (patch.op === "remove") {
-                    if (patch.bindingId === rule.from)
+                    if (patch.bindingId === rule.from) {
                         patch.bindingId = rule.to;
+                    }
                     continue;
                 }
-                if (patch.binding.id === rule.from)
+                if (patch.binding.id === rule.from) {
                     patch.binding.id = rule.to;
-                if (patch.op === "replace" && patch.bindingId === rule.from)
+                }
+                if (patch.op === "replace" && patch.bindingId === rule.from) {
                     patch.bindingId = rule.to;
+                }
             }
             break;
     }
@@ -221,8 +230,9 @@ function resolvePresetChain(presetId, presets, diagnostics) {
     const visiting = new Set();
     const visited = new Set();
     const visit = (id) => {
-        if (visited.has(id))
+        if (visited.has(id)) {
             return true;
+        }
         if (visiting.has(id)) {
             diagnostics.push({ severity: "error", kind: "presetCycle", source: id });
             return false;
@@ -233,8 +243,9 @@ function resolvePresetChain(presetId, presets, diagnostics) {
             return false;
         }
         visiting.add(id);
-        if (preset.extends && !visit(preset.extends))
+        if (preset.extends && !visit(preset.extends)) {
             return false;
+        }
         visiting.delete(id);
         visited.add(id);
         chain.push(preset);
@@ -354,19 +365,27 @@ function patchTargetId(patch) {
     return patch.op === "add" ? patch.binding.id : patch.bindingId;
 }
 function stableJson(value) {
-    if (Array.isArray(value))
+    if (Array.isArray(value)) {
         return value.map(stableJson);
+    }
     if (value && typeof value === "object") {
         const result = {};
         for (const key of Object.keys(value).sort()) {
             const child = value[key];
-            if (child !== undefined)
+            if (child !== undefined) {
                 result[key] = stableJson(child);
+            }
         }
         return result;
     }
     return value;
 }
 function compareText(left, right) {
-    return left < right ? -1 : left > right ? 1 : 0;
+    if (left < right) {
+        return -1;
+    }
+    if (left > right) {
+        return 1;
+    }
+    return 0;
 }

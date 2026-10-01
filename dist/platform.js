@@ -21,10 +21,12 @@ export function analyzePlatformConflicts(bindings, catalog, environment) {
     const diagnostics = [];
     for (const binding of bindings) {
         for (const rule of catalog) {
-            if (!ruleApplies(rule, environment))
+            if (!ruleApplies(rule, environment)) {
                 continue;
-            if (!sequenceEquals(binding.sequence, rule.sequence))
+            }
+            if (!sequenceEquals(binding.sequence, rule.sequence)) {
                 continue;
+            }
             diagnostics.push({
                 bindingId: binding.id,
                 action: binding.action,
@@ -73,39 +75,46 @@ export function analyzePlatformConflicts(bindings, catalog, environment) {
     return diagnostics.sort(compareDiagnostic);
 }
 function ruleApplies(rule, environment) {
-    if (rule.platforms?.length && !rule.platforms.includes(environment.platform))
+    if (rule.platforms?.length && !rule.platforms.includes(environment.platform)) {
         return false;
-    if (rule.browsers?.length && !rule.browsers.includes(environment.browser))
+    }
+    if (rule.browsers?.length && !rule.browsers.includes(environment.browser)) {
         return false;
+    }
     return true;
 }
 function sequenceEquals(left, right) {
     return (left.length === right.length &&
-        left.every((stroke, index) => inputStrokeEquals(stroke, right[index])));
+        left.every((stroke, index) => right[index] !== undefined && inputStrokeEquals(stroke, right[index])));
 }
 function isAltGraphSensitive(binding, environment) {
-    if (environment.platform !== "windows" && environment.platform !== "linux")
+    if (environment.platform !== "windows" && environment.platform !== "linux") {
         return false;
+    }
     return binding.sequence.some((stroke) => isKeyStroke(stroke) &&
         Boolean(stroke.modifiers?.ctrl) &&
         Boolean(stroke.modifiers?.alt) &&
-        !Boolean(stroke.modifiers?.altGraph));
+        !stroke.modifiers?.altGraph);
 }
 function isImeSensitive(binding) {
-    if (!isAlways(binding.when))
+    if (!isAlways(binding.when)) {
         return false;
+    }
     return binding.sequence.some((stroke) => {
-        if (!isKeyStroke(stroke) || stroke.key.kind !== "logical")
+        if (!isKeyStroke(stroke) || stroke.key.kind !== "logical") {
             return false;
+        }
         const modifiers = stroke.modifiers ?? {};
-        if (modifiers.ctrl || modifiers.alt || modifiers.meta || modifiers.altGraph)
+        if (modifiers.ctrl || modifiers.alt || modifiers.meta || modifiers.altGraph) {
             return false;
+        }
         return isPrintableLogicalKey(stroke.key.value);
     });
 }
 function isLayoutSensitive(binding, environment) {
-    if (environment.layoutMapAvailable !== false)
+    if (environment.layoutMapAvailable !== false) {
         return false;
+    }
     return binding.sequence.some((stroke) => isKeyStroke(stroke) && stroke.key.kind === "physical");
 }
 function isAlways(expression) {
@@ -121,5 +130,11 @@ function compareDiagnostic(left, right) {
         compareText(left.title, right.title));
 }
 function compareText(left, right) {
-    return left < right ? -1 : left > right ? 1 : 0;
+    if (left < right) {
+        return -1;
+    }
+    if (left > right) {
+        return 1;
+    }
+    return 0;
 }

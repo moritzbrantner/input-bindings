@@ -16,14 +16,19 @@ export class ContextStack {
         return layer ? cloneLayer(layer) : undefined;
     }
     push(id, options = {}) {
-        if (id.length === 0)
+        if (id.length === 0) {
             throw new Error("Context layer id must not be empty.");
-        this.layers.push(canonicalLayer({ id, blocksLower: options.blocksLower }));
+        }
+        this.layers.push(canonicalLayer({
+            id,
+            ...(options.blocksLower === undefined ? {} : { blocksLower: options.blocksLower }),
+        }));
     }
     pop(expectedId) {
         const top = this.layers.at(-1);
-        if (!top || (expectedId !== undefined && top.id !== expectedId))
+        if (!top || (expectedId !== undefined && top.id !== expectedId)) {
             return undefined;
+        }
         return cloneLayer(this.layers.pop());
     }
     clear() {
@@ -31,8 +36,9 @@ export class ContextStack {
     }
     replace(layers) {
         this.layers = layers.map((layer) => {
-            if (layer.id.length === 0)
+            if (layer.id.length === 0) {
                 throw new Error("Context layer id must not be empty.");
+            }
             return canonicalLayer(layer);
         });
     }
@@ -53,7 +59,8 @@ export class ContextStack {
  * expression evaluation.
  */
 export function resolveWithContextStack(bindings, sequence, activeContexts, contextStack) {
-    return explainResolutionWithContextStack(bindings, sequence, activeContexts, contextStack).resolution;
+    return explainResolutionWithContextStack(bindings, sequence, activeContexts, contextStack)
+        .resolution;
 }
 /**
  * Returns the bindings that are individually reachable in the supplied application context state.
@@ -64,10 +71,12 @@ export function resolveWithContextStack(bindings, sequence, activeContexts, cont
 export function reachableBindingsWithContextStack(bindings, activeContexts, contextStack) {
     const { contexts, depthByContext, barrier } = prepareContextStackState(activeContexts, contextStack);
     return bindings.filter((binding) => {
-        if (binding.sequence.length === 0 || !evaluateWhen(binding.when, contexts))
+        if (binding.sequence.length === 0 || !evaluateWhen(binding.when, contexts)) {
             return false;
-        if (!barrier)
+        }
+        if (!barrier) {
             return true;
+        }
         return ownerDepth(binding.when, depthByContext) >= barrier.depth;
     });
 }
@@ -103,7 +112,8 @@ export function explainResolutionWithContextStack(bindings, sequence, activeCont
             candidates.push({ ...base, match: "none", status: "inputLongerThanBinding" });
             continue;
         }
-        if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
+        if (!sequence.every((stroke, index) => binding.sequence[index] !== undefined &&
+            inputStrokeEquals(stroke, binding.sequence[index]))) {
             candidates.push({ ...base, match: "none", status: "sequenceMismatch" });
             continue;
         }
@@ -136,6 +146,9 @@ export function explainResolutionWithContextStack(bindings, sequence, activeCont
     const resolution = resolve(selectedBindings, sequence, contexts);
     for (const candidate of selected) {
         const trace = candidates[candidate.traceIndex];
+        if (!trace) {
+            throw new Error("Resolution candidate trace is missing.");
+        }
         switch (resolution.kind) {
             case "pending":
                 trace.status = candidate.match === "exact" ? "pendingExact" : "pendingContinuation";
@@ -151,9 +164,12 @@ export function explainResolutionWithContextStack(bindings, sequence, activeCont
                     break;
                 }
                 const winner = selectedBindings.find((binding) => binding.id === resolution.bindingId);
-                trace.status = winner && sameRank(candidate.binding, winner) && candidate.binding.action === winner.action
-                    ? "equivalentWinner"
-                    : "lowerRank";
+                trace.status =
+                    winner &&
+                        sameRank(candidate.binding, winner) &&
+                        candidate.binding.action === winner.action
+                        ? "equivalentWinner"
+                        : "lowerRank";
                 break;
             }
             case "none":
@@ -170,8 +186,9 @@ function prepareContextStackState(activeContexts, contextStack) {
     contextStack.forEach((layer, index) => {
         contexts.add(layer.id);
         depthByContext.set(layer.id, index);
-        if (layer.blocksLower)
+        if (layer.blocksLower) {
             barrier = { id: layer.id, depth: index };
+        }
     });
     return { contexts, depthByContext, ...(barrier ? { barrier } : {}) };
 }

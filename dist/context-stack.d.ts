@@ -1,14 +1,14 @@
 import { type Binding, type InputStroke, type Resolution } from "./index.js";
-export interface ContextLayer {
+export type ContextLayer = {
     id: string;
     blocksLower?: boolean;
-}
-export interface ContextStackPushOptions {
+};
+export type ContextStackPushOptions = {
     blocksLower?: boolean;
-}
+};
 export type ResolutionCandidateMatch = "none" | "exact" | "continuation";
 export type ResolutionCandidateStatus = "inactiveContext" | "inputLongerThanBinding" | "sequenceMismatch" | "blockedByModal" | "lowerContextLayer" | "pendingExact" | "pendingContinuation" | "lowerRank" | "winner" | "equivalentWinner" | "ambiguousWinner";
-export interface ResolutionCandidateTrace {
+export type ResolutionCandidateTrace = {
     bindingId: string;
     action: string;
     match: ResolutionCandidateMatch;
@@ -16,18 +16,18 @@ export interface ResolutionCandidateTrace {
     ownerDepth?: number;
     priority: number;
     specificity: number;
-}
-export interface ResolutionBarrierTrace {
+};
+export type ResolutionBarrierTrace = {
     id: string;
     depth: number;
-}
-export interface ResolutionTrace {
+};
+export type ResolutionTrace = {
     resolution: Resolution;
     activeContexts: string[];
     contextStack: ContextLayer[];
     barrier?: ResolutionBarrierTrace;
     candidates: ResolutionCandidateTrace[];
-}
+};
 /**
  * Mutable application-owned context stack. The last layer is the highest-priority layer.
  * Duplicate context ids are allowed so nested owners can push/pop the same semantic context safely.

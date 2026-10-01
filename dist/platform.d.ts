@@ -3,13 +3,13 @@ export type PlatformFamily = "windows" | "macos" | "linux" | "android" | "ios" |
 export type BrowserFamily = "chromium" | "firefox" | "safari" | "unknown";
 export type PlatformConflictSeverity = "info" | "warning";
 export type PlatformConflictKind = "browserShortcut" | "osShortcut" | "accessibilityShortcut" | "layoutSensitive" | "altGraphSensitive" | "imeSensitive";
-export interface PlatformConflictSource {
+export type PlatformConflictSource = {
     id: string;
     title: string;
     url: string;
     verifiedOn?: string;
-}
-export interface PlatformConflictRule {
+};
+export type PlatformConflictRule = {
     id: string;
     title: string;
     kind: Exclude<PlatformConflictKind, "layoutSensitive" | "altGraphSensitive" | "imeSensitive">;
@@ -18,14 +18,14 @@ export interface PlatformConflictRule {
     platforms?: PlatformFamily[];
     browsers?: BrowserFamily[];
     source: PlatformConflictSource;
-    note?: string;
-}
-export interface PlatformConflictEnvironment {
+    note?: string | undefined;
+};
+export type PlatformConflictEnvironment = {
     platform: PlatformFamily;
     browser: BrowserFamily;
     layoutMapAvailable?: boolean;
-}
-export interface PlatformConflictDiagnostic {
+};
+export type PlatformConflictDiagnostic = {
     bindingId: string;
     action: string;
     kind: PlatformConflictKind;
@@ -33,6 +33,6 @@ export interface PlatformConflictDiagnostic {
     title: string;
     source: PlatformConflictSource;
     ruleId?: string;
-    note?: string;
-}
+    note?: string | undefined;
+};
 export declare function analyzePlatformConflicts(bindings: readonly Binding[], catalog: readonly PlatformConflictRule[], environment: PlatformConflictEnvironment): PlatformConflictDiagnostic[];

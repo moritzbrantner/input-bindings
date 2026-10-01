@@ -74,8 +74,9 @@ function dispositionForKind(kind) {
 }
 function addPreferRepair(repairs, target, other) {
     const otherPriority = other.priority ?? 0;
-    if (otherPriority >= MAX_PRIORITY)
+    if (otherPriority >= MAX_PRIORITY) {
         return;
+    }
     repairs.push({
         kind: "prefer",
         bindingId: target.id,
@@ -86,8 +87,9 @@ function addPreferRepair(repairs, target, other) {
 function addNarrowRepair(repairs, target, other) {
     const otherWhen = other.when ?? ALWAYS;
     const targetWhen = target.when ?? ALWAYS;
-    if (otherWhen.op === "always" || whenEquals(targetWhen, otherWhen))
+    if (otherWhen.op === "always" || whenEquals(targetWhen, otherWhen)) {
         return;
+    }
     const exclusion = { op: "not", expr: structuredClone(otherWhen) };
     const when = targetWhen.op === "always"
         ? exclusion
@@ -100,8 +102,9 @@ function addNarrowRepair(repairs, target, other) {
     });
 }
 function whenEquals(left, right) {
-    if (left.op !== right.op)
+    if (left.op !== right.op) {
         return false;
+    }
     switch (left.op) {
         case "always":
             return true;
@@ -113,6 +116,6 @@ function whenEquals(left, right) {
         case "any":
             return (right.op === left.op &&
                 left.exprs.length === right.exprs.length &&
-                left.exprs.every((expr, index) => whenEquals(expr, right.exprs[index])));
+                left.exprs.every((expr, index) => right.exprs[index] !== undefined && whenEquals(expr, right.exprs[index])));
     }
 }
