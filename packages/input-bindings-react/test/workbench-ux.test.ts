@@ -205,10 +205,7 @@ test("clicked-key inspection is scoped to bindings reachable in the selected sce
   const report = validateRegistry(registry, profile);
   const pauseMenuBindings = bindingsForScenario(report.effectiveBindings, scenarios[0]!);
 
-  assert.deepEqual(
-    bindingIdsForCode(pauseMenuBindings, "Escape"),
-    ["menu.close.default"],
-  );
+  assert.deepEqual(bindingIdsForCode(pauseMenuBindings, "Escape"), ["menu.close.default"]);
 });
 
 test("preview inspector renders the same modal stack and barrier without a parallel shortcut list", () => {

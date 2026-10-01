@@ -5,7 +5,10 @@ import { test } from "node:test";
 const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
 
 test("workbench owns light theme tokens and native control colors", () => {
-  assert.match(styles, /\.ib-workbench\s*\{[\s\S]*?--ib-surface:\s*#ffffff;[\s\S]*?color-scheme:\s*light;/);
+  assert.match(
+    styles,
+    /\.ib-workbench\s*\{[\s\S]*?--ib-surface:\s*#ffffff;[\s\S]*?color-scheme:\s*light;/,
+  );
   assert.match(
     styles,
     /\.ib-workbench button,[\s\S]*?\.ib-workbench textarea\s*\{[\s\S]*?background:\s*var\(--ib-surface\);[\s\S]*?color:\s*inherit;/,

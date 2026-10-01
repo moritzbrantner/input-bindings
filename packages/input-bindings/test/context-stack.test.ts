@@ -28,12 +28,7 @@ test("context stack resolution and trace match the shared Rust/TypeScript fixtur
   for (const entry of fixture.cases) {
     const activeContexts = new Set(entry.activeContexts);
     assert.deepEqual(
-      resolveWithContextStack(
-        fixture.bindings,
-        entry.sequence,
-        activeContexts,
-        entry.contextStack,
-      ),
+      resolveWithContextStack(fixture.bindings, entry.sequence, activeContexts, entry.contextStack),
       entry.expected,
       entry.name,
     );
@@ -51,11 +46,10 @@ test("context stack resolution and trace match the shared Rust/TypeScript fixtur
 });
 
 test("batch reachability matches modal and fallback stack semantics", () => {
-  const reachable = reachableBindingsWithContextStack(
-    fixture.bindings,
-    new Set(),
-    [{ id: "gameplay" }, { id: "menu", blocksLower: true }],
-  );
+  const reachable = reachableBindingsWithContextStack(fixture.bindings, new Set(), [
+    { id: "gameplay" },
+    { id: "menu", blocksLower: true },
+  ]);
 
   assert.deepEqual(
     reachable.map((binding) => binding.id),
@@ -64,7 +58,9 @@ test("batch reachability matches modal and fallback stack semantics", () => {
 });
 
 test("resolution trace exposes modal blocking and the actual winning layer", () => {
-  const entry = fixture.cases.find((candidate) => candidate.name === "blocking layer still resolves its own binding");
+  const entry = fixture.cases.find(
+    (candidate) => candidate.name === "blocking layer still resolves its own binding",
+  );
   assert.ok(entry);
   const trace = explainResolutionWithContextStack(
     fixture.bindings,
@@ -86,7 +82,10 @@ test("resolution trace exposes modal blocking and the actual winning layer", () 
 });
 
 test("resolution trace explains why a higher-layer chord waits instead of firing a lower exact binding", () => {
-  const entry = fixture.cases.find((candidate) => candidate.name === "top-layer chord prefix suppresses a lower-layer exact binding");
+  const entry = fixture.cases.find(
+    (candidate) =>
+      candidate.name === "top-layer chord prefix suppresses a lower-layer exact binding",
+  );
   assert.ok(entry);
   const trace = explainResolutionWithContextStack(
     fixture.bindings,

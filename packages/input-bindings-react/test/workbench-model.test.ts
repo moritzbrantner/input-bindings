@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { Binding, Conflict } from "@moritzbrantner/input-bindings";
+
 import {
   assessConflictInScenarios,
   assessConflictsInScenarios,
@@ -53,12 +54,14 @@ test("derived scenarios provide a usable global view plus every declared context
 
 test("scenario facts merge explicit facts with ordered stack layers", () => {
   assert.deepEqual(
-    [...scenarioContextFacts({
-      id: "dialog",
-      label: "Dialog",
-      activeContexts: ["selectionExists"],
-      stack: [{ id: "editorFocused" }, { id: "dialogOpen", blocksLower: true }],
-    })].sort(),
+    [
+      ...scenarioContextFacts({
+        id: "dialog",
+        label: "Dialog",
+        activeContexts: ["selectionExists"],
+        stack: [{ id: "editorFocused" }, { id: "dialogOpen", blocksLower: true }],
+      }),
+    ].sort(),
     ["dialogOpen", "editorFocused", "selectionExists"],
   );
 });
@@ -119,7 +122,6 @@ test("conflict review distinguishes declared stack precedence from a genuinely a
   ]);
 });
 
-
 test("bulk conflict review preserves per-conflict scenario semantics for shared input sequences", () => {
   const denseBindings: Binding[] = [
     ...bindings,
@@ -161,8 +163,6 @@ test("bulk conflict review preserves per-conflict scenario semantics for shared 
 
   assert.deepEqual(
     assessConflictsInScenarios(denseBindings, conflicts, scenarios),
-    conflicts.map((conflict) =>
-      assessConflictInScenarios(denseBindings, conflict, scenarios),
-    ),
+    conflicts.map((conflict) => assessConflictInScenarios(denseBindings, conflict, scenarios)),
   );
 });

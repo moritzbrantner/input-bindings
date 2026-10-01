@@ -9,14 +9,14 @@ import {
   type WhenExpr,
 } from "./index.ts";
 
-export interface ContextLayer {
+export type ContextLayer = {
   id: string;
   blocksLower?: boolean;
-}
+};
 
-export interface ContextStackPushOptions {
+export type ContextStackPushOptions = {
   blocksLower?: boolean;
-}
+};
 
 export type ResolutionCandidateMatch = "none" | "exact" | "continuation";
 
@@ -33,7 +33,7 @@ export type ResolutionCandidateStatus =
   | "equivalentWinner"
   | "ambiguousWinner";
 
-export interface ResolutionCandidateTrace {
+export type ResolutionCandidateTrace = {
   bindingId: string;
   action: string;
   match: ResolutionCandidateMatch;
@@ -41,27 +41,27 @@ export interface ResolutionCandidateTrace {
   ownerDepth?: number;
   priority: number;
   specificity: number;
-}
+};
 
-export interface ResolutionBarrierTrace {
+export type ResolutionBarrierTrace = {
   id: string;
   depth: number;
-}
+};
 
-export interface ResolutionTrace {
+export type ResolutionTrace = {
   resolution: Resolution;
   activeContexts: string[];
   contextStack: ContextLayer[];
   barrier?: ResolutionBarrierTrace;
   candidates: ResolutionCandidateTrace[];
-}
+};
 
-interface WorkingCandidate {
+type WorkingCandidate = {
   binding: Binding;
   traceIndex: number;
   depth: number;
   match: Exclude<ResolutionCandidateMatch, "none">;
-}
+};
 
 /**
  * Mutable application-owned context stack. The last layer is the highest-priority layer.
@@ -84,13 +84,22 @@ export class ContextStack {
   }
 
   push(id: string, options: ContextStackPushOptions = {}): void {
-    if (id.length === 0) throw new Error("Context layer id must not be empty.");
-    this.layers.push(canonicalLayer({ id, blocksLower: options.blocksLower }));
+    if (id.length === 0) {
+      throw new Error("Context layer id must not be empty.");
+    }
+    this.layers.push(
+      canonicalLayer({
+        id,
+        ...(options.blocksLower === undefined ? {} : { blocksLower: options.blocksLower }),
+      }),
+    );
   }
 
   pop(expectedId?: string): ContextLayer | undefined {
     const top = this.layers.at(-1);
-    if (!top || (expectedId !== undefined && top.id !== expectedId)) return undefined;
+    if (!top || (expectedId !== undefined && top.id !== expectedId)) {
+      return undefined;
+    }
     return cloneLayer(this.layers.pop()!);
   }
 
@@ -100,7 +109,9 @@ export class ContextStack {
 
   replace(layers: readonly ContextLayer[]): void {
     this.layers = layers.map((layer) => {
-      if (layer.id.length === 0) throw new Error("Context layer id must not be empty.");
+      if (layer.id.length === 0) {
+        throw new Error("Context layer id must not be empty.");
+      }
       return canonicalLayer(layer);
     });
   }
@@ -128,12 +139,8 @@ export function resolveWithContextStack(
   activeContexts: ReadonlySet<string>,
   contextStack: readonly ContextLayer[],
 ): Resolution {
-  return explainResolutionWithContextStack(
-    bindings,
-    sequence,
-    activeContexts,
-    contextStack,
-  ).resolution;
+  return explainResolutionWithContextStack(bindings, sequence, activeContexts, contextStack)
+    .resolution;
 }
 
 /**
@@ -153,8 +160,12 @@ export function reachableBindingsWithContextStack(
   );
 
   return bindings.filter((binding) => {
-    if (binding.sequence.length === 0 || !evaluateWhen(binding.when, contexts)) return false;
-    if (!barrier) return true;
+    if (binding.sequence.length === 0 || !evaluateWhen(binding.when, contexts)) {
+      return false;
+    }
+    if (!barrier) {
+      return true;
+    }
     return ownerDepth(binding.when, depthByContext) >= barrier.depth;
   });
 }
@@ -204,7 +215,13 @@ export function explainResolutionWithContextStack(
       candidates.push({ ...base, match: "none", status: "inputLongerThanBinding" });
       continue;
     }
-    if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
+    if (
+      !sequence.every(
+        (stroke, index) =>
+          binding.sequence[index] !== undefined &&
+          inputStrokeEquals(stroke, binding.sequence[index]),
+      )
+    ) {
       candidates.push({ ...base, match: "none", status: "sequenceMismatch" });
       continue;
     }
@@ -242,6 +259,9 @@ export function explainResolutionWithContextStack(
 
   for (const candidate of selected) {
     const trace = candidates[candidate.traceIndex];
+    if (!trace) {
+      throw new Error("Resolution candidate trace is missing.");
+    }
     switch (resolution.kind) {
       case "pending":
         trace.status = candidate.match === "exact" ? "pendingExact" : "pendingContinuation";
@@ -257,9 +277,12 @@ export function explainResolutionWithContextStack(
           break;
         }
         const winner = selectedBindings.find((binding) => binding.id === resolution.bindingId);
-        trace.status = winner && sameRank(candidate.binding, winner) && candidate.binding.action === winner.action
-          ? "equivalentWinner"
-          : "lowerRank";
+        trace.status =
+          winner &&
+          sameRank(candidate.binding, winner) &&
+          candidate.binding.action === winner.action
+            ? "equivalentWinner"
+            : "lowerRank";
         break;
       }
       case "none":
@@ -271,11 +294,11 @@ export function explainResolutionWithContextStack(
   return { resolution, ...baseTrace, candidates };
 }
 
-interface PreparedContextStackState {
+type PreparedContextStackState = {
   contexts: Set<string>;
   depthByContext: Map<string, number>;
   barrier?: ResolutionBarrierTrace;
-}
+};
 
 function prepareContextStackState(
   activeContexts: ReadonlySet<string>,
@@ -288,7 +311,9 @@ function prepareContextStackState(
   contextStack.forEach((layer, index) => {
     contexts.add(layer.id);
     depthByContext.set(layer.id, index);
-    if (layer.blocksLower) barrier = { id: layer.id, depth: index };
+    if (layer.blocksLower) {
+      barrier = { id: layer.id, depth: index };
+    }
   });
 
   return { contexts, depthByContext, ...(barrier ? { barrier } : {}) };

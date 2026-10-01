@@ -1,6 +1,4 @@
-import { expect, test } from "@playwright/test";
-
-import type { Locator, Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const storyBase = "input-bindings-keyboard-view";
 
@@ -67,7 +65,9 @@ test("pressed, selected, highlighted, and conflict states remain visible", async
   await expect(key(page, "KeyS")).toHaveClass(/\bis-conflict\b/);
 });
 
-test("layout comparison renders the same physical keyboard under every fixture", async ({ page }) => {
+test("layout comparison renders the same physical keyboard under every fixture", async ({
+  page,
+}) => {
   await openStory(page, `${storyBase}--layout-comparison`, 5);
 
   const layouts = ["qwerty", "qwertz", "azerty", "dvorak", "colemak"] as const;
@@ -104,7 +104,9 @@ test("narrow viewports keep the physical keyboard scrollable without page-level 
 test("all keyboard layout stories render without browser errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
+    if (message.type() === "error") {
+      errors.push(message.text());
+    }
   });
   page.on("pageerror", (error) => errors.push(error.message));
 

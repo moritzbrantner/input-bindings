@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
-import { InputRuntimeController, type RuntimeDispatch } from "@moritzbrantner/input-bindings-runtime";
+import {
+  InputRuntimeController,
+  type RuntimeDispatch,
+} from "@moritzbrantner/input-bindings-runtime";
+
 import {
   attachGamepadRuntime,
   attachMouseRuntime,
@@ -24,7 +28,9 @@ class FakeTarget {
   }
 
   emit(type: string, event: any): void {
-    for (const listener of this.listeners.get(type) ?? []) listener(event);
+    for (const listener of this.listeners.get(type) ?? []) {
+      listener(event);
+    }
   }
 }
 

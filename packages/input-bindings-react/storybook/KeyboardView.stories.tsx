@@ -1,7 +1,6 @@
-import { useState } from "react";
-
-import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { Binding, Conflict } from "@moritzbrantner/input-bindings";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 
 import { KeyboardView, type KeyboardViewProps } from "../src/index.tsx";
 import {
@@ -9,6 +8,7 @@ import {
   keyboardLayoutFixture,
   type KeyboardLayoutFixture,
 } from "./keyboard-layouts.ts";
+
 import "./KeyboardView.stories.css";
 
 const bindings: Binding[] = [

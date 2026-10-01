@@ -1,6 +1,3 @@
-import { StrictMode, useMemo, useState } from "react";
-import { createRoot } from "react-dom/client";
-
 import {
   resolvePortableConfiguration,
   serializePortableConfiguration,
@@ -10,28 +7,32 @@ import {
   type PresetDefinition,
 } from "@moritzbrantner/input-bindings";
 import { formatSequence } from "@moritzbrantner/input-bindings-react/model";
+import { StrictMode, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import fixtureJson from "../../../fixtures/persistence.json";
+
 import "./site.css";
 
-interface FixtureCase {
+type FixtureCase = {
   name: string;
   configuration: PortableConfigurationV1;
-}
+};
 
-interface PersistenceFixture {
+type PersistenceFixture = {
   currentRegistryVersion: number;
   registry: ActionRegistry;
   presets: PresetDefinition[];
   migrations: MigrationStep[];
   cases: FixtureCase[];
-}
+};
 
 const fixture = fixtureJson as unknown as PersistenceFixture;
 
 function PersistenceLab() {
   const [caseIndex, setCaseIndex] = useState(0);
   const [draft, setDraft] = useState(() =>
-    JSON.stringify(fixture.cases[0].configuration, null, 2),
+    JSON.stringify(fixture.cases[0]?.configuration, null, 2),
   );
 
   const preview = useMemo(() => {
@@ -59,7 +60,7 @@ function PersistenceLab() {
 
   const loadCase = (nextIndex: number) => {
     setCaseIndex(nextIndex);
-    setDraft(JSON.stringify(fixture.cases[nextIndex].configuration, null, 2));
+    setDraft(JSON.stringify(fixture.cases[nextIndex]?.configuration, null, 2));
   };
 
   const migrated = preview.report?.configuration;
@@ -82,10 +83,7 @@ function PersistenceLab() {
       <section className="site-persistence-controls" aria-label="Persistence fixture controls">
         <label>
           Shared fixture case
-          <select
-            value={caseIndex}
-            onChange={(event) => loadCase(Number(event.target.value))}
-          >
+          <select value={caseIndex} onChange={(event) => loadCase(Number(event.target.value))}>
             {fixture.cases.map((entry, index) => (
               <option value={index} key={entry.name}>
                 {entry.name}
@@ -147,9 +145,8 @@ function PersistenceLab() {
             )}
           </div>
 
-          {preview.error ? (
-            <p className="site-error">{preview.error}</p>
-          ) : preview.report ? (
+          {preview.error && <p className="site-error">{preview.error}</p>}
+          {!preview.error && preview.report && (
             <>
               <dl className="site-facts">
                 <div>
@@ -225,7 +222,7 @@ function PersistenceLab() {
                 </div>
               </section>
             </>
-          ) : null}
+          )}
         </section>
       </div>
     </main>
@@ -233,7 +230,9 @@ function PersistenceLab() {
 }
 
 function isPortableConfiguration(value: unknown): value is PortableConfigurationV1 {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {
+    return false;
+  }
   const candidate = value as {
     schemaVersion?: unknown;
     registryVersion?: unknown;
@@ -251,7 +250,9 @@ function isPortableConfiguration(value: unknown): value is PortableConfiguration
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {
+  throw new Error("Missing #root element");
+}
 createRoot(root).render(
   <StrictMode>
     <PersistenceLab />

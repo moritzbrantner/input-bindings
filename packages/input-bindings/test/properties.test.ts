@@ -45,7 +45,9 @@ const CONTEXTS = ["editing", "game", "modal"] as const;
 
 function generatedModifiers(rng: DeterministicRng): Modifiers | undefined {
   const mask = rng.range(8);
-  if (mask === 0) return undefined;
+  if (mask === 0) {
+    return undefined;
+  }
   return {
     ctrl: (mask & 1) !== 0,
     shift: (mask & 2) !== 0,
@@ -57,7 +59,10 @@ function generatedStroke(rng: DeterministicRng): InputStroke {
   return {
     key: {
       kind: rng.range(2) === 0 ? "logical" : "physical",
-      value: rng.range(2) === 0 ? KEYS[rng.range(KEYS.length)] : `Key${KEYS[rng.range(KEYS.length)].toUpperCase()}`,
+      value:
+        rng.range(2) === 0
+          ? KEYS[rng.range(KEYS.length)]
+          : `Key${KEYS[rng.range(KEYS.length)].toUpperCase()}`,
     },
     modifiers: generatedModifiers(rng),
   };
@@ -112,7 +117,9 @@ function normalizedConflicts(conflicts: readonly Conflict[]): string[] {
 function generatedContexts(rng: DeterministicRng): Set<string> {
   const result = new Set<string>();
   CONTEXTS.forEach((name, index) => {
-    if ((rng.next() & (1 << index)) !== 0) result.add(name);
+    if ((rng.next() & (1 << index)) !== 0) {
+      result.add(name);
+    }
   });
   return result;
 }
@@ -140,7 +147,8 @@ test("generated resolver and conflict cases are invariant to registry order", ()
     const bindings = Array.from({ length: 8 }, (_, index) => generatedBinding(rng, index));
     const reversed = [...bindings].reverse();
     const selected = bindings[rng.range(bindings.length)];
-    const prefixLength = selected.sequence.length === 1 ? 1 : 1 + rng.range(selected.sequence.length);
+    const prefixLength =
+      selected.sequence.length === 1 ? 1 : 1 + rng.range(selected.sequence.length);
     const sequence = selected.sequence.slice(0, prefixLength);
     const activeContexts = generatedContexts(rng);
 
@@ -195,10 +203,7 @@ test("conflict discovery preserves original left-major result ordering", () => {
   ];
 
   assert.deepEqual(
-    analyzeConflicts(bindings).map((conflict) => [
-      conflict.leftBindingId,
-      conflict.rightBindingId,
-    ]),
+    analyzeConflicts(bindings).map((conflict) => [conflict.leftBindingId, conflict.rightBindingId]),
     [
       ["empty", "a"],
       ["empty", "ab"],
@@ -233,7 +238,11 @@ test("generated profiles are deterministic and canonical persistence is idempote
 
     const roundTrippedProfile = profileFromPortableConfiguration(canonical);
     const roundTripped = portableConfigurationFromProfile(roundTrippedProfile, bindings, 1);
-    assert.deepEqual(roundTripped.diagnostics, [], `unexpected round-trip diagnostic for seed ${seed}`);
+    assert.deepEqual(
+      roundTripped.diagnostics,
+      [],
+      `unexpected round-trip diagnostic for seed ${seed}`,
+    );
     assert.deepEqual(
       roundTripped.configuration,
       canonical,

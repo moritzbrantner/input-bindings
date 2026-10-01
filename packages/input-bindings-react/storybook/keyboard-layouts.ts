@@ -1,9 +1,9 @@
-export interface KeyboardLayoutFixture {
+export type KeyboardLayoutFixture = {
   id: "qwerty" | "qwertz" | "azerty" | "dvorak" | "colemak";
   label: string;
   description: string;
   layoutLabels: ReadonlyMap<string, string>;
-}
+};
 
 export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
   {
@@ -91,7 +91,8 @@ export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
   {
     id: "colemak",
     label: "Colemak",
-    description: "Standard Colemak letter positions while preserving the familiar bottom-left shortcuts.",
+    description:
+      "Standard Colemak letter positions while preserving the familiar bottom-left shortcuts.",
     layoutLabels: new Map([
       ["KeyE", "f"],
       ["KeyR", "p"],
@@ -114,10 +115,10 @@ export const KEYBOARD_LAYOUT_FIXTURES: readonly KeyboardLayoutFixture[] = [
   },
 ] as const;
 
-export function keyboardLayoutFixture(
-  id: KeyboardLayoutFixture["id"],
-): KeyboardLayoutFixture {
+export function keyboardLayoutFixture(id: KeyboardLayoutFixture["id"]): KeyboardLayoutFixture {
   const fixture = KEYBOARD_LAYOUT_FIXTURES.find((candidate) => candidate.id === id);
-  if (!fixture) throw new Error(`Unknown keyboard layout fixture: ${id}`);
+  if (!fixture) {
+    throw new Error(`Unknown keyboard layout fixture: ${id}`);
+  }
   return fixture;
 }

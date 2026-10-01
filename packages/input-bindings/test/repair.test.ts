@@ -1,16 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import {
-  analyzeConflicts,
-  resolve,
-  type Binding,
-  type Conflict,
-} from "../src/index.ts";
-import {
-  applyConflictRepair,
-  planConflictRepairs,
-} from "../src/repair.ts";
+import { analyzeConflicts, resolve, type Binding, type Conflict } from "../src/index.ts";
+import { applyConflictRepair, planConflictRepairs } from "../src/repair.ts";
 
 const key = (value: string) => [{ key: { kind: "logical" as const, value } }];
 const context = (id: string) => ({ op: "context" as const, id });
@@ -34,7 +26,10 @@ test("ambiguous exact bindings offer deterministic prefer or unbind repairs", ()
   const plan = planConflictRepairs(bindings, conflict);
 
   assert.equal(plan.disposition, "ambiguous");
-  assert.deepEqual(plan.repairs.map((repair) => repair.kind), ["prefer", "prefer", "unbind", "unbind"]);
+  assert.deepEqual(
+    plan.repairs.map((repair) => repair.kind),
+    ["prefer", "prefer", "unbind", "unbind"],
+  );
 
   const preferFirst = plan.repairs.find(
     (repair) => repair.kind === "prefer" && repair.bindingId === "editor.first",
@@ -46,10 +41,7 @@ test("ambiguous exact bindings offer deterministic prefer or unbind repairs", ()
     bindingId: "editor.first",
     action: "editor.first",
   });
-  assert.equal(
-    conflictBetween(repaired, "editor.first", "editor.second").kind,
-    "overrideExact",
-  );
+  assert.equal(conflictBetween(repaired, "editor.first", "editor.second").kind, "overrideExact");
 });
 
 test("context narrowing makes a global binding fall through only where the contextual binding applies", () => {
@@ -93,7 +85,10 @@ test("identical scopes do not offer a misleading narrow-context repair", () => {
   const plan = planConflictRepairs(bindings, conflict);
 
   assert.equal(plan.disposition, "chordPrefix");
-  assert.deepEqual(plan.repairs.map((repair) => repair.kind), ["unbind", "unbind"]);
+  assert.deepEqual(
+    plan.repairs.map((repair) => repair.kind),
+    ["unbind", "unbind"],
+  );
 });
 
 test("duplicate same-action bindings can be explicitly kept or deduplicated", () => {
@@ -105,5 +100,8 @@ test("duplicate same-action bindings can be explicitly kept or deduplicated", ()
   const plan = planConflictRepairs(bindings, conflict);
 
   assert.equal(plan.disposition, "redundant");
-  assert.deepEqual(plan.repairs.map((repair) => repair.kind), ["keep", "unbind", "unbind"]);
+  assert.deepEqual(
+    plan.repairs.map((repair) => repair.kind),
+    ["keep", "unbind", "unbind"],
+  );
 });

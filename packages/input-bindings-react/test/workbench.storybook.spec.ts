@@ -1,25 +1,40 @@
-import { expect, test } from "@playwright/test";
-
-import type { Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const storyBase = "input-bindings-workbench";
 
-test("shortcut task exposes list and keyboard as presentations, not peer tasks", async ({ page }) => {
+test("shortcut task exposes list and keyboard as presentations, not peer tasks", async ({
+  page,
+}) => {
   await openStory(page, "list");
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
   await expect(taskTabs.getByRole("tab")).toHaveCount(3);
-  await expect(taskTabs.getByRole("tab", { name: "Shortcuts", exact: true })).toHaveAttribute("aria-selected", "true");
-  await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toHaveAttribute("aria-selected", "false");
-  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveAttribute("aria-selected", "false");
+  await expect(taskTabs.getByRole("tab", { name: "Shortcuts", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "false",
+  );
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "false",
+  );
 
   const panel = page.getByRole("tabpanel");
   await expect(panel).toHaveAttribute("id", "ib-workbench-panel-shortcuts");
   await expect(panel).toHaveAttribute("aria-labelledby", "ib-workbench-tab-shortcuts");
 
   const presentation = page.getByLabel("Shortcut presentation");
-  await expect(presentation.getByRole("button", { name: "List" })).toHaveAttribute("aria-pressed", "true");
-  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveAttribute("aria-pressed", "false");
+  await expect(presentation.getByRole("button", { name: "List" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
   await expect(page.getByRole("table", { name: "Keybindings" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Keyboard overview" })).toHaveCount(0);
 });
@@ -117,7 +132,10 @@ test("narrow screens replace keyboard-only surfaces with mobile controls", async
 
   const presentation = page.getByLabel("Shortcut presentation");
   await expect(presentation.getByRole("button", { name: "List" })).toBeVisible();
-  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toHaveAttribute("aria-pressed", "true");
+  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Keyboard overview" })).toHaveCount(0);
@@ -129,7 +147,9 @@ test("narrow screens replace keyboard-only surfaces with mobile controls", async
   expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
 });
 
-test("mobile settings support exact binding edits and an editable touch overlay", async ({ page }) => {
+test("mobile settings support exact binding edits and an editable touch overlay", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openStory(page, "mobile-settings");
 
@@ -235,7 +255,9 @@ test("keyboard presentation produces inspectable visual evidence", async ({ page
 test("all workbench stories render without browser errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
+    if (message.type() === "error") {
+      errors.push(message.text());
+    }
   });
   page.on("pageerror", (error) => errors.push(error.message));
 
@@ -246,7 +268,10 @@ test("all workbench stories render without browser errors", async ({ page }) => 
   expect(errors).toEqual([]);
 });
 
-async function openStory(page: Page, story: "list" | "keyboard" | "conflicts" | "preview" | "mobile-settings") {
+async function openStory(
+  page: Page,
+  story: "list" | "keyboard" | "conflicts" | "preview" | "mobile-settings",
+) {
   await page.goto(`/iframe.html?id=${storyBase}--${story}&viewMode=story`);
   await expect(page.locator("#storybook-root")).toBeVisible();
   await expect(page.locator(".ib-workbench")).toBeVisible();

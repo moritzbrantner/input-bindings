@@ -25,6 +25,7 @@ test("logical mode follows the produced character", () => {
 });
 
 test("logical key normalization is locale invariant", () => {
+  // oxlint-disable-next-line typescript/unbound-method -- Preserve and restore the prototype implementation without invoking it unbound.
   const originalToLocaleLowerCase = String.prototype.toLocaleLowerCase;
   String.prototype.toLocaleLowerCase = () => "ı";
   try {

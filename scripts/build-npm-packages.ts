@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   copyFileSync,
   existsSync,
@@ -8,7 +9,6 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const tsc = resolve(root, "node_modules/typescript/bin/tsc");
@@ -20,14 +20,14 @@ const packages = [
 ];
 
 if (!existsSync(tsc)) {
-  throw new Error("TypeScript is not installed. Run npm ci first.");
+  throw new Error("TypeScript is not installed. Run bun install --frozen-lockfile first.");
 }
 
 for (const packagePath of packages) {
   const absolute = resolve(root, packagePath);
   const dist = resolve(absolute, "dist");
   rmSync(dist, { recursive: true, force: true });
-  run(process.execPath, [tsc, "-p", resolve(absolute, "tsconfig.json")]);
+  run(process.execPath, [tsc, "-p", resolve(absolute, "tsconfig.build.json")]);
   rewriteDeclarationSpecifiers(dist);
 }
 
@@ -45,32 +45,29 @@ for (const packagePath of packages) {
 
 console.log(`Built ${packages.length} compiled npm workspaces.`);
 
-function rewriteDeclarationSpecifiers(directory) {
+function rewriteDeclarationSpecifiers(directory: string) {
   for (const path of walk(directory)) {
-    if (!path.endsWith(".d.ts")) continue;
+    if (!path.endsWith(".d.ts")) {
+      continue;
+    }
     const content = readFileSync(path, "utf8");
     const rewritten = content
-      .replace(
-        /(\bfrom\s+)(["'])(\.{1,2}\/[^"']+?)\.(?:ts|tsx)\2/gu,
-        "$1$2$3.js$2",
-      )
-      .replace(
-        /(\bimport\s*\(\s*)(["'])(\.{1,2}\/[^"']+?)\.(?:ts|tsx)\2/gu,
-        "$1$2$3.js$2",
-      )
-      .replace(
-        /(\bimport\s+)(["'])(\.{1,2}\/[^"']+?)\.(?:ts|tsx)\2/gu,
-        "$1$2$3.js$2",
-      );
-    if (rewritten !== content) writeFileSync(path, rewritten);
+      .replace(/(\bfrom\s+)(["'])(\.{1,2}\/[^"']+?)\.(?:ts|tsx)\2/gu, "$1$2$3.js$2")
+      .replace(/(\bimport\s*\(\s*)(["'])(\.{1,2}\/[^"']+?)\.(?:ts|tsx)\2/gu, "$1$2$3.js$2")
+      .replace(/(\bimport\s+)(["'])(\.{1,2}\/[^"']+?)\.(?:ts|tsx)\2/gu, "$1$2$3.js$2");
+    if (rewritten !== content) {
+      writeFileSync(path, rewritten);
+    }
   }
 }
 
-function verifyExports(packageRoot) {
+function verifyExports(packageRoot: string) {
   const manifest = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8"));
-  const targets = new Set();
+  const targets = new Set<string>();
   collectExportTargets(manifest.exports, targets);
-  if (typeof manifest.types === "string") targets.add(manifest.types);
+  if (typeof manifest.types === "string") {
+    targets.add(manifest.types);
+  }
 
   for (const target of [...targets].sort()) {
     if (!target.startsWith("./dist/")) {
@@ -82,16 +79,20 @@ function verifyExports(packageRoot) {
   }
 }
 
-function collectExportTargets(value, targets) {
+function collectExportTargets(value: unknown, targets: Set<string>) {
   if (typeof value === "string") {
     targets.add(value);
     return;
   }
-  if (!value || typeof value !== "object") return;
-  for (const nested of Object.values(value)) collectExportTargets(nested, targets);
+  if (!value || typeof value !== "object") {
+    return;
+  }
+  for (const nested of Object.values(value)) {
+    collectExportTargets(nested, targets);
+  }
 }
 
-function verifyNoStorybookFiles(directory) {
+function verifyNoStorybookFiles(directory: string) {
   for (const path of walk(directory)) {
     if (/\.stories\.(?:js|d\.ts)$/u.test(path)) {
       throw new Error(`Published package contains a Storybook story: ${path}`);
@@ -99,9 +100,11 @@ function verifyNoStorybookFiles(directory) {
   }
 }
 
-function verifyNoSourceExtensions(directory) {
+function verifyNoSourceExtensions(directory: string) {
   for (const path of walk(directory)) {
-    if (![".js", ".d.ts"].some((suffix) => path.endsWith(suffix))) continue;
+    if (![".js", ".d.ts"].some((suffix) => path.endsWith(suffix))) {
+      continue;
+    }
     const content = readFileSync(path, "utf8");
     if (/\.(?:ts|tsx)(?:["'])/u.test(content)) {
       throw new Error(`Emitted package still references a TypeScript source extension: ${path}`);
@@ -109,21 +112,27 @@ function verifyNoSourceExtensions(directory) {
   }
 }
 
-function* walk(directory) {
+function* walk(directory: string): Generator<string> {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) yield* walk(path);
-    else if (entry.isFile()) yield path;
+    if (entry.isDirectory()) {
+      yield* walk(path);
+    } else if (entry.isFile()) {
+      yield path;
+    }
   }
 }
 
-function run(command, args) {
+function run(command: string, args: string[]) {
   const result = spawnSync(command, args, {
     cwd: root,
+    timeout: 120_000,
     stdio: "inherit",
     shell: process.platform === "win32",
   });
-  if (result.error) throw result.error;
+  if (result.error) {
+    throw result.error;
+  }
   if (result.status !== 0) {
     throw new Error(`${command} ${args.join(" ")} failed with exit ${result.status}.`);
   }
