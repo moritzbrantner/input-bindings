@@ -1,4 +1,5 @@
 export * from "./analog.js";
+export * from "./pointer-stroke.js";
 import { compileActionRegistry, inputStrokeIdentity, resolve, resolveWithContextStack, validateCompiledRegistry, } from "@moritzbrantner/input-bindings";
 const defaultScheduler = {
     setTimeout(callback, delayMs) {
