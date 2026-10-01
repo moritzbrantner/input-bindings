@@ -1,4 +1,4 @@
-import { gestureMatchesFromPrimitives, recognizeGesturePrimitives, } from "@moritzbrantner/input-bindings-runtime";
+import { analyzeGestureTrace, } from "@moritzbrantner/input-bindings-runtime";
 import { attachPointerStrokeCapture } from "./pointer-stroke.js";
 /**
  * Feeds completed pointer strokes through recognition into the runtime controller, so gesture
@@ -6,7 +6,7 @@ import { attachPointerStrokeCapture } from "./pointer-stroke.js";
  * never reach recognition. Returns a detach function.
  */
 export function attachGestureRuntime(controller, options) {
-    const recognize = options.recognize ?? primitiveGestureRecognizer(options.primitives);
+    const recognize = options.recognize ?? strokeGestureRecognizer(options.recognition);
     return attachPointerStrokeCapture({
         ...options,
         onStroke(event) {
@@ -20,13 +20,13 @@ export function attachGestureRuntime(controller, options) {
         },
     });
 }
-/** The default recognizer: primitive candidates, with the recognition as evidence. */
-export function primitiveGestureRecognizer(options) {
+/** The default recognizer: accepted symbols, then primitives, with the analysis as evidence. */
+export function strokeGestureRecognizer(options) {
     return (stroke) => {
-        const primitives = recognizeGesturePrimitives(stroke, options);
+        const analysis = analyzeGestureTrace(stroke, options);
         return {
-            matches: gestureMatchesFromPrimitives(primitives.candidates),
-            evidence: { strokeId: stroke.id, pointerType: stroke.pointerType, primitives },
+            matches: analysis.matches,
+            evidence: { strokeId: stroke.id, pointerType: stroke.pointerType, ...analysis },
         };
     };
 }
