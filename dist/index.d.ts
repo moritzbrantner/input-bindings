@@ -2,10 +2,10 @@ export * from "./analog.js";
 export * from "./gesture-features.js";
 export * from "./gesture-primitives.js";
 export * from "./pointer-stroke.js";
-import { type ActionRegistry, type Binding, type ContextLayer, type InputStroke, type KeyStroke, type Profile, type RegistryValidationReport, type Resolution } from "@moritzbrantner/input-bindings";
+import { type ActionRegistry, type Binding, type ContextLayer, type GestureMatch, type InputStroke, type KeyStroke, type Profile, type RegistryValidationReport, type Resolution } from "@moritzbrantner/input-bindings";
 export type RuntimeActionPhase = "press" | "repeat" | "release";
 export type RuntimeConsumePolicy = "never" | "matched" | "dispatched";
-export type RuntimeDispatchReason = "direct" | "chord" | "timeout" | "keyUp" | "reset";
+export type RuntimeDispatchReason = "direct" | "chord" | "timeout" | "keyUp" | "reset" | "gesture";
 export type RuntimeDecisionKind = "none" | "pending" | "dispatched" | "released" | "ambiguous" | "repeatSuppressed" | "cancelled" | "reset" | "invalidConfiguration";
 export type RuntimeDecisionReason = "unmatched" | "pendingChord" | "resolved" | "ambiguous" | "repeatSuppressed" | "keyReleased" | "chordMismatch" | "chordCancelled" | "timeoutResolved" | "timeoutAmbiguous" | "timeoutExpired" | "reset" | "invalidConfiguration";
 export type RuntimeScheduler = {
@@ -20,6 +20,19 @@ export type RuntimeDispatch = {
     reason: RuntimeDispatchReason;
     sequence: InputStroke[];
     activeContexts: string[];
+    /** Present on gesture dispatches: the bound pattern that matched and the recognizer evidence. */
+    gesture?: RuntimeGestureEvidence;
+};
+export type RuntimeGestureEvidence = {
+    match: GestureMatch;
+    evidence?: unknown;
+};
+/** A completed, recognized gesture. Gestures are event-like: a match dispatches press then release. */
+export type RuntimeGestureInput = {
+    /** Recognized gestures, most specific primitive or best-ranked symbol first. */
+    matches: readonly GestureMatch[];
+    /** Structured-cloneable recognition evidence passed through to dispatches unchanged. */
+    evidence?: unknown;
 };
 export type RuntimeExplanation = {
     reason: RuntimeDecisionReason;
@@ -27,6 +40,8 @@ export type RuntimeExplanation = {
     continuationBindingIds?: string[];
     cancelledSequence?: InputStroke[];
     resetReason?: string;
+    /** Gesture binding patterns tried, most specific first. */
+    gestureCandidates?: GestureMatch[];
 };
 export type RuntimeDecision = {
     kind: RuntimeDecisionKind;
@@ -82,6 +97,12 @@ export declare class InputRuntimeController {
     handleInputDown(stroke: InputStroke, options?: InputDownOptions): RuntimeDecision;
     handleKeyUp(stroke: KeyStroke): RuntimeDecision;
     handleInputUp(stroke: InputStroke): RuntimeDecision;
+    /**
+     * Resolves a completed gesture through the normal context/profile path. The most specific
+     * candidate pattern with a non-`none` resolution decides; a match dispatches press and then
+     * release immediately, so gestures never hold an action. A pending keyboard chord is cancelled.
+     */
+    handleGesture(input: RuntimeGestureInput): RuntimeDecision;
     cancelChord(reason?: string): RuntimeDecision;
     reset(reason?: string): RuntimeDecision;
     private processFreshStroke;

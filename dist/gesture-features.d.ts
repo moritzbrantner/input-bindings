@@ -1,3 +1,6 @@
+import type { CompassDirection, GestureOrientation } from "@moritzbrantner/input-bindings";
+export type { CompassDirection } from "@moritzbrantner/input-bindings";
+export type StrokeOrientation = GestureOrientation;
 /** The minimum stroke evidence features need: element-local CSS pixels and stroke-relative ms. */
 export type StrokePoint = {
     x: number;
@@ -7,9 +10,6 @@ export type StrokePoint = {
 export type StrokeTrace = {
     samples: readonly StrokePoint[];
 };
-/** Eight-way screen direction; north is up on screen. */
-export type CompassDirection = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
-export type StrokeOrientation = "clockwise" | "counterClockwise";
 export type StrokeBounds = {
     minX: number;
     minY: number;

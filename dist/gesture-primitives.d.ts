@@ -1,3 +1,4 @@
+import type { GestureMatch } from "@moritzbrantner/input-bindings";
 import { type CompassDirection, type StrokeBounds, type StrokeFeatureOptions, type StrokeFeatures, type StrokeOrientation, type StrokeTrace } from "./gesture-features.js";
 export type GesturePrimitiveKind = "circle" | "slash" | "swipe" | "drag" | "hold" | "tap";
 export type GestureSpeedClass = "slow" | "medium" | "fast";
@@ -92,4 +93,9 @@ export type GesturePrimitiveOptions = {
  */
 export declare function recognizeGesturePrimitives(trace: StrokeTrace, options?: GesturePrimitiveOptions): GesturePrimitiveRecognition;
 export declare function classifyGestureSpeed(averageSpeed: number, thresholds?: Pick<GesturePrimitiveThresholds, "mediumSpeed" | "fastSpeed">): GestureSpeedClass;
+/**
+ * Converts primitive candidates into concrete gesture matches for binding resolution, preserving
+ * the recognizer's most-specific-first order.
+ */
+export declare function gestureMatchesFromPrimitives(candidates: readonly GesturePrimitiveCandidate[]): GestureMatch[];
 export {};

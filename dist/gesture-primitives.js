@@ -165,3 +165,22 @@ function margins(values) {
     const clamped = values.map((value) => Math.min(1, Math.max(0, value)));
     return clamped.reduce((sum, value) => sum + value, 0) / Math.max(1, clamped.length);
 }
+/**
+ * Converts primitive candidates into concrete gesture matches for binding resolution, preserving
+ * the recognizer's most-specific-first order.
+ */
+export function gestureMatchesFromPrimitives(candidates) {
+    return candidates.map((candidate) => {
+        switch (candidate.kind) {
+            case "circle":
+                return { kind: "circle", orientation: candidate.orientation };
+            case "slash":
+            case "swipe":
+            case "drag":
+                return { kind: candidate.kind, direction: candidate.direction };
+            case "hold":
+            case "tap":
+                return { kind: candidate.kind };
+        }
+    });
+}
