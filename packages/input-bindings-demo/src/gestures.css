@@ -1,0 +1,94 @@
+.gesture-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+.gesture-surface {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: min(70vh, 36rem);
+  border: 2px dashed #8c959f;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.gesture-surface-hint {
+  color: #59636e;
+  pointer-events: none;
+}
+
+.gesture-path {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.gesture-path-raw {
+  fill: none;
+  stroke: #0969da;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gesture-path-raw.is-cancelled {
+  stroke: #bf8700;
+  stroke-dasharray: 6 6;
+}
+
+.gesture-evidence {
+  padding: 1rem;
+}
+
+.gesture-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.gesture-metrics dt {
+  color: #59636e;
+  font-size: 0.8rem;
+}
+
+.gesture-metrics dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .gesture-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gesture-surface {
+    min-height: 55vh;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .gesture-surface {
+    border-color: #6e7681;
+    background: #0d1117;
+  }
+
+  .gesture-surface-hint,
+  .gesture-metrics dt {
+    color: #9198a1;
+  }
+
+  .gesture-path-raw {
+    stroke: #4493f8;
+  }
+}

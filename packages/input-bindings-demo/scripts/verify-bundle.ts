@@ -35,9 +35,11 @@ if (!browserBundleStat?.isFile()) {
     "attachGyroscopeAnalog",
     "attachKeyboardRuntime",
     "attachMouseRuntime",
+    "attachPointerStrokeCapture",
     "attachTouchLookAnalog",
     "attachVirtualStickAnalog",
     "keyboardEventToStroke",
+    "PointerStrokeTracker",
     "requestDeviceMotionPermission",
     "validateRegistry",
   ]) {

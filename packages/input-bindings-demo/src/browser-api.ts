@@ -2,12 +2,14 @@ export { analyzeConflicts, applyProfile, validateRegistry } from "@moritzbrantne
 export {
   AnalogInputController,
   InputRuntimeController,
+  PointerStrokeTracker,
 } from "@moritzbrantner/input-bindings-runtime";
 export {
   attachGamepadRuntime,
   attachGyroscopeAnalog,
   attachKeyboardRuntime,
   attachMouseRuntime,
+  attachPointerStrokeCapture,
   attachTouchLookAnalog,
   attachVirtualStickAnalog,
   keyboardEventToStroke,

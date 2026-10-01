@@ -21,6 +21,7 @@ export default defineConfig({
         devices: resolve(root, "devices.html"),
         persistence: resolve(root, "persistence.html"),
         platform: resolve(root, "platform.html"),
+        gestures: resolve(root, "gestures.html"),
       },
     },
   },
