@@ -133,10 +133,11 @@ Pointer gestures are tracked in #55. Implemented so far:
 - Gesture lab with trace visualization, explicit recording, deterministic export/replay at any presentation size, and promoted regression traces (#60).
 - Deterministic single-stroke template recognition for runes and drawn symbols (#59).
 - Mobile gesture zones as geometry around the shared gesture runtime, with zone-scoped contexts and explicit drag-out/cancellation policies (#61).
+- Pages dogfood of slash, encircle, and rune bindings with contexts, a modal menu, profiles, speed-dependent parameters, consumer-owned hit-testing, and replay (#63).
 
 Remaining:
 
-- Multi-pointer gestures (#62) and the slash/encircle/rune dogfood (#63).
+- Multi-pointer gestures (#62).
 - Tap versus hold and press/release-specific bindings.
 - Double-tap and ordered key/button sequences beyond the current chord model.
 - Analog threshold and directional-axis gestures with deterministic hysteresis rules where needed.
