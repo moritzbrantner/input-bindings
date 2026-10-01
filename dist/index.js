@@ -3,6 +3,7 @@ export * from "./gesture-features.js";
 export * from "./gesture-primitives.js";
 export * from "./gesture-templates.js";
 export * from "./gesture-trace.js";
+export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
 import { compileActionRegistry, inputStrokeIdentity, resolve, resolveGestureWith, resolveWithContextStack, validateCompiledRegistry, } from "@moritzbrantner/input-bindings";
 const defaultScheduler = {

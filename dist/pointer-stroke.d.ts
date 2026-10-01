@@ -1,7 +1,7 @@
 export type PointerKind = "mouse" | "touch" | "pen" | "unknown";
 export type PointerStrokePhase = "start" | "update" | "complete" | "cancel";
 export type PointerStrokeStatus = "active" | "completed" | "cancelled";
-export type PointerStrokeCancelReason = "pointerCancel" | "lostPointerCapture" | "blur" | "hidden" | "detach" | "superseded" | "reset";
+export type PointerStrokeCancelReason = "pointerCancel" | "lostPointerCapture" | "blur" | "hidden" | "detach" | "superseded" | "multiPointer" | "reset";
 /** Element rectangle in viewport CSS pixels, frozen when a stroke starts. */
 export type PointerSurface = {
     left: number;
