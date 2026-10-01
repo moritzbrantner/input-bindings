@@ -25,7 +25,9 @@ export function releaseOutput(root: string, requested: string): string {
     output === temporary ||
     (!contains(releases, output) && !contains(temporary, output))
   ) {
-    throw new Error("Release output must be inside release/ or OS temporary storage, outside source roots.");
+    throw new Error(
+      "Release output must be inside release/ or OS temporary storage, outside source roots.",
+    );
   }
   return output;
 }

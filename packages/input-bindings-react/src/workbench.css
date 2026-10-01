@@ -277,7 +277,9 @@
 
 .ib-preview-surface {
   outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .ib-preview-surface.is-capturing {
@@ -575,7 +577,6 @@
   font-size: 0.75rem;
   color: var(--ib-muted, #606774);
 }
-
 
 .ib-mobile-controls {
   display: grid;

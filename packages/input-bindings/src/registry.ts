@@ -16,7 +16,7 @@ export type RepeatPolicy = "never" | "allow";
 export type Provenance = {
   source: string;
   version?: string;
-}
+};
 
 export type ActionDefinition = {
   id: string;
@@ -27,11 +27,11 @@ export type ActionDefinition = {
   allowedDevices?: DeviceClass[];
   defaults?: Binding[];
   provenance?: Provenance;
-}
+};
 
 export type ActionRegistry = {
   actions: ActionDefinition[];
-}
+};
 
 export type ValidationDiagnosticKind =
   | "duplicateActionId"
@@ -61,14 +61,14 @@ export type ValidationDiagnostic = {
   bindingId?: string;
   patchIndex?: number;
   strokeIndex?: number;
-}
+};
 
 export type RegistryValidationReport = {
   valid: boolean;
   effectiveBindings: Binding[];
   diagnostics: ValidationDiagnostic[];
   conflicts: Conflict[];
-}
+};
 
 export type CompiledActionRegistry = {
   readonly baseBindings: readonly Binding[];
@@ -76,7 +76,7 @@ export type CompiledActionRegistry = {
   readonly conflicts: readonly Conflict[];
   readonly knownActions: ReadonlySet<string>;
   readonly allowedDevicesByAction: ReadonlyMap<string, readonly DeviceClass[]>;
-}
+};
 
 export function compileActionRegistry(registry: ActionRegistry): CompiledActionRegistry {
   const actions = registry.actions
@@ -84,12 +84,17 @@ export function compileActionRegistry(registry: ActionRegistry): CompiledActionR
     .sort((left, right) => compareText(left.id, right.id) || compareText(left.title, right.title));
   const knownActions = new Set(actions.map((action) => action.id));
   const allowedDevicesByAction = new Map(
-    actions.map((action) => [action.id, [...(action.allowedDevices ?? [])] as readonly DeviceClass[]]),
+    actions.map((action) => [
+      action.id,
+      [...(action.allowedDevices ?? [])] as readonly DeviceClass[],
+    ]),
   );
   const diagnostics: ValidationDiagnostic[] = [];
 
   for (const [actionId, count] of counts(actions.map((action) => action.id))) {
-    if (count > 1) {diagnostics.push({ kind: "duplicateActionId", actionId });}
+    if (count > 1) {
+      diagnostics.push({ kind: "duplicateActionId", actionId });
+    }
   }
 
   const flattenedDefaults = actions.flatMap((action) =>
@@ -97,12 +102,18 @@ export function compileActionRegistry(registry: ActionRegistry): CompiledActionR
   );
 
   for (const [bindingId, count] of counts(flattenedDefaults.map((binding) => binding.id))) {
-    if (count > 1) {diagnostics.push({ kind: "duplicateBindingId", bindingId });}
+    if (count > 1) {
+      diagnostics.push({ kind: "duplicateBindingId", bindingId });
+    }
   }
 
   for (const action of actions) {
-    const defaults = [...(action.defaults ?? [])].sort((left, right) => compareText(left.id, right.id));
-    if (action.id.length === 0) {diagnostics.push({ kind: "emptyActionId", actionId: action.id });}
+    const defaults = [...(action.defaults ?? [])].sort((left, right) =>
+      compareText(left.id, right.id),
+    );
+    if (action.id.length === 0) {
+      diagnostics.push({ kind: "emptyActionId", actionId: action.id });
+    }
 
     for (const binding of defaults) {
       if (binding.action !== action.id) {
@@ -112,19 +123,15 @@ export function compileActionRegistry(registry: ActionRegistry): CompiledActionR
           bindingId: binding.id,
         });
       }
-      validateBinding(
-        binding,
-        knownActions,
-        allowedDevicesByAction,
-        undefined,
-        diagnostics,
-      );
+      validateBinding(binding, knownActions, allowedDevicesByAction, undefined, diagnostics);
     }
   }
 
   const baseMap = new Map<string, Binding>();
   for (const binding of flattenedDefaults) {
-    if (!baseMap.has(binding.id)) {baseMap.set(binding.id, structuredClone(binding));}
+    if (!baseMap.has(binding.id)) {
+      baseMap.set(binding.id, structuredClone(binding));
+    }
   }
   const baseBindings = [...baseMap.values()].sort((left, right) => compareText(left.id, right.id));
   const conflicts = analyzeConflicts(
@@ -178,15 +185,12 @@ export function validateCompiledRegistry(
 
   profileDiagnostics.sort(
     (left, right) =>
-      (left.patchIndex ?? Number.MAX_SAFE_INTEGER) -
-      (right.patchIndex ?? Number.MAX_SAFE_INTEGER),
+      (left.patchIndex ?? Number.MAX_SAFE_INTEGER) - (right.patchIndex ?? Number.MAX_SAFE_INTEGER),
   );
   diagnostics.push(...profileDiagnostics);
 
   const conflicts = analyzeConflicts(
-    effectiveBindings.filter((binding) =>
-      bindingIsResolvable(binding, compiled.knownActions),
-    ),
+    effectiveBindings.filter((binding) => bindingIsResolvable(binding, compiled.knownActions)),
   );
 
   return { valid: diagnostics.length === 0, effectiveBindings, diagnostics, conflicts };
@@ -201,7 +205,9 @@ export function validateRegistry(
 
 function counts(values: readonly string[]): Array<[string, number]> {
   const result = new Map<string, number>();
-  for (const value of values) {result.set(value, (result.get(value) ?? 0) + 1);}
+  for (const value of values) {
+    result.set(value, (result.get(value) ?? 0) + 1);
+  }
   return [...result.entries()].sort(([left], [right]) => compareText(left, right));
 }
 
@@ -218,9 +224,15 @@ function validateBinding(
     ...(patchIndex === undefined ? {} : { patchIndex }),
   };
 
-  if (binding.id.length === 0) {diagnostics.push({ kind: "emptyBindingId", ...base });}
-  if (!knownActions.has(binding.action)) {diagnostics.push({ kind: "unknownAction", ...base });}
-  if (binding.sequence.length === 0) {diagnostics.push({ kind: "emptySequence", ...base });}
+  if (binding.id.length === 0) {
+    diagnostics.push({ kind: "emptyBindingId", ...base });
+  }
+  if (!knownActions.has(binding.action)) {
+    diagnostics.push({ kind: "unknownAction", ...base });
+  }
+  if (binding.sequence.length === 0) {
+    diagnostics.push({ kind: "emptySequence", ...base });
+  }
 
   const allowed = allowedDevicesByAction.get(binding.action) ?? [];
   binding.sequence.forEach((stroke, strokeIndex) => {
@@ -228,7 +240,9 @@ function validateBinding(
       diagnostics.push({ kind: "defaultDeviceNotAllowed", ...base, strokeIndex });
     }
     const invalidKind = invalidStrokeKind(stroke);
-    if (invalidKind) {diagnostics.push({ kind: invalidKind, ...base, strokeIndex });}
+    if (invalidKind) {
+      diagnostics.push({ kind: invalidKind, ...base, strokeIndex });
+    }
   });
 }
 
@@ -244,8 +258,12 @@ function cloneConflict(conflict: Conflict): Conflict {
 
 function invalidStrokeKind(stroke: InputStroke): ValidationDiagnosticKind | undefined {
   if (isKeyStroke(stroke)) {
-    if (stroke.key.kind === "logical" && !validLogicalKey(stroke.key.value)) {return "invalidLogicalKey";}
-    if (stroke.key.kind === "physical" && !validPhysicalKey(stroke.key.value)) {return "invalidPhysicalKey";}
+    if (stroke.key.kind === "logical" && !validLogicalKey(stroke.key.value)) {
+      return "invalidLogicalKey";
+    }
+    if (stroke.key.kind === "physical" && !validPhysicalKey(stroke.key.value)) {
+      return "invalidPhysicalKey";
+    }
     return undefined;
   }
   switch (stroke.device) {
@@ -256,14 +274,26 @@ function invalidStrokeKind(stroke: InputStroke): ValidationDiagnosticKind | unde
         ? undefined
         : "invalidWheelDirection";
     case "gamepadButton":
-      if (!validOptionalGamepad(stroke.gamepad)) {return "invalidGamepadIndex";}
-      if (!validInteger(stroke.button, 0, 255)) {return "invalidGamepadButton";}
-      if (!validPercent(stroke.threshold, 1, 100)) {return "invalidThreshold";}
+      if (!validOptionalGamepad(stroke.gamepad)) {
+        return "invalidGamepadIndex";
+      }
+      if (!validInteger(stroke.button, 0, 255)) {
+        return "invalidGamepadButton";
+      }
+      if (!validPercent(stroke.threshold, 1, 100)) {
+        return "invalidThreshold";
+      }
       return undefined;
     case "gamepadAxis":
-      if (!validOptionalGamepad(stroke.gamepad)) {return "invalidGamepadIndex";}
-      if (!validInteger(stroke.axis, 0, 31)) {return "invalidGamepadAxis";}
-      if (!validPercent(stroke.threshold, 1, 100)) {return "invalidThreshold";}
+      if (!validOptionalGamepad(stroke.gamepad)) {
+        return "invalidGamepadIndex";
+      }
+      if (!validInteger(stroke.axis, 0, 31)) {
+        return "invalidGamepadAxis";
+      }
+      if (!validPercent(stroke.threshold, 1, 100)) {
+        return "invalidThreshold";
+      }
       if (!validPercent(stroke.deadzone, 0, 99) || stroke.deadzone >= stroke.threshold) {
         return "invalidDeadzone";
       }
@@ -302,8 +332,12 @@ function validOptionalGamepad(value: number | undefined): boolean {
 }
 
 function compareText(left: string, right: string): number {
-  if (left < right) { return -1; }
-  if (left > right) { return 1; }
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
   return 0;
 }
 

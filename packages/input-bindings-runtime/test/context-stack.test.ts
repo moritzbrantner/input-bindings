@@ -7,6 +7,7 @@ import {
   type Binding,
   type KeyStroke,
 } from "@moritzbrantner/input-bindings";
+
 import {
   InputRuntimeController,
   type RuntimeDispatch,
@@ -34,7 +35,9 @@ class FakeScheduler implements RuntimeScheduler {
       const next = [...this.tasks.entries()]
         .filter(([, task]) => task.at <= target)
         .sort((left, right) => left[1].at - right[1].at || left[0] - right[0])[0];
-      if (!next) {break;}
+      if (!next) {
+        break;
+      }
       this.now = next[1].at;
       this.tasks.delete(next[0]);
       next[1].callback();

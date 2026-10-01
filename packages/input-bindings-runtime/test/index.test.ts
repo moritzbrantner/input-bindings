@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { ActionRegistry, Binding, KeyStroke, Profile } from "@moritzbrantner/input-bindings";
+
 import {
   InputRuntimeController,
   type RuntimeDispatch,
@@ -29,7 +30,9 @@ class FakeScheduler implements RuntimeScheduler {
       const next = [...this.tasks.entries()]
         .filter(([, task]) => task.at <= target)
         .sort((left, right) => left[1].at - right[1].at || left[0] - right[0])[0];
-      if (!next) {break;}
+      if (!next) {
+        break;
+      }
       this.now = next[1].at;
       this.tasks.delete(next[0]);
       next[1].callback();
@@ -52,7 +55,10 @@ const physical = (id: string, action: string, code: string): Binding => ({
 const chord = (id: string, action: string, keys: string[]): Binding => ({
   id,
   action,
-  sequence: keys.map((key) => ({ key: { kind: "logical", value: key }, modifiers: { ctrl: true } })),
+  sequence: keys.map((key) => ({
+    key: { kind: "logical", value: key },
+    modifiers: { ctrl: true },
+  })),
 });
 const registry = (bindings: Binding[]): ActionRegistry => ({
   actions: [...new Set(bindings.map((binding) => binding.action))].map((action) => ({
@@ -63,10 +69,10 @@ const registry = (bindings: Binding[]): ActionRegistry => ({
     defaults: bindings.filter((binding) => binding.action === action),
   })),
 });
-const stroke = (
-  key: string,
-  modifiers: KeyStroke["modifiers"] = {},
-): KeyStroke => ({ key: { kind: "logical", value: key }, modifiers });
+const stroke = (key: string, modifiers: KeyStroke["modifiers"] = {}): KeyStroke => ({
+  key: { kind: "logical", value: key },
+  modifiers,
+});
 const code = (value: string): KeyStroke => ({ key: { kind: "physical", value } });
 
 test("dispatches a direct action and a matching key-up release", () => {
@@ -115,7 +121,10 @@ test("waits on a prefix and resolves the longer chord before timeout", () => {
   assert.equal(completed.dispatches[0].action, "comment");
   assert.equal(completed.dispatches[0].reason, "chord");
   scheduler.advance(1000);
-  assert.deepEqual(dispatches.map((dispatch) => dispatch.action), ["comment"]);
+  assert.deepEqual(
+    dispatches.map((dispatch) => dispatch.action),
+    ["comment"],
+  );
 });
 
 test("fires the exact prefix binding when the chord timeout expires", () => {
@@ -166,8 +175,14 @@ test("honors action repeat policy without creating duplicate active presses", ()
   });
 
   assert.equal(controller.handleKeyDown(code("KeyW")).dispatches[0].phase, "press");
-  assert.equal(controller.handleKeyDown(code("KeyW"), { repeat: true }).dispatches[0].phase, "repeat");
-  assert.equal(controller.handleKeyDown(stroke("s", { ctrl: true }), { repeat: true }).kind, "repeatSuppressed");
+  assert.equal(
+    controller.handleKeyDown(code("KeyW"), { repeat: true }).dispatches[0].phase,
+    "repeat",
+  );
+  assert.equal(
+    controller.handleKeyDown(stroke("s", { ctrl: true }), { repeat: true }).kind,
+    "repeatSuppressed",
+  );
   assert.equal(controller.handleKeyUp(code("KeyW")).dispatches[0].phase, "release");
 });
 
@@ -191,7 +206,10 @@ test("reset cancels a pending chord and releases active actions", () => {
   assert.equal(reset.dispatches[0].phase, "release");
   assert.equal(controller.hasPendingChord, false);
   scheduler.advance(2000);
-  assert.deepEqual(dispatches.map((dispatch) => dispatch.phase), ["press", "release"]);
+  assert.deepEqual(
+    dispatches.map((dispatch) => dispatch.phase),
+    ["press", "release"],
+  );
 });
 
 test("invalid configuration is fail-closed", () => {
@@ -225,7 +243,6 @@ test("dispatched-only consumption leaves pending chord leaders unconsumed", () =
   assert.equal(pending.kind, "pending");
   assert.equal(pending.consumed, false);
 });
-
 
 test("profile-only updates reuse the runtime registry baseline while changing effective bindings", () => {
   const save = logical("save.default", "save", "s", { ctrl: true });

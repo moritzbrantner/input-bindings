@@ -1,10 +1,10 @@
 {
   "name": "input-bindings-workspace",
   "private": true,
-  "type": "module",
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "scripts": {
     "build:packages": "bun scripts/build-npm-packages.ts",
     "pack:packages": "bun scripts/pack-npm-packages.ts",

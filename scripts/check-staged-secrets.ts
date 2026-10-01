@@ -5,11 +5,11 @@ import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const paths = execFileSync(
-  "git",
-  ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
-  { cwd: root, encoding: "utf8", timeout: 10_000 },
-)
+const paths = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"], {
+  cwd: root,
+  encoding: "utf8",
+  timeout: 10_000,
+})
   .split("\0")
   .filter(Boolean);
 

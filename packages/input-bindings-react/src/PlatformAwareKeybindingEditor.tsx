@@ -1,14 +1,7 @@
+import { compileActionRegistry, validateCompiledRegistry } from "@moritzbrantner/input-bindings";
 import { useMemo } from "react";
 
-import {
-  compileActionRegistry,
-  validateCompiledRegistry,
-} from "@moritzbrantner/input-bindings";
-
-import {
-  KeybindingEditor,
-  type KeybindingEditorProps,
-} from "./index.tsx";
+import { KeybindingEditor, type KeybindingEditorProps } from "./index.tsx";
 import { PlatformAdvisoryPanel } from "./PlatformAdvisoryPanel.tsx";
 
 export function PlatformAwareKeybindingEditor(props: KeybindingEditorProps) {
@@ -23,10 +16,7 @@ export function PlatformAwareKeybindingEditor(props: KeybindingEditorProps) {
 
   return (
     <div className="ib-platform-aware-editor">
-      <PlatformAdvisoryPanel
-        registry={props.registry}
-        bindings={report.effectiveBindings}
-      />
+      <PlatformAdvisoryPanel registry={props.registry} bindings={report.effectiveBindings} />
       <KeybindingEditor {...props} compiledRegistry={compiledRegistry} />
     </div>
   );

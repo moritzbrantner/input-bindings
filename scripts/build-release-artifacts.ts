@@ -1,13 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  copyFileSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,7 +25,10 @@ const packageVersions = packageManifests.map((path) => {
 const cargoVersion = workspaceCargoVersion();
 const releaseVersion = requestedVersion ?? packageVersions[0]?.version;
 
-if (!releaseVersion || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u.test(releaseVersion)) {
+if (
+  !releaseVersion ||
+  !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u.test(releaseVersion)
+) {
   throw new Error(`Invalid release version: ${releaseVersion ?? "<missing>"}`);
 }
 
@@ -52,14 +48,8 @@ if (cargoVersion !== releaseVersion) {
 run("bun", ["run", "build:pages"]);
 run("cargo", ["package", "--locked", "-p", "input-bindings-core"]);
 
-const browserSource = resolve(
-  root,
-  "packages/input-bindings-demo/dist/input-bindings-browser.js",
-);
-const crateSource = resolve(
-  root,
-  `target/package/input-bindings-core-${releaseVersion}.crate`,
-);
+const browserSource = resolve(root, "packages/input-bindings-demo/dist/input-bindings-browser.js");
+const crateSource = resolve(root, `target/package/input-bindings-core-${releaseVersion}.crate`);
 const sources = [
   {
     source: browserSource,
@@ -134,7 +124,9 @@ console.log(`Built input-bindings ${releaseVersion} artifacts in ${outputDirecto
 
 function argumentValue(name: string) {
   const index = args.indexOf(name);
-  if (index < 0) {return undefined;}
+  if (index < 0) {
+    return undefined;
+  }
   const value = args[index + 1];
   if (!value || value.startsWith("--")) {
     throw new Error(`${name} requires a value.`);
@@ -146,7 +138,9 @@ function workspaceCargoVersion() {
   const cargoToml = readFileSync(resolve(root, "Cargo.toml"), "utf8");
   const section = cargoToml.match(/\[workspace\.package\]([\s\S]*?)(?:\n\[|$)/u)?.[1];
   const version = section?.match(/^version\s*=\s*"([^"]+)"/mu)?.[1];
-  if (!version) {throw new Error("Cargo workspace version is missing.");}
+  if (!version) {
+    throw new Error("Cargo workspace version is missing.");
+  }
   return version;
 }
 
@@ -158,7 +152,9 @@ function run(command: string, commandArgs: string[]) {
     stdio: "inherit",
     shell: process.platform === "win32",
   });
-  if (result.error) {throw result.error;}
+  if (result.error) {
+    throw result.error;
+  }
   if (result.status !== 0) {
     throw new Error(`${command} ${commandArgs.join(" ")} failed with exit ${result.status}.`);
   }

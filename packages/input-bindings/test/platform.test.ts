@@ -13,14 +13,14 @@ type ExpectedDiagnostic = {
   bindingId: string;
   kind: string;
   ruleId?: string;
-}
+};
 
 type FixtureCase = {
   name: string;
   environment: PlatformConflictEnvironment;
   bindings: Binding[];
   expected: ExpectedDiagnostic[];
-}
+};
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../../fixtures/platform_conflicts.json", import.meta.url), "utf8"),

@@ -55,6 +55,8 @@ function verifyBrowserSource(source: string, label: string, failures: string[]) 
     failures.push(`${label}: contains classic JSX output that requires an unbound React global`);
   }
   if (/\bfrom\s*["']react(?:\/(?:jsx-runtime|jsx-dev-runtime))?["']/u.test(source)) {
-    failures.push(`${label}: contains a bare React import that browsers cannot resolve on GitHub Pages`);
+    failures.push(
+      `${label}: contains a bare React import that browsers cannot resolve on GitHub Pages`,
+    );
   }
 }

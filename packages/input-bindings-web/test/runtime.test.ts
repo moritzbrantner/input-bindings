@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
-import { InputRuntimeController, type RuntimeDispatch } from "@moritzbrantner/input-bindings-runtime";
+import {
+  InputRuntimeController,
+  type RuntimeDispatch,
+} from "@moritzbrantner/input-bindings-runtime";
+
 import { attachKeyboardRuntime, type RuntimeKeyboardEventLike } from "../src/index.ts";
 
 class FakeTarget {
@@ -146,7 +150,10 @@ test("key-up keeps the original normalized stroke across mode, target, and defau
     }),
   );
 
-  assert.deepEqual(dispatches.map((entry) => entry.phase), ["press", "release"]);
+  assert.deepEqual(
+    dispatches.map((entry) => entry.phase),
+    ["press", "release"],
+  );
   assert.equal(dispatches[1].bindingId, "save.default");
   detach();
 });
@@ -169,22 +176,22 @@ test("blur and hidden visibility reset active actions so held controls cannot st
     resetOnDetach: false,
   });
 
-  keyTarget.emit(
-    "keydown",
-    keyboardEvent({ key: "w", code: "KeyW", ctrlKey: false }),
-  );
+  keyTarget.emit("keydown", keyboardEvent({ key: "w", code: "KeyW", ctrlKey: false }));
   focusTarget.emit("blur");
-  assert.deepEqual(dispatches.map((entry) => entry.phase), ["press", "release"]);
+  assert.deepEqual(
+    dispatches.map((entry) => entry.phase),
+    ["press", "release"],
+  );
   assert.equal(dispatches[1].reason, "reset");
 
-  keyTarget.emit(
-    "keydown",
-    keyboardEvent({ key: "w", code: "KeyW", ctrlKey: false }),
-  );
+  keyTarget.emit("keydown", keyboardEvent({ key: "w", code: "KeyW", ctrlKey: false }));
   visibilityTarget.hidden = true;
   visibilityTarget.visibilityState = "hidden";
   visibilityTarget.emit("visibilitychange");
-  assert.deepEqual(dispatches.map((entry) => entry.phase), ["press", "release", "press", "release"]);
+  assert.deepEqual(
+    dispatches.map((entry) => entry.phase),
+    ["press", "release", "press", "release"],
+  );
   detach();
 });
 

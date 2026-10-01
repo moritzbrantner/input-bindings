@@ -2,11 +2,7 @@
   "schemaVersion": 1,
   "profile": "input-bindings",
   "tiers": {
-    "fast": [
-      "format:check",
-      "lint",
-      "typecheck"
-    ],
+    "fast": ["format:check", "lint", "typecheck"],
     "full": [
       "format:check",
       "lint",
@@ -17,24 +13,11 @@
       "test:e2e"
     ]
   },
-  "requiredCapabilities": [
-    "format:check",
-    "lint",
-    "typecheck",
-    "test:unit",
-    "build"
-  ],
-  "optionalCapabilities": [
-    "test:integration",
-    "test:e2e"
-  ],
+  "requiredCapabilities": ["format:check", "lint", "typecheck", "test:unit", "build"],
+  "optionalCapabilities": ["test:integration", "test:e2e"],
   "capabilityCommands": {
     "input-bindings-workspace": {
-      "test:e2e": [
-        "bun",
-        "run",
-        "test:e2e"
-      ]
+      "test:e2e": ["bun", "run", "test:e2e"]
     },
     "input-bindings": {
       "lint": [

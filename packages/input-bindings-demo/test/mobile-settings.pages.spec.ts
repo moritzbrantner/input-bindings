@@ -69,9 +69,14 @@ test("mobile Pages settings use touch controls instead of a keyboard map", async
   const persistedSaveRow = page.getByRole("row").filter({ hasText: "Save document" });
   await expect(persistedSaveRow.getByText("Changed", { exact: true })).toBeVisible();
 
-  await page.getByLabel("Shortcut presentation").getByRole("button", { name: "Mobile controls" }).click();
+  await page
+    .getByLabel("Shortcut presentation")
+    .getByRole("button", { name: "Mobile controls" })
+    .click();
   await page.getByRole("button", { name: "A mobile control" }).click();
-  await expect(page.getByLabel("Selected mobile control").getByRole("spinbutton", { name: "X", exact: true })).toHaveValue("74");
+  await expect(
+    page.getByLabel("Selected mobile control").getByRole("spinbutton", { name: "X", exact: true }),
+  ).toHaveValue("74");
 
   const metrics = await page.locator("html").evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,

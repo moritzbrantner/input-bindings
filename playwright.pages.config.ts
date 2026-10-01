@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+
 import { browserTestPort } from "./scripts/browser-test-port.ts";
 
 const port = await browserTestPort("INPUT_BINDINGS_PAGES_TEST_PORT");

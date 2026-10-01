@@ -1,9 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "import"
-  ],
+  "plugins": ["typescript", "import"],
   "categories": {
     "correctness": "error"
   },
@@ -11,10 +8,7 @@
     "typeAware": true
   },
   "rules": {
-    "typescript/consistent-type-definitions": [
-      "error",
-      "type"
-    ],
+    "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/switch-exhaustiveness-check": [
       "error",
       {
@@ -29,10 +23,7 @@
     ],
     "curly": "error",
     "no-case-declarations": "error",
-    "no-cond-assign": [
-      "error",
-      "always"
-    ],
+    "no-cond-assign": ["error", "always"],
     "no-fallthrough": [
       "error",
       {

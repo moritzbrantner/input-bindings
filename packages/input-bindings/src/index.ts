@@ -1,6 +1,4 @@
-export type KeyMatch =
-  | { kind: "logical"; value: string }
-  | { kind: "physical"; value: string };
+export type KeyMatch = { kind: "logical"; value: string } | { kind: "physical"; value: string };
 
 export type Modifiers = {
   ctrl?: boolean;
@@ -8,31 +6,31 @@ export type Modifiers = {
   shift?: boolean;
   meta?: boolean;
   altGraph?: boolean;
-}
+};
 
 export type KeyStroke = {
   key: KeyMatch;
   modifiers?: Modifiers;
-}
+};
 
 export type MouseButtonStroke = {
   device: "mouseButton";
   button: number;
   modifiers?: Modifiers;
-}
+};
 
 export type WheelStroke = {
   device: "wheel";
   direction: "up" | "down" | "left" | "right";
   modifiers?: Modifiers;
-}
+};
 
 export type GamepadButtonStroke = {
   device: "gamepadButton";
   button: number;
   threshold: number;
   gamepad?: number;
-}
+};
 
 export type GamepadAxisStroke = {
   device: "gamepadAxis";
@@ -41,7 +39,7 @@ export type GamepadAxisStroke = {
   threshold: number;
   deadzone: number;
   gamepad?: number;
-}
+};
 
 export type InputStroke =
   | KeyStroke
@@ -65,7 +63,7 @@ export type Binding = {
   sequence: InputStroke[];
   when?: WhenExpr;
   priority?: number;
-}
+};
 
 export type Resolution =
   | { kind: "none" }
@@ -90,7 +88,7 @@ export type Conflict = {
   rightBindingId: string;
   kind: ConflictKind;
   witnessContexts?: string[];
-}
+};
 
 export type BindingPatch =
   | { op: "add"; binding: Binding }
@@ -100,23 +98,20 @@ export type BindingPatch =
 export type Profile = {
   id: string;
   patches: BindingPatch[];
-}
+};
 
-export type ProfileDiagnosticKind =
-  | "addCollision"
-  | "missingBinding"
-  | "replacementIdMismatch";
+export type ProfileDiagnosticKind = "addCollision" | "missingBinding" | "replacementIdMismatch";
 
 export type ProfileDiagnostic = {
   patchIndex: number;
   kind: ProfileDiagnosticKind;
   bindingId: string;
-}
+};
 
 export type ProfileApplication = {
   bindings: Binding[];
   diagnostics: ProfileDiagnostic[];
-}
+};
 
 const MAX_EXHAUSTIVE_CONTEXTS = 16;
 const ALWAYS: WhenExpr = { op: "always" };
@@ -126,8 +121,12 @@ export function isKeyStroke(stroke: InputStroke): stroke is KeyStroke {
 }
 
 export function inputDeviceClass(stroke: InputStroke): InputDeviceClass {
-  if (isKeyStroke(stroke)) {return "keyboard";}
-  if (stroke.device === "mouseButton" || stroke.device === "wheel") {return "mouse";}
+  if (isKeyStroke(stroke)) {
+    return "keyboard";
+  }
+  if (stroke.device === "mouseButton" || stroke.device === "wheel") {
+    return "mouse";
+  }
   return "gamepad";
 }
 
@@ -196,7 +195,9 @@ export function resolve(
   sequence: readonly InputStroke[],
   activeContexts: ReadonlySet<string>,
 ): Resolution {
-  if (sequence.length === 0) {return { kind: "none" };}
+  if (sequence.length === 0) {
+    return { kind: "none" };
+  }
 
   const exact: Binding[] = [];
   const continuations: Binding[] = [];
@@ -205,11 +206,20 @@ export function resolve(
     if (!evaluateWhen(binding.when, activeContexts) || sequence.length > binding.sequence.length) {
       continue;
     }
-    if (!sequence.every((stroke, index) => binding.sequence[index] !== undefined && inputStrokeEquals(stroke, binding.sequence[index]))) {
+    if (
+      !sequence.every(
+        (stroke, index) =>
+          binding.sequence[index] !== undefined &&
+          inputStrokeEquals(stroke, binding.sequence[index]),
+      )
+    ) {
       continue;
     }
-    if (sequence.length === binding.sequence.length) {exact.push(binding);}
-    else {continuations.push(binding);}
+    if (sequence.length === binding.sequence.length) {
+      exact.push(binding);
+    } else {
+      continuations.push(binding);
+    }
   }
 
   if (continuations.length > 0) {
@@ -220,7 +230,9 @@ export function resolve(
     };
   }
 
-  if (exact.length === 0) {return { kind: "none" };}
+  if (exact.length === 0) {
+    return { kind: "none" };
+  }
 
   const topRank = exact.map(bindingRank).sort(compareRankDescending)[0];
   if (!topRank) {
@@ -252,10 +264,14 @@ export function analyzeConflicts(bindings: readonly Binding[]): Conflict[] {
       throw new Error("Conflict candidate index is outside the binding registry.");
     }
     const relation = sequenceRelation(left.sequence, right.sequence);
-    if (relation === "separate") {continue;}
+    if (relation === "separate") {
+      continue;
+    }
 
     const overlap = contextOverlap(left.when, right.when);
-    if (overlap.kind === "disjoint") {continue;}
+    if (overlap.kind === "disjoint") {
+      continue;
+    }
 
     let kind: ConflictKind;
     if (overlap.kind === "unknown") {
@@ -292,7 +308,7 @@ type ConflictSequenceTrieNode = {
   children: Map<string, ConflictSequenceTrieNode>;
   terminalIndices: number[];
   subtreeIndices: number[];
-}
+};
 
 function conflictCandidatePairs(bindings: readonly Binding[]): Array<readonly [number, number]> {
   const root = conflictTrieNode();
@@ -317,20 +333,28 @@ function conflictCandidateIndices(
   let node = root;
 
   if (sequence.length === 0) {
-    for (const index of root.subtreeIndices) {result.add(index);}
+    for (const index of root.subtreeIndices) {
+      result.add(index);
+    }
     return result;
   }
 
-  for (const index of root.terminalIndices) {result.add(index);}
+  for (const index of root.terminalIndices) {
+    result.add(index);
+  }
 
   for (const [strokeIndex, stroke] of sequence.entries()) {
     const child = node.children.get(conflictStrokeKey(stroke));
-    if (!child) {return result;}
+    if (!child) {
+      return result;
+    }
     node = child;
 
     const candidates =
       strokeIndex === sequence.length - 1 ? node.subtreeIndices : node.terminalIndices;
-    for (const index of candidates) {result.add(index);}
+    for (const index of candidates) {
+      result.add(index);
+    }
   }
 
   return result;
@@ -416,10 +440,7 @@ function conflictStrokeKey(stroke: InputStroke): string {
   }
 }
 
-export function applyProfile(
-  base: readonly Binding[],
-  profile: Profile,
-): ProfileApplication {
+export function applyProfile(base: readonly Binding[], profile: Profile): ProfileApplication {
   const bindings = new Map(base.map((binding) => [binding.id, structuredClone(binding)]));
   const diagnostics: ProfileDiagnostic[] = [];
 
@@ -463,7 +484,9 @@ export function inputStrokeEquals(left: InputStroke, right: InputStroke): boolea
   if (isKeyStroke(left) || isKeyStroke(right)) {
     return isKeyStroke(left) && isKeyStroke(right) && keyStrokeEquals(left, right);
   }
-  if (left.device !== right.device) {return false;}
+  if (left.device !== right.device) {
+    return false;
+  }
   switch (left.device) {
     case "mouseButton":
       return (
@@ -540,14 +563,19 @@ function sequenceRelation(
 ): SequenceRelation {
   if (
     left.length === right.length &&
-    left.every((stroke, index) => right[index] !== undefined && inputStrokeEquals(stroke, right[index]))
+    left.every(
+      (stroke, index) => right[index] !== undefined && inputStrokeEquals(stroke, right[index]),
+    )
   ) {
     return "exact";
   }
 
   const commonLength = Math.min(left.length, right.length);
-  const commonPrefix = Array.from({ length: commonLength }, (_, index) => index).every((index) =>
-    left[index] !== undefined && right[index] !== undefined && inputStrokeEquals(left[index], right[index]),
+  const commonPrefix = Array.from({ length: commonLength }, (_, index) => index).every(
+    (index) =>
+      left[index] !== undefined &&
+      right[index] !== undefined &&
+      inputStrokeEquals(left[index], right[index]),
   );
   return commonPrefix ? "prefix" : "separate";
 }
@@ -567,7 +595,9 @@ function contextOverlap(left: WhenExpr | undefined, right: WhenExpr | undefined)
   for (let mask = 0; mask < assignmentCount; mask += 1) {
     const active = new Set<string>();
     contexts.forEach((context, index) => {
-      if ((mask & 2 ** index) !== 0) {active.add(context);}
+      if ((mask & (2 ** index)) !== 0) {
+        active.add(context);
+      }
     });
     if (evaluateWhen(left, active) && evaluateWhen(right, active)) {
       return { kind: "overlap", witnessContexts: [...active].sort() };

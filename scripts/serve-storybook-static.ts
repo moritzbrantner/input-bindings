@@ -34,7 +34,9 @@ const server = createServer((request, response) => {
     return;
   }
 
-  if (existsSync(path) && statSync(path).isDirectory()) {path = join(path, "index.html");}
+  if (existsSync(path) && statSync(path).isDirectory()) {
+    path = join(path, "index.html");
+  }
   if (!existsSync(path) || !statSync(path).isFile()) {
     response.writeHead(404).end("Not found");
     return;

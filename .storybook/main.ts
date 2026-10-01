@@ -7,8 +7,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const aliases = {
   "@moritzbrantner/input-bindings": path.resolve(root, "packages/input-bindings/src/public.ts"),
-  "@moritzbrantner/input-bindings-runtime": path.resolve(root, "packages/input-bindings-runtime/src/index.ts"),
-  "@moritzbrantner/input-bindings-web": path.resolve(root, "packages/input-bindings-web/src/index.ts"),
+  "@moritzbrantner/input-bindings-runtime": path.resolve(
+    root,
+    "packages/input-bindings-runtime/src/index.ts",
+  ),
+  "@moritzbrantner/input-bindings-web": path.resolve(
+    root,
+    "packages/input-bindings-web/src/index.ts",
+  ),
 };
 
 const config: StorybookConfig = {
@@ -23,7 +29,12 @@ const config: StorybookConfig = {
       ...viteConfig.resolve,
       alias: [
         ...Object.entries(aliases).map(([find, replacement]) => ({ find, replacement })),
-        ...(Array.isArray(existingAliases) ? existingAliases : Object.entries(existingAliases ?? {}).map(([find, replacement]) => ({ find, replacement }))),
+        ...(Array.isArray(existingAliases)
+          ? existingAliases
+          : Object.entries(existingAliases ?? {}).map(([find, replacement]) => ({
+              find,
+              replacement,
+            }))),
       ],
     };
     return viteConfig;

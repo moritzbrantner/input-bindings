@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import {
   planConflictRepairs,
   type ActionDefinition,
@@ -8,6 +6,7 @@ import {
   type ConflictDisposition,
   type ConflictRepair,
 } from "@moritzbrantner/input-bindings";
+import { useMemo } from "react";
 
 import { describeWhen, formatSequence } from "./model.ts";
 import {
@@ -22,7 +21,7 @@ export type ConflictRepairPanelProps = {
   actions: ReadonlyMap<string, ActionDefinition>;
   scenarios?: readonly InputBindingsContextScenario[];
   onApplyRepair: (repair: ConflictRepair) => void;
-}
+};
 
 export function ConflictRepairPanel({
   bindings,
@@ -51,10 +50,14 @@ export function ConflictRepairPanel({
           <p className="ib-workbench-eyebrow">Deterministic repair</p>
           <h2 id="ib-conflict-workbench-title">Conflict review</h2>
         </div>
-        <span>{conflicts.length} overlap{conflicts.length === 1 ? "" : "s"}</span>
+        <span>
+          {conflicts.length} overlap{conflicts.length === 1 ? "" : "s"}
+        </span>
       </div>
       <p className="ib-reference-help">
-        Repairs are suggestions only. Nothing changes until you choose an operation. Declared application scenarios are checked with the real context-stack resolver so stack-ordered overlaps are not mistaken for unresolved runtime ambiguity.
+        Repairs are suggestions only. Nothing changes until you choose an operation. Declared
+        application scenarios are checked with the real context-stack resolver so stack-ordered
+        overlaps are not mistaken for unresolved runtime ambiguity.
       </p>
 
       {plans.length === 0 ? (
@@ -74,7 +77,9 @@ export function ConflictRepairPanel({
               >
                 <header>
                   <div>
-                    <span className="ib-conflict-disposition">{dispositionLabel(plan.disposition)}</span>
+                    <span className="ib-conflict-disposition">
+                      {dispositionLabel(plan.disposition)}
+                    </span>
                     <strong>{dispositionTitle(plan.disposition)}</strong>
                   </div>
                   <code>{plan.conflict.kind}</code>
@@ -123,8 +128,12 @@ export function ConflictRepairPanel({
 }
 
 function ScenarioEvidence({ assessments }: { assessments: readonly ConflictScenarioAssessment[] }) {
-  if (assessments.length === 0) {return null;}
-  const observed = assessments.filter((assessment) => assessment.outcome !== "notSimultaneouslyActive");
+  if (assessments.length === 0) {
+    return null;
+  }
+  const observed = assessments.filter(
+    (assessment) => assessment.outcome !== "notSimultaneouslyActive",
+  );
   if (observed.length === 0) {
     return (
       <div className="ib-scenario-evidence">
@@ -151,11 +160,16 @@ function ScenarioEvidence({ assessments }: { assessments: readonly ConflictScena
 
 function scenarioOutcomeLabel(outcome: ConflictScenarioAssessment["outcome"]): string {
   switch (outcome) {
-    case "notSimultaneouslyActive": return "not active together";
-    case "orderedByStack": return "ordered by context stack";
-    case "orderedByRank": return "ordered by priority / specificity";
-    case "ambiguous": return "still ambiguous";
-    case "chordWait": return "chord wait remains";
+    case "notSimultaneouslyActive":
+      return "not active together";
+    case "orderedByStack":
+      return "ordered by context stack";
+    case "orderedByRank":
+      return "ordered by priority / specificity";
+    case "ambiguous":
+      return "still ambiguous";
+    case "chordWait":
+      return "chord wait remains";
   }
 }
 
@@ -166,35 +180,53 @@ function BindingSummary({
   binding: Binding | undefined;
   actions: ReadonlyMap<string, ActionDefinition>;
 }) {
-  if (!binding) {return <div className="ib-conflict-binding"><strong>Missing binding</strong></div>;}
+  if (!binding) {
+    return (
+      <div className="ib-conflict-binding">
+        <strong>Missing binding</strong>
+      </div>
+    );
+  }
   const action = actions.get(binding.action);
   return (
     <div className="ib-conflict-binding">
       <strong>{action?.title ?? binding.action}</strong>
       <kbd>{formatSequence(binding.sequence)}</kbd>
       <span>{describeWhen(binding.when)}</span>
-      <small>{binding.id} · priority {binding.priority ?? 0}</small>
+      <small>
+        {binding.id} · priority {binding.priority ?? 0}
+      </small>
     </div>
   );
 }
 
 function dispositionLabel(disposition: ConflictDisposition): string {
   switch (disposition) {
-    case "redundant": return "Redundant";
-    case "ambiguous": return "Needs a decision";
-    case "orderedOverride": return "Ordered override";
-    case "chordPrefix": return "Chord overlap";
-    case "potential": return "Potential overlap";
+    case "redundant":
+      return "Redundant";
+    case "ambiguous":
+      return "Needs a decision";
+    case "orderedOverride":
+      return "Ordered override";
+    case "chordPrefix":
+      return "Chord overlap";
+    case "potential":
+      return "Potential overlap";
   }
 }
 
 function dispositionTitle(disposition: ConflictDisposition): string {
   switch (disposition) {
-    case "redundant": return "Two equivalent bindings do the same job";
-    case "ambiguous": return "Two actions have the same winning rank";
-    case "orderedOverride": return "Existing precedence already chooses a winner";
-    case "chordPrefix": return "One shortcut is a prefix of another";
-    case "potential": return "The context space is too large to prove the overlap exhaustively";
+    case "redundant":
+      return "Two equivalent bindings do the same job";
+    case "ambiguous":
+      return "Two actions have the same winning rank";
+    case "orderedOverride":
+      return "Existing precedence already chooses a winner";
+    case "chordPrefix":
+      return "One shortcut is a prefix of another";
+    case "potential":
+      return "The context space is too large to prove the overlap exhaustively";
   }
 }
 
@@ -213,11 +245,16 @@ function dispositionExplanation(disposition: ConflictDisposition): string {
   }
 }
 
-function keepLabel(reason: "existingPrecedence" | "potentialConflict" | "redundantSameAction"): string {
+function keepLabel(
+  reason: "existingPrecedence" | "potentialConflict" | "redundantSameAction",
+): string {
   switch (reason) {
-    case "existingPrecedence": return "Keep the existing precedence";
-    case "potentialConflict": return "Keep the potential overlap";
-    case "redundantSameAction": return "Keep both equivalent bindings";
+    case "existingPrecedence":
+      return "Keep the existing precedence";
+    case "potentialConflict":
+      return "Keep the potential overlap";
+    case "redundantSameAction":
+      return "Keep both equivalent bindings";
   }
 }
 
@@ -233,9 +270,12 @@ function repairLabel(
   const target = bindings.get(repair.bindingId);
   const title = target ? (actions.get(target.action)?.title ?? target.action) : repair.bindingId;
   switch (repair.kind) {
-    case "unbind": return `Unbind ${title}`;
-    case "prefer": return `Prefer ${title}`;
-    case "narrowContext": return `Separate ${title} by context`;
+    case "unbind":
+      return `Unbind ${title}`;
+    case "prefer":
+      return `Prefer ${title}`;
+    case "narrowContext":
+      return `Separate ${title} by context`;
   }
 }
 

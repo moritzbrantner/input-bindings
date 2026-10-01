@@ -10,14 +10,14 @@ export type ResolutionHistoryEntry = {
   normalized: string;
   physicalCode: string;
   result: string;
-}
+};
 
 export type ResolutionInspectorProps = {
   trace: ResolutionTrace;
   history: readonly ResolutionHistoryEntry[];
   actions: ReadonlyMap<string, ActionDefinition>;
   bindingById: ReadonlyMap<string, Binding>;
-}
+};
 
 export function ResolutionInspector({
   trace,
@@ -37,7 +37,9 @@ export function ResolutionInspector({
           <p className="ib-workbench-eyebrow">Resolution evidence</p>
           <h2 id="ib-resolution-inspector-title">Why this input resolved</h2>
         </div>
-        <span>{relevant.length} matching candidate{relevant.length === 1 ? "" : "s"}</span>
+        <span>
+          {relevant.length} matching candidate{relevant.length === 1 ? "" : "s"}
+        </span>
       </div>
 
       <div className="ib-inspector-context">
@@ -45,7 +47,9 @@ export function ResolutionInspector({
           <strong>Ordered stack</strong>
           <span>
             {trace.contextStack.length
-              ? trace.contextStack.map((layer) => `${layer.id}${layer.blocksLower ? " (modal)" : ""}`).join(" → ")
+              ? trace.contextStack
+                  .map((layer) => `${layer.id}${layer.blocksLower ? " (modal)" : ""}`)
+                  .join(" → ")
               : "No stack layers"}
           </span>
         </div>
@@ -55,7 +59,9 @@ export function ResolutionInspector({
         </div>
         <div>
           <strong>Modal barrier</strong>
-          <span>{trace.barrier ? `${trace.barrier.id} at depth ${trace.barrier.depth}` : "None"}</span>
+          <span>
+            {trace.barrier ? `${trace.barrier.id} at depth ${trace.barrier.depth}` : "None"}
+          </span>
         </div>
       </div>
 
@@ -74,19 +80,24 @@ export function ResolutionInspector({
                   </div>
                   <span className="ib-candidate-status">{statusLabel(candidate.status)}</span>
                   <small>
-                    {candidate.match} · layer {candidate.ownerDepth === -1 ? "global" : (candidate.ownerDepth ?? "n/a")} · priority {candidate.priority} · specificity {candidate.specificity}
+                    {candidate.match} · layer{" "}
+                    {candidate.ownerDepth === -1 ? "global" : (candidate.ownerDepth ?? "n/a")} ·
+                    priority {candidate.priority} · specificity {candidate.specificity}
                   </small>
                   {binding?.when && <small>Action: {binding.action}</small>}
                 </div>
               );
             })}
             {relevant.length === 0 && (
-              <p className="ib-empty">No binding shares the current input prefix in this application state.</p>
+              <p className="ib-empty">
+                No binding shares the current input prefix in this application state.
+              </p>
             )}
           </div>
           {ignoredCount > 0 && (
             <p className="ib-inspector-ignored">
-              {ignoredCount} other binding{ignoredCount === 1 ? " was" : "s were"} excluded by context or sequence mismatch before ranking.
+              {ignoredCount} other binding{ignoredCount === 1 ? " was" : "s were"} excluded by
+              context or sequence mismatch before ranking.
             </p>
           )}
         </div>
@@ -115,16 +126,27 @@ export function ResolutionInspector({
 
 function statusLabel(status: ResolutionCandidateStatus): string {
   switch (status) {
-    case "inactiveContext": return "Inactive context";
-    case "inputLongerThanBinding": return "Input already passed binding";
-    case "sequenceMismatch": return "Different sequence";
-    case "blockedByModal": return "Blocked by modal layer";
-    case "lowerContextLayer": return "Shadowed by higher layer";
-    case "pendingExact": return "Exact match waiting on chord";
-    case "pendingContinuation": return "Chord can continue";
-    case "lowerRank": return "Lower priority / specificity";
-    case "winner": return "Winner";
-    case "equivalentWinner": return "Equivalent same-action match";
-    case "ambiguousWinner": return "Ambiguous top-rank match";
+    case "inactiveContext":
+      return "Inactive context";
+    case "inputLongerThanBinding":
+      return "Input already passed binding";
+    case "sequenceMismatch":
+      return "Different sequence";
+    case "blockedByModal":
+      return "Blocked by modal layer";
+    case "lowerContextLayer":
+      return "Shadowed by higher layer";
+    case "pendingExact":
+      return "Exact match waiting on chord";
+    case "pendingContinuation":
+      return "Chord can continue";
+    case "lowerRank":
+      return "Lower priority / specificity";
+    case "winner":
+      return "Winner";
+    case "equivalentWinner":
+      return "Equivalent same-action match";
+    case "ambiguousWinner":
+      return "Ambiguous top-rank match";
   }
 }

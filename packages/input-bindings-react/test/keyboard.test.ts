@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { Binding } from "@moritzbrantner/input-bindings";
+import { KeyboardView } from "@moritzbrantner/input-bindings-react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { KeyboardView } from "@moritzbrantner/input-bindings-react";
 import {
   bindingIdsForCode,
   codeForStroke,
@@ -22,10 +22,7 @@ const germanishLayout = new Map([
 ]);
 
 test("logical strokes use the browser layout map while physical strokes stay positional", () => {
-  assert.equal(
-    codeForStroke({ key: { kind: "logical", value: "z" } }, germanishLayout),
-    "KeyY",
-  );
+  assert.equal(codeForStroke({ key: { kind: "logical", value: "z" } }, germanishLayout), "KeyY");
   assert.equal(
     codeForStroke({ key: { kind: "physical", value: "KeyZ" } }, germanishLayout),
     "KeyZ",
@@ -57,7 +54,6 @@ test("sequence and binding lookup expose primary and modifier positions", () => 
   assert.deepEqual(bindingIdsForCode(bindings, "ControlLeft", germanishLayout), ["logical.z"]);
   assert.deepEqual(bindingIdsForCode(bindings, "Space", germanishLayout), ["physical.space"]);
 });
-
 
 test("keyboard binding index preserves per-key lookup semantics", () => {
   const bindings: Binding[] = [
@@ -142,4 +138,3 @@ test("keyboard view only exposes keys as controls when inspection is enabled", (
   assert.match(interactiveMarkup, /<button[^>]+class="ib-key/u);
   assert.match(interactiveMarkup, /data-key-code="KeyA"/u);
 });
-

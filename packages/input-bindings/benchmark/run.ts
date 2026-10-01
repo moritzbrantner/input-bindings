@@ -14,11 +14,7 @@ import {
   type WhenExpr,
 } from "../src/index.ts";
 
-type ScenarioKind =
-  | "resolveDirect"
-  | "resolveChordPrefix"
-  | "analyzeConflicts"
-  | "applyProfile";
+type ScenarioKind = "resolveDirect" | "resolveChordPrefix" | "analyzeConflicts" | "applyProfile";
 
 type Scenario = {
   id: string;
@@ -27,13 +23,13 @@ type Scenario = {
   bindingCount: number;
   iterations: number;
   patchCount?: number;
-}
+};
 
 type BenchmarkManifest = {
   schemaVersion: number;
   generatorVersion: number;
   scenarios: Scenario[];
-}
+};
 
 type ScenarioResult = {
   id: string;
@@ -42,7 +38,7 @@ type ScenarioResult = {
   elapsedMs: number;
   nsPerOperation: number;
   checksum: number;
-}
+};
 
 class DeterministicRng {
   private state: number;
@@ -71,7 +67,9 @@ const manifest = JSON.parse(
 
 function modifiers(rng: DeterministicRng): Modifiers | undefined {
   const mask = rng.range(8);
-  if (mask === 0) {return undefined;}
+  if (mask === 0) {
+    return undefined;
+  }
   return {
     ctrl: (mask & 1) !== 0,
     shift: (mask & 2) !== 0,
@@ -116,11 +114,7 @@ function generatedWhen(index: number): WhenExpr | undefined {
   }
 }
 
-function generateBindings(
-  count: number,
-  seed: number,
-  kind: ScenarioKind,
-): Binding[] {
+function generateBindings(count: number, seed: number, kind: ScenarioKind): Binding[] {
   const rng = new DeterministicRng(seed);
   return Array.from({ length: count }, (_, index) => {
     const conflictKey = index % Math.max(1, Math.floor(count / 4));
@@ -193,10 +187,7 @@ function resolutionFingerprint(resolution: Resolution): number {
     case "resolved":
       return mix(textFingerprint(resolution.bindingId), textFingerprint(resolution.action));
     case "ambiguous":
-      return resolution.bindingIds.reduce(
-        (checksum, id) => mix(checksum, textFingerprint(id)),
-        3,
-      );
+      return resolution.bindingIds.reduce((checksum, id) => mix(checksum, textFingerprint(id)), 3);
     case "pending":
       return [...resolution.exactBindingIds, ...resolution.continuationBindingIds].reduce(
         (checksum, id) => mix(checksum, textFingerprint(id)),

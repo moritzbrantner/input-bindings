@@ -3,30 +3,16 @@
   "compilerOptions": {
     "noEmit": true,
     "declaration": false,
-    "types": [
-      "node",
-      "react",
-      "react-dom"
-    ],
+    "types": ["node", "react", "react-dom"],
     "paths": {
-      "@moritzbrantner/input-bindings": [
-        "./packages/input-bindings/src/public.ts"
-      ],
-      "@moritzbrantner/input-bindings/*": [
-        "./packages/input-bindings/src/*.ts"
-      ],
-      "@moritzbrantner/input-bindings-runtime": [
-        "./packages/input-bindings-runtime/src/index.ts"
-      ],
-      "@moritzbrantner/input-bindings-web": [
-        "./packages/input-bindings-web/src/index.ts"
-      ],
+      "@moritzbrantner/input-bindings": ["./packages/input-bindings/src/public.ts"],
+      "@moritzbrantner/input-bindings/*": ["./packages/input-bindings/src/*.ts"],
+      "@moritzbrantner/input-bindings-runtime": ["./packages/input-bindings-runtime/src/index.ts"],
+      "@moritzbrantner/input-bindings-web": ["./packages/input-bindings-web/src/index.ts"],
       "@moritzbrantner/input-bindings-web/platform-conflicts": [
         "./packages/input-bindings-web/src/platformCatalog.ts"
       ],
-      "@moritzbrantner/input-bindings-react": [
-        "./packages/input-bindings-react/src/index.tsx"
-      ],
+      "@moritzbrantner/input-bindings-react": ["./packages/input-bindings-react/src/index.tsx"],
       "@moritzbrantner/input-bindings-react/model": [
         "./packages/input-bindings-react/src/model.ts"
       ],

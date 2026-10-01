@@ -9,7 +9,7 @@ export type KeyboardKeyDefinition = {
   code: string;
   label: string;
   width?: number;
-}
+};
 
 export const KEYBOARD_ROWS: readonly (readonly KeyboardKeyDefinition[])[] = [
   [
@@ -108,16 +108,21 @@ const PUNCTUATION_CODES: Readonly<Record<string, string>> = {
   "/": "Slash",
 };
 
-const LAYOUT_LABEL_CODE = /^(?:Key[A-Z]|Digit[0-9]|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/u;
+const LAYOUT_LABEL_CODE =
+  /^(?:Key[A-Z]|Digit[0-9]|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/u;
 
 export function keyboardLabelForCode(
   code: string,
   layoutLabels?: ReadonlyMap<string, string>,
 ): string {
   const fallback = KEYBOARD_LABEL_BY_CODE.get(code) ?? code;
-  if (!LAYOUT_LABEL_CODE.test(code)) {return fallback;}
+  if (!LAYOUT_LABEL_CODE.test(code)) {
+    return fallback;
+  }
   const layoutLabel = layoutLabels?.get(code);
-  if (!layoutLabel || layoutLabel.trim().length === 0) {return fallback;}
+  if (!layoutLabel || layoutLabel.trim().length === 0) {
+    return fallback;
+  }
   return layoutLabel.length === 1 ? layoutLabel.toLocaleUpperCase() : layoutLabel;
 }
 
@@ -125,22 +130,34 @@ export function codeForStroke(
   stroke: KeyStroke,
   layoutLabels?: ReadonlyMap<string, string>,
 ): string | undefined {
-  if (stroke.key.kind === "physical") {return stroke.key.value;}
+  if (stroke.key.kind === "physical") {
+    return stroke.key.value;
+  }
 
   const value = stroke.key.value;
   const special = SPECIAL_LOGICAL_CODES[value];
-  if (special) {return special;}
-  if (/^F(?:[1-9]|1[0-2])$/u.test(value)) {return value;}
+  if (special) {
+    return special;
+  }
+  if (/^F(?:[1-9]|1[0-2])$/u.test(value)) {
+    return value;
+  }
 
   if (layoutLabels) {
     const normalized = value.toLocaleLowerCase();
     for (const [code, label] of layoutLabels.entries()) {
-      if (label.toLocaleLowerCase() === normalized) {return code;}
+      if (label.toLocaleLowerCase() === normalized) {
+        return code;
+      }
     }
   }
 
-  if (/^[a-z]$/iu.test(value)) {return `Key${value.toLocaleUpperCase()}`;}
-  if (/^[0-9]$/u.test(value)) {return `Digit${value}`;}
+  if (/^[a-z]$/iu.test(value)) {
+    return `Key${value.toLocaleUpperCase()}`;
+  }
+  if (/^[0-9]$/u.test(value)) {
+    return `Digit${value}`;
+  }
   return PUNCTUATION_CODES[value];
 }
 
@@ -149,13 +166,25 @@ export function codesForStroke(
   layoutLabels?: ReadonlyMap<string, string>,
 ): string[] {
   const codes: string[] = [];
-  if (stroke.modifiers?.ctrl) {codes.push("ControlLeft", "ControlRight");}
-  if (stroke.modifiers?.shift) {codes.push("ShiftLeft", "ShiftRight");}
-  if (stroke.modifiers?.alt) {codes.push("AltLeft", "AltRight");}
-  if (stroke.modifiers?.meta) {codes.push("MetaLeft", "MetaRight");}
-  if (stroke.modifiers?.altGraph) {codes.push("AltRight");}
+  if (stroke.modifiers?.ctrl) {
+    codes.push("ControlLeft", "ControlRight");
+  }
+  if (stroke.modifiers?.shift) {
+    codes.push("ShiftLeft", "ShiftRight");
+  }
+  if (stroke.modifiers?.alt) {
+    codes.push("AltLeft", "AltRight");
+  }
+  if (stroke.modifiers?.meta) {
+    codes.push("MetaLeft", "MetaRight");
+  }
+  if (stroke.modifiers?.altGraph) {
+    codes.push("AltRight");
+  }
   const primary = codeForStroke(stroke, layoutLabels);
-  if (primary) {codes.push(primary);}
+  if (primary) {
+    codes.push(primary);
+  }
   return [...new Set(codes)];
 }
 
@@ -165,9 +194,7 @@ export function codesForSequence(
 ): string[] {
   return [
     ...new Set(
-      sequence
-        .filter(isKeyStroke)
-        .flatMap((stroke) => codesForStroke(stroke, layoutLabels)),
+      sequence.filter(isKeyStroke).flatMap((stroke) => codesForStroke(stroke, layoutLabels)),
     ),
   ];
 }
@@ -191,7 +218,9 @@ export function createKeyboardBindingIndex(
     }
   }
 
-  for (const bindingIds of result.values()) {bindingIds.sort();}
+  for (const bindingIds of result.values()) {
+    bindingIds.sort();
+  }
   return result;
 }
 

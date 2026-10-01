@@ -1,12 +1,4 @@
 import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from "react";
-
-import {
   applyConflictRepair,
   compileActionRegistry,
   explainResolutionWithContextStack,
@@ -20,22 +12,23 @@ import {
   type ResolutionTrace,
 } from "@moritzbrantner/input-bindings";
 import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 
 import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
+import { KeyboardView, KeybindingEditor } from "./index.tsx";
 import {
   createStarterMobileControlsOverlay,
   MobileControlsView,
   type MobileControlsOverlay,
 } from "./MobileControlsView.tsx";
-import {
-  KeyboardView,
-  KeybindingEditor,
-} from "./index.tsx";
 import { formatSequence, profileFromBindings } from "./model.ts";
-import {
-  ResolutionInspector,
-  type ResolutionHistoryEntry,
-} from "./ResolutionInspector.tsx";
+import { ResolutionInspector, type ResolutionHistoryEntry } from "./ResolutionInspector.tsx";
 import {
   bindingsForScenario,
   deriveContextScenarios,
@@ -45,10 +38,7 @@ import {
 } from "./workbench-model.ts";
 
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
-export {
-  createStarterMobileControlsOverlay,
-  MobileControlsView,
-} from "./MobileControlsView.tsx";
+export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.tsx";
 export type {
   MobileControlKind,
   MobileControlsOrientation,
@@ -74,7 +64,7 @@ export type InputBindingsWorkbenchProps = {
   mobileOverlay?: MobileControlsOverlay;
   onMobileOverlayChange?: (overlay: MobileControlsOverlay) => void;
   className?: string;
-}
+};
 
 const DEFAULT_SCENARIO: InputBindingsContextScenario = {
   id: "global",
@@ -135,7 +125,8 @@ export function InputBindingsWorkbench({
   const visiblePresentation: "list" | "keyboard" | "mobile" =
     presentation === "list" ? "list" : keyboardPresentation;
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
-  const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
+  const scenario =
+    scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
   const [keyboardMode, setKeyboardMode] = useState<InputBindingsKeyboardMode>(
     scenario.defaultKeyboardMode ?? "logical",
   );
@@ -175,7 +166,8 @@ export function InputBindingsWorkbench({
           <h1>{title}</h1>
           <p>{description}</p>
           <p className="ib-workbench-summary">
-            {registry.actions.length} actions · {effectiveBindings.length} bindings · {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
+            {registry.actions.length} actions · {effectiveBindings.length} bindings ·{" "}
+            {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
           </p>
         </div>
         <WorkbenchTabs mode={visibleMode} compact={compactPresentation} onChange={setMode} />
@@ -270,20 +262,43 @@ function WorkbenchTabs({
   const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] =
     compact
       ? [
-          { id: "shortcuts", label: "Bindings", description: "Browse bindings or arrange the mobile control overlay." },
-          { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
+          {
+            id: "shortcuts",
+            label: "Bindings",
+            description: "Browse bindings or arrange the mobile control overlay.",
+          },
+          {
+            id: "conflicts",
+            label: "Conflicts",
+            description: "Understand overlaps and apply explicit deterministic repairs.",
+          },
         ]
       : [
-          { id: "shortcuts", label: "Shortcuts", description: "Browse and edit shortcuts in either list or keyboard presentation." },
-          { id: "conflicts", label: "Conflicts", description: "Understand overlaps and apply explicit deterministic repairs." },
-          { id: "preview", label: "Try shortcuts", description: "Press real keys and inspect exactly why the current context resolves them." },
+          {
+            id: "shortcuts",
+            label: "Shortcuts",
+            description: "Browse and edit shortcuts in either list or keyboard presentation.",
+          },
+          {
+            id: "conflicts",
+            label: "Conflicts",
+            description: "Understand overlaps and apply explicit deterministic repairs.",
+          },
+          {
+            id: "preview",
+            label: "Try shortcuts",
+            description:
+              "Press real keys and inspect exactly why the current context resolves them.",
+          },
         ];
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const activate = (index: number) => {
     const normalizedIndex = (index + tabs.length) % tabs.length;
     const tab = tabs[normalizedIndex];
-    if (!tab) {return;}
+    if (!tab) {
+      return;
+    }
     onChange(tab.id);
     queueMicrotask(() => tabRefs.current[normalizedIndex]?.focus());
   };
@@ -347,7 +362,9 @@ function PresentationToolbar({
       <div>
         <p className="ib-workbench-eyebrow">Presentation</p>
         <h2>Choose how to configure the same actions</h2>
-        <p>The action registry stays authoritative while the device-specific presentation changes.</p>
+        <p>
+          The action registry stays authoritative while the device-specific presentation changes.
+        </p>
       </div>
       <fieldset className="ib-mode-switch">
         <legend>View</legend>
@@ -371,7 +388,6 @@ function PresentationToolbar({
     </section>
   );
 }
-
 
 function useCompactControlsPresentation(): boolean {
   // Keep the server render and the browser's first render identical. Responsive
@@ -408,7 +424,9 @@ function ScenarioToolbar({
         <span>Application context</span>
         <select value={scenario.id} onChange={(event) => onScenarioChange(event.target.value)}>
           {scenarios.map((candidate) => (
-            <option key={candidate.id} value={candidate.id}>{candidate.label}</option>
+            <option key={candidate.id} value={candidate.id}>
+              {candidate.label}
+            </option>
           ))}
         </select>
       </label>
@@ -454,7 +472,8 @@ function ContextStackSummary({ scenario }: { scenario: InputBindingsContextScena
     <small>
       {stack.length > 0 && (
         <span className="ib-context-stack">
-          Stack: {stack.map((layer) => `${layer.id}${layer.blocksLower ? " (modal)" : ""}`).join(" → ")}
+          Stack:{" "}
+          {stack.map((layer) => `${layer.id}${layer.blocksLower ? " (modal)" : ""}`).join(" → ")}
         </span>
       )}
       {facts.length > 0 && <span>Facts: {facts.join(", ")}</span>}
@@ -511,20 +530,26 @@ function PreviewMode({
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!capturing) {return;}
+    if (!capturing) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     if (event.code) {
       setPressedCodes((current) => new Set([...current, event.code]));
     }
-    if (event.repeat || event.nativeEvent.isComposing) {return;}
+    if (event.repeat || event.nativeEvent.isComposing) {
+      return;
+    }
 
     const stroke = keyboardEventToStroke(event.nativeEvent, {
       mode: keyboardMode,
       respectDefaultPrevented: false,
       ignoreComposing: true,
     });
-    if (!stroke) {return;}
+    if (!stroke) {
+      return;
+    }
 
     let nextSequence = trace.resolution.kind === "pending" ? [...sequence, stroke] : [stroke];
     let nextTrace = explainResolutionWithContextStack(
@@ -557,7 +582,9 @@ function PreviewMode({
   };
 
   const onKeyUp = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!event.code) {return;}
+    if (!event.code) {
+      return;
+    }
     setPressedCodes((current) => {
       const next = new Set(current);
       next.delete(event.code);
@@ -577,7 +604,9 @@ function PreviewMode({
     <div className="ib-preview-layout">
       <section
         ref={captureRef}
-        className={["ib-preview-surface", capturing ? "is-capturing" : ""].filter(Boolean).join(" ")}
+        className={["ib-preview-surface", capturing ? "is-capturing" : ""]
+          .filter(Boolean)
+          .join(" ")}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
@@ -591,11 +620,17 @@ function PreviewMode({
           </div>
           <div className="ib-preview-actions">
             {!capturing ? (
-              <button type="button" className="ib-primary-button" onClick={startCapture}>Start preview</button>
+              <button type="button" className="ib-primary-button" onClick={startCapture}>
+                Start preview
+              </button>
             ) : (
-              <button type="button" onClick={stopCapture}>Stop preview</button>
+              <button type="button" onClick={stopCapture}>
+                Stop preview
+              </button>
             )}
-            <button type="button" onClick={clearTrace}>Clear</button>
+            <button type="button" onClick={clearTrace}>
+              Clear
+            </button>
           </div>
         </div>
 
@@ -716,10 +751,12 @@ function resolutionHistoryLabel(
       return `Waiting for chord (${trace.resolution.continuationBindingIds.length} continuation${trace.resolution.continuationBindingIds.length === 1 ? "" : "s"})`;
     case "ambiguous": {
       const actionNames = [
-        ...new Set(trace.resolution.bindingIds.map((bindingId) => {
-          const binding = bindingById.get(bindingId);
-          return binding ? (actions.get(binding.action)?.title ?? binding.action) : bindingId;
-        })),
+        ...new Set(
+          trace.resolution.bindingIds.map((bindingId) => {
+            const binding = bindingById.get(bindingId);
+            return binding ? (actions.get(binding.action)?.title ?? binding.action) : bindingId;
+          }),
+        ),
       ];
       return `Ambiguous: ${actionNames.join(", ")}`;
     }
@@ -735,6 +772,8 @@ function cloneScenario(scenario: InputBindingsContextScenario): InputBindingsCon
 }
 
 function modeForView(view: InputBindingsWorkbenchView | undefined): InputBindingsWorkbenchMode {
-  if (view === "conflicts" || view === "preview") { return view; }
+  if (view === "conflicts" || view === "preview") {
+    return view;
+  }
   return "shortcuts";
 }

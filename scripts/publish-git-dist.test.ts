@@ -70,7 +70,10 @@ await test("leaves external dependencies untouched", () => {
 });
 
 await test("fails closed when an internal dependency has no distribution commit", () => {
-  assert.throws(() => rewriteInternalDependencies(web, new Map([[core.name, coreCommit]])), /no distribution commit/u);
+  assert.throws(
+    () => rewriteInternalDependencies(web, new Map([[core.name, coreCommit]])),
+    /no distribution commit/u,
+  );
 });
 
 await test("accepts only exact commits and derives one branch per package", () => {

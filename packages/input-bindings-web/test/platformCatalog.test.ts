@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { analyzePlatformConflicts, type Binding } from "@moritzbrantner/input-bindings";
+
 import {
   DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG,
   detectBrowser,
@@ -31,16 +32,14 @@ test("built-in catalog reports documented Chromium shortcut overlap", () => {
   const binding: Binding = {
     id: "tabs.new",
     action: "app.newTab",
-    sequence: [
-      { key: { kind: "logical", value: "t" }, modifiers: { ctrl: true } },
-    ],
+    sequence: [{ key: { kind: "logical", value: "t" }, modifiers: { ctrl: true } }],
   };
 
-  const diagnostics = analyzePlatformConflicts(
-    [binding],
-    DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG,
-    { platform: "windows", browser: "chromium", layoutMapAvailable: true },
-  );
+  const diagnostics = analyzePlatformConflicts([binding], DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG, {
+    platform: "windows",
+    browser: "chromium",
+    layoutMapAvailable: true,
+  });
 
   assert.equal(diagnostics.length, 1);
   assert.equal(diagnostics[0].ruleId, "chrome.ctrl-t");

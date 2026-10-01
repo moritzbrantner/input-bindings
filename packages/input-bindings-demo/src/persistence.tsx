@@ -1,6 +1,3 @@
-import { StrictMode, useMemo, useState } from "react";
-import { createRoot } from "react-dom/client";
-
 import {
   resolvePortableConfiguration,
   serializePortableConfiguration,
@@ -10,13 +7,17 @@ import {
   type PresetDefinition,
 } from "@moritzbrantner/input-bindings";
 import { formatSequence } from "@moritzbrantner/input-bindings-react/model";
+import { StrictMode, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import fixtureJson from "../../../fixtures/persistence.json";
+
 import "./site.css";
 
 type FixtureCase = {
   name: string;
   configuration: PortableConfigurationV1;
-}
+};
 
 type PersistenceFixture = {
   currentRegistryVersion: number;
@@ -24,7 +25,7 @@ type PersistenceFixture = {
   presets: PresetDefinition[];
   migrations: MigrationStep[];
   cases: FixtureCase[];
-}
+};
 
 const fixture = fixtureJson as unknown as PersistenceFixture;
 
@@ -82,10 +83,7 @@ function PersistenceLab() {
       <section className="site-persistence-controls" aria-label="Persistence fixture controls">
         <label>
           Shared fixture case
-          <select
-            value={caseIndex}
-            onChange={(event) => loadCase(Number(event.target.value))}
-          >
+          <select value={caseIndex} onChange={(event) => loadCase(Number(event.target.value))}>
             {fixture.cases.map((entry, index) => (
               <option value={index} key={entry.name}>
                 {entry.name}
@@ -232,7 +230,9 @@ function PersistenceLab() {
 }
 
 function isPortableConfiguration(value: unknown): value is PortableConfigurationV1 {
-  if (!value || typeof value !== "object") {return false;}
+  if (!value || typeof value !== "object") {
+    return false;
+  }
   const candidate = value as {
     schemaVersion?: unknown;
     registryVersion?: unknown;
@@ -250,7 +250,9 @@ function isPortableConfiguration(value: unknown): value is PortableConfiguration
 }
 
 const root = document.getElementById("root");
-if (!root) {throw new Error("Missing #root element");}
+if (!root) {
+  throw new Error("Missing #root element");
+}
 createRoot(root).render(
   <StrictMode>
     <PersistenceLab />

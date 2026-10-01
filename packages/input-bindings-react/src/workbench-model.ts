@@ -18,7 +18,7 @@ export type InputBindingsContextScenario = {
   activeContexts?: readonly string[];
   stack?: readonly ContextLayer[];
   defaultKeyboardMode?: InputBindingsKeyboardMode;
-}
+};
 
 export type ConflictScenarioOutcome =
   | "notSimultaneouslyActive"
@@ -31,7 +31,7 @@ export type ConflictScenarioAssessment = {
   scenarioId: string;
   scenarioLabel: string;
   outcome: ConflictScenarioOutcome;
-}
+};
 
 export function deriveContextScenarios(
   bindings: readonly Binding[],
@@ -60,9 +60,7 @@ export function deriveContextScenarios(
   ];
 }
 
-export function scenarioContextFacts(
-  scenario: InputBindingsContextScenario,
-): ReadonlySet<string> {
+export function scenarioContextFacts(scenario: InputBindingsContextScenario): ReadonlySet<string> {
   return new Set([
     ...(scenario.activeContexts ?? []),
     ...(scenario.stack ?? []).map((layer) => layer.id),
@@ -108,7 +106,9 @@ export function assessConflictsInScenarios(
   return conflicts.map((conflict) => {
     const left = bindingById.get(conflict.leftBindingId);
     const right = bindingById.get(conflict.rightBindingId);
-    if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) {return [];}
+    if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) {
+      return [];
+    }
 
     const sequence = left.sequence.length <= right.sequence.length ? left.sequence : right.sequence;
     const sequenceKey = JSON.stringify(sequence);
