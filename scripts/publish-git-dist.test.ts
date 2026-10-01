@@ -6,7 +6,7 @@ import {
   gitDependencySpecifier,
   publicationOrder,
   rewriteInternalDependencies,
-} from "./publish-git-dist.mjs";
+} from "./publish-git-dist.ts";
 
 const core = { name: "@moritzbrantner/input-bindings", version: "0.1.0" };
 const runtime = {
@@ -34,7 +34,7 @@ const react = {
 const coreCommit = "1".repeat(40);
 const runtimeCommit = "2".repeat(40);
 
-test("publishes every internal dependency before its dependents", () => {
+await test("publishes every internal dependency before its dependents", () => {
   const order = publicationOrder([react, web, runtime, core]).map((manifest) => manifest.name);
   for (const manifest of [runtime, web, react]) {
     for (const dependency of Object.keys(manifest.dependencies)) {
@@ -43,12 +43,12 @@ test("publishes every internal dependency before its dependents", () => {
   }
 });
 
-test("rejects internal dependency cycles", () => {
+await test("rejects internal dependency cycles", () => {
   const cyclicCore = { ...core, dependencies: { "@moritzbrantner/input-bindings-web": "0.1.0" } };
   assert.throws(() => publicationOrder([cyclicCore, runtime, web]), /cycle/u);
 });
 
-test("pins internal dependencies to exact distribution commits", () => {
+await test("pins internal dependencies to exact distribution commits", () => {
   const commits = new Map([
     [core.name, coreCommit],
     [runtime.name, runtimeCommit],
@@ -61,7 +61,7 @@ test("pins internal dependencies to exact distribution commits", () => {
   assert.equal(web.dependencies["@moritzbrantner/input-bindings"], "0.1.0", "input unchanged");
 });
 
-test("leaves external dependencies untouched", () => {
+await test("leaves external dependencies untouched", () => {
   const commits = new Map([
     [core.name, coreCommit],
     [web.name, runtimeCommit],
@@ -69,11 +69,11 @@ test("leaves external dependencies untouched", () => {
   assert.deepEqual(rewriteInternalDependencies(react, commits).peerDependencies, { react: ">=19" });
 });
 
-test("fails closed when an internal dependency has no distribution commit", () => {
+await test("fails closed when an internal dependency has no distribution commit", () => {
   assert.throws(() => rewriteInternalDependencies(web, new Map([[core.name, coreCommit]])), /no distribution commit/u);
 });
 
-test("accepts only exact commits and derives one branch per package", () => {
+await test("accepts only exact commits and derives one branch per package", () => {
   assert.throws(() => gitDependencySpecifier("main"), /exact commit/u);
   assert.equal(distBranch("@moritzbrantner/input-bindings-web"), "dist/input-bindings-web");
 });

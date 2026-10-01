@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "sortImports": true,
+  "ignorePatterns": [
+    "fixtures/**",
+    "bun.lock",
+    "Cargo.lock",
+    "target/**",
+    "release/**",
+    "packages/*/dist/**",
+    "storybook-static/**",
+    "test-results/**",
+    ".unlighthouse/**",
+    "**/node_modules/**"
+  ]
+}

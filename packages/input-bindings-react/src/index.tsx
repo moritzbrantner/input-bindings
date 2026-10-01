@@ -1,5 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState,type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import {
   analyzeConflicts,
@@ -45,7 +44,7 @@ export * from "./model.ts";
 
 export type KeybindingEditorPresentation = "split" | "list" | "keyboard";
 
-export interface KeybindingEditorProps {
+export type KeybindingEditorProps = {
   registry: ActionRegistry;
   profile: Profile;
   onProfileChange: (profile: Profile) => void;
@@ -159,29 +158,29 @@ export function KeybindingEditor({
     const normalizedQuery = query.trim().toLocaleLowerCase();
     return sortedActions.filter((action) => {
       const metadata = actionIndex.get(action.id);
-      if (!metadata) return false;
+      if (!metadata) {return false;}
       const bindings = metadata.bindings;
 
-      if (normalizedQuery && !metadata.searchText.includes(normalizedQuery)) return false;
-      if (category !== "all" && categoryLabel(action) !== category) return false;
-      if (context !== "all" && !metadata.contexts.has(context)) return false;
-      if (device !== "all" && !(action.allowedDevices ?? []).includes(device)) return false;
-      if (changedFilter === "changed" && !metadata.changed) return false;
-      if (changedFilter === "default" && metadata.changed) return false;
-      if (conflictFilter === "none" && metadata.conflictKinds.size > 0) return false;
+      if (normalizedQuery && !metadata.searchText.includes(normalizedQuery)) {return false;}
+      if (category !== "all" && categoryLabel(action) !== category) {return false;}
+      if (context !== "all" && !metadata.contexts.has(context)) {return false;}
+      if (device !== "all" && !(action.allowedDevices ?? []).includes(device)) {return false;}
+      if (changedFilter === "changed" && !metadata.changed) {return false;}
+      if (changedFilter === "default" && metadata.changed) {return false;}
+      if (conflictFilter === "none" && metadata.conflictKinds.size > 0) {return false;}
       if (
         conflictFilter !== "all" &&
         conflictFilter !== "none" &&
         !metadata.conflictKinds.has(conflictFilter)
-      ) return false;
+      ) {return false;}
       if (
         shortcutFilter.length > 0 &&
         !bindings.some((binding) => sequenceStartsWith(binding.sequence, shortcutFilter))
-      ) return false;
+      ) {return false;}
       if (
         keyboardFilter &&
         !bindings.some((binding) => keyboardFilterIds.has(binding.id))
-      ) return false;
+      ) {return false;}
       return true;
     });
   }, [
@@ -214,7 +213,7 @@ export function KeybindingEditor({
   const saveBinding = (actionId: string, bindingId: string | undefined, sequence: KeyStroke[]) => {
     if (bindingId) {
       const existing = bindingById.get(bindingId);
-      if (!existing) return;
+      if (!existing) {return;}
       applyBindings(
         effectiveBindings.map((binding) =>
           binding.id === bindingId ? { ...binding, sequence: structuredClone(sequence) } : binding,
@@ -239,7 +238,7 @@ export function KeybindingEditor({
 
   const removeBinding = (bindingId: string) => {
     applyBindings(effectiveBindings.filter((binding) => binding.id !== bindingId));
-    if (selectedBindingId === bindingId) setSelectedBindingId(undefined);
+    if (selectedBindingId === bindingId) {setSelectedBindingId(undefined);}
   };
 
   const resetAction = (action: ActionDefinition) => {
@@ -381,7 +380,7 @@ export function KeybindingEditor({
                 className={["ib-row", actionSelected ? "is-selected" : ""].filter(Boolean).join(" ")}
                 role="row"
                 key={action.id}
-                onClick={() => { setSelectedActionId(action.id); if (keyboardScope === "visible") setKeyboardScope("selectedAction"); }}
+                onClick={() => { setSelectedActionId(action.id); if (keyboardScope === "visible") {setKeyboardScope("selectedAction");} }}
               >
                 <div className="ib-action" role="cell">
                   <div className="ib-action-title-line">
@@ -511,7 +510,7 @@ function BindingEntry({ binding, selected, conflicts, bindingById, actionById, o
   bindingById: ReadonlyMap<string, Binding>;
   actionById: ReadonlyMap<string, ActionDefinition>;
   onSelect: () => void;
-  onEdit?: () => void;
+  onEdit?: (() => void) | undefined;
   onRemove: () => void;
 }) {
   return (
@@ -536,17 +535,17 @@ function BindingEntry({ binding, selected, conflicts, bindingById, actionById, o
   );
 }
 
-export interface KeyboardViewProps {
+export type KeyboardViewProps = {
   bindings: readonly Binding[];
   conflicts?: readonly Conflict[];
-  selectedActionId?: string;
-  selectedBindingId?: string;
+  selectedActionId?: string | undefined;
+  selectedBindingId?: string | undefined;
   scope?: KeyboardScope;
-  context?: string;
+  context?: string | undefined;
   visibleActionIds?: readonly string[];
   pressedCodes?: ReadonlySet<string>;
   highlightedSequence?: readonly KeyStroke[];
-  layoutLabels?: ReadonlyMap<string, string>;
+  layoutLabels?: ReadonlyMap<string, string> | undefined;
   onKeyInspect?: (code: string, bindingIds: string[]) => void;
 }
 
@@ -573,7 +572,7 @@ export function KeyboardView({ bindings, conflicts = [], selectedActionId, selec
     [allBindingIdsByCode, bindings, layoutLabels, scopedBindings],
   );
   const selectedCodes = useMemo(() => {
-    if (!selectedBindingId) return new Set<string>();
+    if (!selectedBindingId) {return new Set<string>();}
     const selectedBinding = bindings.find((binding) => binding.id === selectedBindingId);
     return new Set(
       selectedBinding ? codesForSequence(selectedBinding.sequence, layoutLabels) : [],
@@ -612,8 +611,8 @@ function KeyboardKey({ definition, scopedBindingIds, allBindingIds, conflictIds,
   selected: boolean;
   pressed: boolean;
   highlighted: boolean;
-  layoutLabels?: ReadonlyMap<string, string>;
-  onInspect?: (code: string, bindingIds: string[]) => void;
+  layoutLabels?: ReadonlyMap<string, string> | undefined;
+  onInspect?: ((code: string, bindingIds: string[]) => void) | undefined;
 }) {
   const conflicting = allBindingIds.some((id) => conflictIds.has(id));
   const classes = ["ib-key", scopedBindingIds.length > 0 ? "is-used" : "", conflicting ? "is-conflict" : "", selected ? "is-selected" : "", pressed ? "is-pressed" : "", highlighted ? "is-highlighted" : ""].filter(Boolean).join(" ");
@@ -669,16 +668,12 @@ function KeyboardLegend() {
 
 function normalizeManualKeyValue(value: string, mode: "logical" | "physical"): string | undefined {
   const trimmed = value.trim();
-  if (!trimmed) return undefined;
+  if (!trimmed) {return undefined;}
 
-  const normalized =
-    mode === "logical"
-      ? normalizeLogicalKey(trimmed)
-      : /^[a-z]$/i.test(trimmed)
-        ? `Key${trimmed.toUpperCase()}`
-        : /^[0-9]$/.test(trimmed)
-          ? `Digit${trimmed}`
-          : trimmed;
+  let normalized = trimmed;
+  if (mode === "logical") { normalized = normalizeLogicalKey(trimmed); }
+  else if (/^[a-z]$/i.test(trimmed)) { normalized = `Key${trimmed.toUpperCase()}`; }
+  else if (/^[0-9]$/.test(trimmed)) { normalized = `Digit${trimmed}`; }
 
   return isModifierOnlyKeyboardValue(normalized, mode) ? undefined : normalized;
 }
@@ -689,8 +684,8 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   allBindings: readonly Binding[];
   allConflicts: readonly Conflict[];
   actionId?: string;
-  existingBinding?: Binding;
-  layoutLabels?: ReadonlyMap<string, string>;
+  existingBinding?: Binding | undefined;
+  layoutLabels?: ReadonlyMap<string, string> | undefined;
   onSave: (sequence: KeyStroke[]) => void;
   onCancel: () => void;
 }) {
@@ -706,20 +701,23 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   const manualKeyListId = useId();
 
   const previewBinding = useMemo<Binding | undefined>(() => {
-    if (!actionId || sequence.length === 0) return undefined;
+    if (!actionId || sequence.length === 0) {return undefined;}
     return existingBinding
       ? { ...existingBinding, sequence: structuredClone(sequence) }
       : { id: "__input-bindings-preview__", action: actionId, sequence: structuredClone(sequence), when: { op: "always" }, priority: 0 };
   }, [actionId, existingBinding, sequence]);
 
   const previewConflicts = useMemo(() => {
-    if (!previewBinding) return [];
+    if (!previewBinding) {return [];}
     const previewId = previewBinding.id;
     const candidates = [...allBindings.filter((binding) => binding.id !== existingBinding?.id), previewBinding];
     return analyzeConflicts(candidates).filter((conflict) => conflict.leftBindingId === previewId || conflict.rightBindingId === previewId);
   }, [allBindings, existingBinding?.id, previewBinding]);
 
-  const status = !focused ? "Idle" : previewConflicts.length > 0 ? "Conflict detected" : sequence.length > 0 ? "Captured · ready for next chord step" : "Listening";
+  let status = "Listening";
+  if (!focused) { status = "Idle"; }
+  else if (previewConflicts.length > 0) { status = "Conflict detected"; }
+  else if (sequence.length > 0) { status = "Captured · ready for next chord step"; }
   const normalizedManualKey = normalizeManualKeyValue(manualKey, mode);
   const manualStroke: KeyStroke | undefined = normalizedManualKey
     ? {
@@ -729,7 +727,7 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
     : undefined;
 
   const applyManualStroke = (replace: boolean) => {
-    if (!manualStroke) return;
+    if (!manualStroke) {return;}
     const nextSequence = replace
       ? [manualStroke]
       : [...sequence, manualStroke].slice(0, 4);
@@ -744,7 +742,7 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.code) setPressedCodes((current) => new Set([...current, event.code]));
+    if (event.code) {setPressedCodes((current) => new Set([...current, event.code]));}
     event.preventDefault();
     event.stopPropagation();
     if (event.repeat) { setFeedback("Held-key repeat ignored. Release the key before recording it again."); return; }
@@ -835,13 +833,7 @@ function BindingRecorder({ title, initialSequence, allBindings, allConflicts, ac
                       }
                     />
                     <span>
-                      {modifier === "ctrl"
-                        ? "Ctrl"
-                        : modifier === "meta"
-                          ? "Meta"
-                          : modifier === "altGraph"
-                            ? "AltGraph"
-                            : modifier[0]!.toUpperCase() + modifier.slice(1)}
+                      {{ ctrl: "Ctrl", meta: "Meta", altGraph: "AltGraph", alt: "Alt", shift: "Shift" }[modifier]}
                     </span>
                   </label>
                 ))}
@@ -903,7 +895,9 @@ function ProfileTransfer({ compiledRegistry, profile, onApply, onClose }: { comp
       <h2 id="ib-transfer-title">Import / export profile</h2>
       <p>Profiles contain only user deltas over consumer-owned defaults.</p>
       <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={14} spellCheck={false} />
-      <div className="ib-transfer-preview" aria-live="polite">{preview.error ? <strong>Cannot import: {preview.error}</strong> : preview.report?.valid ? <span>Preview valid. {preview.profile?.patches.length ?? 0} patches will be applied.</span> : <span>Preview rejected: {preview.report?.diagnostics.map((item) => item.kind).join(", ")}</span>}</div>
+      <div className="ib-transfer-preview" aria-live="polite">{preview.error && <strong>Cannot import: {preview.error}</strong>}
+        {!preview.error && preview.report?.valid && <span>Preview valid. {preview.profile?.patches.length ?? 0} patches will be applied.</span>}
+        {!preview.error && !preview.report?.valid && <span>Preview rejected: {preview.report?.diagnostics.map((item) => item.kind).join(", ")}</span>}</div>
       <div className="ib-recorder-actions">
         <button type="button" disabled={!preview.profile || !preview.report?.valid} onClick={() => preview.profile && onApply(preview.profile)}>Apply imported profile</button>
         <button type="button" onClick={() => setDraft(JSON.stringify(profile, null, 2))}>Restore current JSON</button>
@@ -920,14 +914,14 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
 function parseProfilePreview(compiledRegistry: CompiledActionRegistry, draft: string) {
   try {
     const value = JSON.parse(draft) as unknown;
-    if (!isProfile(value)) return { error: "JSON is not a profile with an id and patches array." };
+    if (!isProfile(value)) {return { error: "JSON is not a profile with an id and patches array." };}
     try { return { profile: value, report: validateCompiledRegistry(compiledRegistry, value) }; }
     catch (error) { return { error: error instanceof Error ? error.message : "Profile validation failed." }; }
   } catch (error) { return { error: error instanceof Error ? error.message : "Invalid JSON." }; }
 }
 
 function isProfile(value: unknown): value is Profile {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {return false;}
   const candidate = value as { id?: unknown; patches?: unknown };
   return typeof candidate.id === "string" && Array.isArray(candidate.patches);
 }
@@ -953,8 +947,8 @@ function useKeyboardLayoutLabels(): ReadonlyMap<string, string> {
   useEffect(() => {
     let cancelled = false;
     const keyboard = (navigator as Navigator & { keyboard?: { getLayoutMap?: () => Promise<ReadonlyMap<string, string>> } }).keyboard;
-    if (!keyboard?.getLayoutMap) return;
-    keyboard.getLayoutMap().then((layoutMap) => { if (!cancelled) setLabels(new Map(layoutMap)); }).catch(() => { /* Physical fallback remains usable. */ });
+    if (!keyboard?.getLayoutMap) {return;}
+    keyboard.getLayoutMap().then((layoutMap) => { if (!cancelled) {setLabels(new Map(layoutMap));} }).catch(() => { /* Physical fallback remains usable. */ });
     return () => { cancelled = true; };
   }, []);
   return labels;

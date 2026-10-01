@@ -1,0 +1,52 @@
+{
+  "extends": "./tsconfig.packages.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "types": [
+      "node",
+      "react",
+      "react-dom"
+    ],
+    "paths": {
+      "@moritzbrantner/input-bindings": [
+        "./packages/input-bindings/src/public.ts"
+      ],
+      "@moritzbrantner/input-bindings/*": [
+        "./packages/input-bindings/src/*.ts"
+      ],
+      "@moritzbrantner/input-bindings-runtime": [
+        "./packages/input-bindings-runtime/src/index.ts"
+      ],
+      "@moritzbrantner/input-bindings-web": [
+        "./packages/input-bindings-web/src/index.ts"
+      ],
+      "@moritzbrantner/input-bindings-web/platform-conflicts": [
+        "./packages/input-bindings-web/src/platformCatalog.ts"
+      ],
+      "@moritzbrantner/input-bindings-react": [
+        "./packages/input-bindings-react/src/index.tsx"
+      ],
+      "@moritzbrantner/input-bindings-react/model": [
+        "./packages/input-bindings-react/src/model.ts"
+      ],
+      "@moritzbrantner/input-bindings-react/workbench": [
+        "./packages/input-bindings-react/src/Workbench.tsx"
+      ],
+      "@moritzbrantner/input-bindings-react/platform-advisories": [
+        "./packages/input-bindings-react/src/PlatformAwareKeybindingEditor.tsx"
+      ]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/*/storybook/**/*.ts",
+    "packages/*/storybook/**/*.tsx",
+    "packages/*/vite*.ts",
+    ".storybook/**/*.ts",
+    "playwright.*.ts",
+    "scripts/**/*.ts",
+    "packages/input-bindings-demo/scripts/**/*.ts"
+  ]
+}

@@ -1,4 +1,4 @@
-import type { ActionRegistry, Binding } from "@moritzbrantner/input-bindings";
+import type { ActionRegistry, Modifiers, Binding } from "@moritzbrantner/input-bindings";
 import { InputRuntimeController } from "@moritzbrantner/input-bindings-runtime";
 import { attachKeyboardRuntime } from "@moritzbrantner/input-bindings-web";
 
@@ -6,7 +6,7 @@ const logical = (
   id: string,
   action: string,
   key: string,
-  modifiers: Binding["sequence"][number] extends { modifiers?: infer M } ? M : never = {},
+  modifiers: Modifiers = {},
 ): Binding => ({
   id,
   action,
@@ -53,13 +53,13 @@ const controller = new InputRuntimeController({
   getActiveContexts: () => new Set(["pages"]),
   consumePolicy: "matched",
   onDispatch(dispatch) {
-    if (dispatch.phase !== "press") return;
+    if (dispatch.phase !== "press") {return;}
     if (dispatch.action === "site.help") {
       toggleHelp();
       return;
     }
     const destination = destinations[dispatch.action];
-    if (destination) window.location.assign(new URL(destination, window.location.href));
+    if (destination) {window.location.assign(new URL(destination, window.location.href));}
   },
 });
 

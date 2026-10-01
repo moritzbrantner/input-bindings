@@ -14,7 +14,7 @@ import {
   type PresetDefinition,
 } from "../src/persistence.ts";
 
-interface FixtureCase {
+type FixtureCase = {
   name: string;
   configuration: PortableConfigurationV1;
   expected: {

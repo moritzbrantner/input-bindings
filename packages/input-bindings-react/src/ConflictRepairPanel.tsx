@@ -16,7 +16,7 @@ import {
   type InputBindingsContextScenario,
 } from "./workbench-model.ts";
 
-export interface ConflictRepairPanelProps {
+export type ConflictRepairPanelProps = {
   bindings: readonly Binding[];
   conflicts: readonly Conflict[];
   actions: ReadonlyMap<string, ActionDefinition>;
@@ -123,7 +123,7 @@ export function ConflictRepairPanel({
 }
 
 function ScenarioEvidence({ assessments }: { assessments: readonly ConflictScenarioAssessment[] }) {
-  if (assessments.length === 0) return null;
+  if (assessments.length === 0) {return null;}
   const observed = assessments.filter((assessment) => assessment.outcome !== "notSimultaneouslyActive");
   if (observed.length === 0) {
     return (
@@ -163,10 +163,10 @@ function BindingSummary({
   binding,
   actions,
 }: {
-  binding?: Binding;
+  binding: Binding | undefined;
   actions: ReadonlyMap<string, ActionDefinition>;
 }) {
-  if (!binding) return <div className="ib-conflict-binding"><strong>Missing binding</strong></div>;
+  if (!binding) {return <div className="ib-conflict-binding"><strong>Missing binding</strong></div>;}
   const action = actions.get(binding.action);
   return (
     <div className="ib-conflict-binding">

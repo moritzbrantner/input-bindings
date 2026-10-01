@@ -1,4 +1,4 @@
-export interface KeyboardLayoutFixture {
+export type KeyboardLayoutFixture = {
   id: "qwerty" | "qwertz" | "azerty" | "dvorak" | "colemak";
   label: string;
   description: string;
@@ -118,6 +118,6 @@ export function keyboardLayoutFixture(
   id: KeyboardLayoutFixture["id"],
 ): KeyboardLayoutFixture {
   const fixture = KEYBOARD_LAYOUT_FIXTURES.find((candidate) => candidate.id === id);
-  if (!fixture) throw new Error(`Unknown keyboard layout fixture: ${id}`);
+  if (!fixture) {throw new Error(`Unknown keyboard layout fixture: ${id}`);}
   return fixture;
 }

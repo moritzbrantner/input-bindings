@@ -20,7 +20,7 @@ type ScenarioKind =
   | "analyzeConflicts"
   | "applyProfile";
 
-interface Scenario {
+type Scenario = {
   id: string;
   kind: ScenarioKind;
   seed: number;
@@ -29,13 +29,13 @@ interface Scenario {
   patchCount?: number;
 }
 
-interface BenchmarkManifest {
+type BenchmarkManifest = {
   schemaVersion: number;
   generatorVersion: number;
   scenarios: Scenario[];
 }
 
-interface ScenarioResult {
+type ScenarioResult = {
   id: string;
   kind: ScenarioKind;
   operations: number;
@@ -71,7 +71,7 @@ const manifest = JSON.parse(
 
 function modifiers(rng: DeterministicRng): Modifiers | undefined {
   const mask = rng.range(8);
-  if (mask === 0) return undefined;
+  if (mask === 0) {return undefined;}
   return {
     ctrl: (mask & 1) !== 0,
     shift: (mask & 2) !== 0,

@@ -18,12 +18,13 @@ const config: StorybookConfig = {
   },
   stories: ["../packages/input-bindings-react/storybook/**/*.stories.@(ts|tsx)"],
   viteFinal(viteConfig) {
+    const existingAliases = viteConfig.resolve?.alias;
     viteConfig.resolve = {
       ...viteConfig.resolve,
-      alias: {
-        ...(Array.isArray(viteConfig.resolve?.alias) ? {} : viteConfig.resolve?.alias),
-        ...aliases,
-      },
+      alias: [
+        ...Object.entries(aliases).map(([find, replacement]) => ({ find, replacement })),
+        ...(Array.isArray(existingAliases) ? existingAliases : Object.entries(existingAliases ?? {}).map(([find, replacement]) => ({ find, replacement }))),
+      ],
     };
     return viteConfig;
   },

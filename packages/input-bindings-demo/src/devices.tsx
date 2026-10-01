@@ -132,7 +132,7 @@ const registry: ActionRegistry = {
   ],
 };
 
-interface LogEntry {
+type LogEntry = {
   id: number;
   dispatch: RuntimeDispatch;
 }
@@ -246,7 +246,7 @@ function App() {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {throw new Error("Missing #root element");}
 createRoot(root).render(
   <StrictMode>
     <App />

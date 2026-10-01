@@ -11,10 +11,12 @@ import {
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { releaseOutput } from "./release-output.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const args = process.argv.slice(2);
 const requestedVersion = argumentValue("--version");
-const outputDirectory = resolve(root, argumentValue("--output") ?? "release");
+const outputDirectory = releaseOutput(root, argumentValue("--output") ?? "release");
 
 const packageManifests = [
   "packages/input-bindings/package.json",
@@ -47,7 +49,7 @@ if (cargoVersion !== releaseVersion) {
   );
 }
 
-run("npm", ["run", "build:pages"]);
+run("bun", ["run", "build:pages"]);
 run("cargo", ["package", "--locked", "-p", "input-bindings-core"]);
 
 const browserSource = resolve(
@@ -130,9 +132,9 @@ writeFileSync(
 
 console.log(`Built input-bindings ${releaseVersion} artifacts in ${outputDirectory}`);
 
-function argumentValue(name) {
+function argumentValue(name: string) {
   const index = args.indexOf(name);
-  if (index < 0) return undefined;
+  if (index < 0) {return undefined;}
   const value = args[index + 1];
   if (!value || value.startsWith("--")) {
     throw new Error(`${name} requires a value.`);
@@ -144,23 +146,24 @@ function workspaceCargoVersion() {
   const cargoToml = readFileSync(resolve(root, "Cargo.toml"), "utf8");
   const section = cargoToml.match(/\[workspace\.package\]([\s\S]*?)(?:\n\[|$)/u)?.[1];
   const version = section?.match(/^version\s*=\s*"([^"]+)"/mu)?.[1];
-  if (!version) throw new Error("Cargo workspace version is missing.");
+  if (!version) {throw new Error("Cargo workspace version is missing.");}
   return version;
 }
 
-function run(command, commandArgs) {
+function run(command: string, commandArgs: string[]) {
   const result = spawnSync(command, commandArgs, {
     cwd: root,
+    timeout: 600_000,
     encoding: "utf8",
     stdio: "inherit",
     shell: process.platform === "win32",
   });
-  if (result.error) throw result.error;
+  if (result.error) {throw result.error;}
   if (result.status !== 0) {
     throw new Error(`${command} ${commandArgs.join(" ")} failed with exit ${result.status}.`);
   }
 }
 
-function sha256(path) {
+function sha256(path: string) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }

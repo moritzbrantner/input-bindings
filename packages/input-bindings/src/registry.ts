@@ -13,12 +13,12 @@ import {
 export type DeviceClass = "keyboard" | "mouse" | "gamepad" | "pointer";
 export type RepeatPolicy = "never" | "allow";
 
-export interface Provenance {
+export type Provenance = {
   source: string;
   version?: string;
 }
 
-export interface ActionDefinition {
+export type ActionDefinition = {
   id: string;
   title: string;
   description?: string;
@@ -29,7 +29,7 @@ export interface ActionDefinition {
   provenance?: Provenance;
 }
 
-export interface ActionRegistry {
+export type ActionRegistry = {
   actions: ActionDefinition[];
 }
 
@@ -55,7 +55,7 @@ export type ValidationDiagnosticKind =
   | "profileMissingBinding"
   | "profileReplacementIdMismatch";
 
-export interface ValidationDiagnostic {
+export type ValidationDiagnostic = {
   kind: ValidationDiagnosticKind;
   actionId?: string;
   bindingId?: string;
@@ -63,14 +63,14 @@ export interface ValidationDiagnostic {
   strokeIndex?: number;
 }
 
-export interface RegistryValidationReport {
+export type RegistryValidationReport = {
   valid: boolean;
   effectiveBindings: Binding[];
   diagnostics: ValidationDiagnostic[];
   conflicts: Conflict[];
 }
 
-export interface CompiledActionRegistry {
+export type CompiledActionRegistry = {
   readonly baseBindings: readonly Binding[];
   readonly diagnostics: readonly ValidationDiagnostic[];
   readonly conflicts: readonly Conflict[];
@@ -89,7 +89,7 @@ export function compileActionRegistry(registry: ActionRegistry): CompiledActionR
   const diagnostics: ValidationDiagnostic[] = [];
 
   for (const [actionId, count] of counts(actions.map((action) => action.id))) {
-    if (count > 1) diagnostics.push({ kind: "duplicateActionId", actionId });
+    if (count > 1) {diagnostics.push({ kind: "duplicateActionId", actionId });}
   }
 
   const flattenedDefaults = actions.flatMap((action) =>
@@ -97,12 +97,12 @@ export function compileActionRegistry(registry: ActionRegistry): CompiledActionR
   );
 
   for (const [bindingId, count] of counts(flattenedDefaults.map((binding) => binding.id))) {
-    if (count > 1) diagnostics.push({ kind: "duplicateBindingId", bindingId });
+    if (count > 1) {diagnostics.push({ kind: "duplicateBindingId", bindingId });}
   }
 
   for (const action of actions) {
     const defaults = [...(action.defaults ?? [])].sort((left, right) => compareText(left.id, right.id));
-    if (action.id.length === 0) diagnostics.push({ kind: "emptyActionId", actionId: action.id });
+    if (action.id.length === 0) {diagnostics.push({ kind: "emptyActionId", actionId: action.id });}
 
     for (const binding of defaults) {
       if (binding.action !== action.id) {
@@ -124,7 +124,7 @@ export function compileActionRegistry(registry: ActionRegistry): CompiledActionR
 
   const baseMap = new Map<string, Binding>();
   for (const binding of flattenedDefaults) {
-    if (!baseMap.has(binding.id)) baseMap.set(binding.id, structuredClone(binding));
+    if (!baseMap.has(binding.id)) {baseMap.set(binding.id, structuredClone(binding));}
   }
   const baseBindings = [...baseMap.values()].sort((left, right) => compareText(left.id, right.id));
   const conflicts = analyzeConflicts(
@@ -201,7 +201,7 @@ export function validateRegistry(
 
 function counts(values: readonly string[]): Array<[string, number]> {
   const result = new Map<string, number>();
-  for (const value of values) result.set(value, (result.get(value) ?? 0) + 1);
+  for (const value of values) {result.set(value, (result.get(value) ?? 0) + 1);}
   return [...result.entries()].sort(([left], [right]) => compareText(left, right));
 }
 
@@ -218,9 +218,9 @@ function validateBinding(
     ...(patchIndex === undefined ? {} : { patchIndex }),
   };
 
-  if (binding.id.length === 0) diagnostics.push({ kind: "emptyBindingId", ...base });
-  if (!knownActions.has(binding.action)) diagnostics.push({ kind: "unknownAction", ...base });
-  if (binding.sequence.length === 0) diagnostics.push({ kind: "emptySequence", ...base });
+  if (binding.id.length === 0) {diagnostics.push({ kind: "emptyBindingId", ...base });}
+  if (!knownActions.has(binding.action)) {diagnostics.push({ kind: "unknownAction", ...base });}
+  if (binding.sequence.length === 0) {diagnostics.push({ kind: "emptySequence", ...base });}
 
   const allowed = allowedDevicesByAction.get(binding.action) ?? [];
   binding.sequence.forEach((stroke, strokeIndex) => {
@@ -228,7 +228,7 @@ function validateBinding(
       diagnostics.push({ kind: "defaultDeviceNotAllowed", ...base, strokeIndex });
     }
     const invalidKind = invalidStrokeKind(stroke);
-    if (invalidKind) diagnostics.push({ kind: invalidKind, ...base, strokeIndex });
+    if (invalidKind) {diagnostics.push({ kind: invalidKind, ...base, strokeIndex });}
   });
 }
 
@@ -244,8 +244,8 @@ function cloneConflict(conflict: Conflict): Conflict {
 
 function invalidStrokeKind(stroke: InputStroke): ValidationDiagnosticKind | undefined {
   if (isKeyStroke(stroke)) {
-    if (stroke.key.kind === "logical" && !validLogicalKey(stroke.key.value)) return "invalidLogicalKey";
-    if (stroke.key.kind === "physical" && !validPhysicalKey(stroke.key.value)) return "invalidPhysicalKey";
+    if (stroke.key.kind === "logical" && !validLogicalKey(stroke.key.value)) {return "invalidLogicalKey";}
+    if (stroke.key.kind === "physical" && !validPhysicalKey(stroke.key.value)) {return "invalidPhysicalKey";}
     return undefined;
   }
   switch (stroke.device) {
@@ -256,14 +256,14 @@ function invalidStrokeKind(stroke: InputStroke): ValidationDiagnosticKind | unde
         ? undefined
         : "invalidWheelDirection";
     case "gamepadButton":
-      if (!validOptionalGamepad(stroke.gamepad)) return "invalidGamepadIndex";
-      if (!validInteger(stroke.button, 0, 255)) return "invalidGamepadButton";
-      if (!validPercent(stroke.threshold, 1, 100)) return "invalidThreshold";
+      if (!validOptionalGamepad(stroke.gamepad)) {return "invalidGamepadIndex";}
+      if (!validInteger(stroke.button, 0, 255)) {return "invalidGamepadButton";}
+      if (!validPercent(stroke.threshold, 1, 100)) {return "invalidThreshold";}
       return undefined;
     case "gamepadAxis":
-      if (!validOptionalGamepad(stroke.gamepad)) return "invalidGamepadIndex";
-      if (!validInteger(stroke.axis, 0, 31)) return "invalidGamepadAxis";
-      if (!validPercent(stroke.threshold, 1, 100)) return "invalidThreshold";
+      if (!validOptionalGamepad(stroke.gamepad)) {return "invalidGamepadIndex";}
+      if (!validInteger(stroke.axis, 0, 31)) {return "invalidGamepadAxis";}
+      if (!validPercent(stroke.threshold, 1, 100)) {return "invalidThreshold";}
       if (!validPercent(stroke.deadzone, 0, 99) || stroke.deadzone >= stroke.threshold) {
         return "invalidDeadzone";
       }
@@ -281,6 +281,7 @@ function bindingIsResolvable(binding: Binding, knownActions: ReadonlySet<string>
 }
 
 function validLogicalKey(value: string): boolean {
+  // oxlint-disable-next-line no-control-regex -- Reject control characters at the logical-key validation boundary.
   return value.length > 0 && value !== "Unidentified" && !/[\u0000-\u001F\u007F]/u.test(value);
 }
 
@@ -301,7 +302,9 @@ function validOptionalGamepad(value: number | undefined): boolean {
 }
 
 function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
+  if (left < right) { return -1; }
+  if (left > right) { return 1; }
+  return 0;
 }
 
 function profileDiagnosticKind(kind: ProfileDiagnosticKind): ValidationDiagnosticKind {

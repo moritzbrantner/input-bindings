@@ -9,13 +9,13 @@ import {
   type PlatformConflictRule,
 } from "../src/public.ts";
 
-interface ExpectedDiagnostic {
+type ExpectedDiagnostic = {
   bindingId: string;
   kind: string;
   ruleId?: string;
 }
 
-interface FixtureCase {
+type FixtureCase = {
   name: string;
   environment: PlatformConflictEnvironment;
   bindings: Binding[];

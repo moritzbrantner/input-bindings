@@ -28,9 +28,9 @@ const registry: ActionRegistry = {
 function loadProfile(): Profile {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
-    if (!value) return { id: PROFILE_ID, patches: [] };
+    if (!value) {return { id: PROFILE_ID, patches: [] };}
     const parsed = JSON.parse(value) as Partial<Profile>;
-    if (typeof parsed.id === "string" && Array.isArray(parsed.patches)) return parsed as Profile;
+    if (typeof parsed.id === "string" && Array.isArray(parsed.patches)) {return parsed as Profile;}
   } catch {
     // Corrupt local state is ignored rather than reinterpreted.
   }
@@ -62,7 +62,7 @@ function ConflictLab() {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {throw new Error("Missing #root element");}
 createRoot(root).render(
   <StrictMode>
     <ConflictLab />

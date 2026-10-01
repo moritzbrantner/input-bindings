@@ -119,7 +119,7 @@ export const DEFAULT_WEB_PLATFORM_CONFLICT_CATALOG: readonly PlatformConflictRul
   osRule("macos.shift-meta-4", "macOS captures a selected area", [logical("4", { shift: true, meta: true })], ["macos"], macSource),
 ] as const;
 
-export interface NavigatorPlatformLike {
+export type NavigatorPlatformLike = {
   userAgent?: string;
   platform?: string;
   userAgentData?: { platform?: string };
@@ -140,17 +140,17 @@ export function detectPlatformConflictEnvironment(
 
 export function detectPlatform(platformHint: string, userAgent = ""): PlatformFamily {
   const value = `${platformHint} ${userAgent}`.toLocaleLowerCase();
-  if (/android/u.test(value)) return "android";
-  if (/iphone|ipad|ipod/u.test(value)) return "ios";
-  if (/win/u.test(value)) return "windows";
-  if (/mac/u.test(value)) return "macos";
-  if (/linux|x11/u.test(value)) return "linux";
+  if (/android/u.test(value)) {return "android";}
+  if (/iphone|ipad|ipod/u.test(value)) {return "ios";}
+  if (/win/u.test(value)) {return "windows";}
+  if (/mac/u.test(value)) {return "macos";}
+  if (/linux|x11/u.test(value)) {return "linux";}
   return "unknown";
 }
 
 export function detectBrowser(userAgent: string): BrowserFamily {
-  if (/firefox|fxios/iu.test(userAgent)) return "firefox";
-  if (/edg|chrome|chromium|crios/iu.test(userAgent)) return "chromium";
-  if (/safari/iu.test(userAgent)) return "safari";
+  if (/firefox|fxios/iu.test(userAgent)) {return "firefox";}
+  if (/edg|chrome|chromium|crios/iu.test(userAgent)) {return "chromium";}
+  if (/safari/iu.test(userAgent)) {return "safari";}
   return "unknown";
 }

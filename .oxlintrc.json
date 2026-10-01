@@ -1,0 +1,66 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "import"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "typescript/consistent-type-definitions": [
+      "error",
+      "type"
+    ],
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      {
+        "considerDefaultExhaustiveForUnions": false
+      }
+    ],
+    "typescript/no-floating-promises": [
+      "error",
+      {
+        "ignoreVoid": false
+      }
+    ],
+    "curly": "error",
+    "no-case-declarations": "error",
+    "no-cond-assign": [
+      "error",
+      "always"
+    ],
+    "no-fallthrough": [
+      "error",
+      {
+        "allowEmptyCase": true
+      }
+    ],
+    "no-multi-assign": "error",
+    "no-nested-ternary": "error",
+    "no-sequences": [
+      "error",
+      {
+        "allowInParentheses": false
+      }
+    ],
+    "import/no-duplicates": [
+      "error",
+      {
+        "preferInline": true
+      }
+    ],
+    "import/no-cycle": "error"
+  },
+  "ignorePatterns": [
+    "target/**",
+    "release/**",
+    "packages/*/dist/**",
+    "storybook-static/**",
+    "test-results/**",
+    "**/node_modules/**"
+  ]
+}

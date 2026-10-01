@@ -1,6 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { expect, test,type Locator,type Page } from "@playwright/test";
 
-import type { Locator, Page } from "@playwright/test";
 
 const storyBase = "input-bindings-keyboard-view";
 
@@ -104,7 +103,7 @@ test("narrow viewports keep the physical keyboard scrollable without page-level 
 test("all keyboard layout stories render without browser errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
+    if (message.type() === "error") {errors.push(message.text());}
   });
   page.on("pageerror", (error) => errors.push(error.message));
 

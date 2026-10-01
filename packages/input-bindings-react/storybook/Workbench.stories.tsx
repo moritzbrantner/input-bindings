@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type {
   ActionRegistry,
+  Modifiers,
   Binding,
   Profile,
   WhenExpr,
@@ -24,7 +25,7 @@ const logical = (
   id: string,
   action: string,
   key: string,
-  modifiers: Binding["sequence"][number]["modifiers"] = {},
+  modifiers: Modifiers = {},
   when: WhenExpr = { op: "always" },
 ): Binding => ({
   id,

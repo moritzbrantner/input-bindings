@@ -17,14 +17,14 @@ export type PlatformConflictKind =
   | "altGraphSensitive"
   | "imeSensitive";
 
-export interface PlatformConflictSource {
+export type PlatformConflictSource = {
   id: string;
   title: string;
   url: string;
   verifiedOn?: string;
 }
 
-export interface PlatformConflictRule {
+export type PlatformConflictRule = {
   id: string;
   title: string;
   kind: Exclude<
@@ -36,16 +36,16 @@ export interface PlatformConflictRule {
   platforms?: PlatformFamily[];
   browsers?: BrowserFamily[];
   source: PlatformConflictSource;
-  note?: string;
+  note?: string | undefined;
 }
 
-export interface PlatformConflictEnvironment {
+export type PlatformConflictEnvironment = {
   platform: PlatformFamily;
   browser: BrowserFamily;
   layoutMapAvailable?: boolean;
 }
 
-export interface PlatformConflictDiagnostic {
+export type PlatformConflictDiagnostic = {
   bindingId: string;
   action: string;
   kind: PlatformConflictKind;
@@ -53,7 +53,7 @@ export interface PlatformConflictDiagnostic {
   title: string;
   source: PlatformConflictSource;
   ruleId?: string;
-  note?: string;
+  note?: string | undefined;
 }
 
 const ALT_GRAPH_SOURCE: PlatformConflictSource = {
@@ -86,8 +86,8 @@ export function analyzePlatformConflicts(
 
   for (const binding of bindings) {
     for (const rule of catalog) {
-      if (!ruleApplies(rule, environment)) continue;
-      if (!sequenceEquals(binding.sequence, rule.sequence)) continue;
+      if (!ruleApplies(rule, environment)) {continue;}
+      if (!sequenceEquals(binding.sequence, rule.sequence)) {continue;}
       diagnostics.push({
         bindingId: binding.id,
         action: binding.action,
@@ -144,15 +144,15 @@ function ruleApplies(
   rule: PlatformConflictRule,
   environment: PlatformConflictEnvironment,
 ): boolean {
-  if (rule.platforms?.length && !rule.platforms.includes(environment.platform)) return false;
-  if (rule.browsers?.length && !rule.browsers.includes(environment.browser)) return false;
+  if (rule.platforms?.length && !rule.platforms.includes(environment.platform)) {return false;}
+  if (rule.browsers?.length && !rule.browsers.includes(environment.browser)) {return false;}
   return true;
 }
 
 function sequenceEquals(left: readonly InputStroke[], right: readonly InputStroke[]): boolean {
   return (
     left.length === right.length &&
-    left.every((stroke, index) => inputStrokeEquals(stroke, right[index]))
+    left.every((stroke, index) => right[index] !== undefined && inputStrokeEquals(stroke, right[index]))
   );
 }
 
@@ -160,22 +160,22 @@ function isAltGraphSensitive(
   binding: Binding,
   environment: PlatformConflictEnvironment,
 ): boolean {
-  if (environment.platform !== "windows" && environment.platform !== "linux") return false;
+  if (environment.platform !== "windows" && environment.platform !== "linux") {return false;}
   return binding.sequence.some(
     (stroke) =>
       isKeyStroke(stroke) &&
       Boolean(stroke.modifiers?.ctrl) &&
       Boolean(stroke.modifiers?.alt) &&
-      !Boolean(stroke.modifiers?.altGraph),
+      !stroke.modifiers?.altGraph,
   );
 }
 
 function isImeSensitive(binding: Binding): boolean {
-  if (!isAlways(binding.when)) return false;
+  if (!isAlways(binding.when)) {return false;}
   return binding.sequence.some((stroke) => {
-    if (!isKeyStroke(stroke) || stroke.key.kind !== "logical") return false;
+    if (!isKeyStroke(stroke) || stroke.key.kind !== "logical") {return false;}
     const modifiers = stroke.modifiers ?? {};
-    if (modifiers.ctrl || modifiers.alt || modifiers.meta || modifiers.altGraph) return false;
+    if (modifiers.ctrl || modifiers.alt || modifiers.meta || modifiers.altGraph) {return false;}
     return isPrintableLogicalKey(stroke.key.value);
   });
 }
@@ -184,7 +184,7 @@ function isLayoutSensitive(
   binding: Binding,
   environment: PlatformConflictEnvironment,
 ): boolean {
-  if (environment.layoutMapAvailable !== false) return false;
+  if (environment.layoutMapAvailable !== false) {return false;}
   return binding.sequence.some(
     (stroke) => isKeyStroke(stroke) && stroke.key.kind === "physical",
   );
@@ -211,5 +211,7 @@ function compareDiagnostic(
 }
 
 function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
+  if (left < right) { return -1; }
+  if (left > right) { return 1; }
+  return 0;
 }

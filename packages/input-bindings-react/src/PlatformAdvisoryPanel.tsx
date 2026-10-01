@@ -14,7 +14,7 @@ import {
 import { formatSequence } from "./model.ts";
 import "./platform-advisories.css";
 
-export interface PlatformAdvisoryPanelProps {
+export type PlatformAdvisoryPanelProps = {
   registry: ActionRegistry;
   bindings: readonly Binding[];
 }
@@ -122,7 +122,7 @@ function groupByBinding(
 }
 
 function pretty(value: string): string {
-  if (value === "macos") return "macOS";
-  if (value === "ios") return "iOS";
+  if (value === "macos") {return "macOS";}
+  if (value === "ios") {return "iOS";}
   return value.replace(/^./u, (character) => character.toLocaleUpperCase());
 }

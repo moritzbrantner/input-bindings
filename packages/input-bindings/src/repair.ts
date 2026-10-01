@@ -28,7 +28,7 @@ export type ConflictRepair =
       when: WhenExpr;
     };
 
-export interface ConflictRepairPlan {
+export type ConflictRepairPlan = {
   conflict: Conflict;
   disposition: ConflictDisposition;
   repairs: ConflictRepair[];
@@ -132,7 +132,7 @@ function addPreferRepair(
   other: Binding,
 ): void {
   const otherPriority = other.priority ?? 0;
-  if (otherPriority >= MAX_PRIORITY) return;
+  if (otherPriority >= MAX_PRIORITY) {return;}
   repairs.push({
     kind: "prefer",
     bindingId: target.id,
@@ -148,7 +148,7 @@ function addNarrowRepair(
 ): void {
   const otherWhen = other.when ?? ALWAYS;
   const targetWhen = target.when ?? ALWAYS;
-  if (otherWhen.op === "always" || whenEquals(targetWhen, otherWhen)) return;
+  if (otherWhen.op === "always" || whenEquals(targetWhen, otherWhen)) {return;}
   const exclusion: WhenExpr = { op: "not", expr: structuredClone(otherWhen) };
   const when: WhenExpr = targetWhen.op === "always"
     ? exclusion
@@ -162,7 +162,7 @@ function addNarrowRepair(
 }
 
 function whenEquals(left: WhenExpr, right: WhenExpr): boolean {
-  if (left.op !== right.op) return false;
+  if (left.op !== right.op) {return false;}
   switch (left.op) {
     case "always":
       return true;
@@ -175,7 +175,7 @@ function whenEquals(left: WhenExpr, right: WhenExpr): boolean {
       return (
         right.op === left.op &&
         left.exprs.length === right.exprs.length &&
-        left.exprs.every((expr, index) => whenEquals(expr, right.exprs[index]))
+        left.exprs.every((expr, index) => right.exprs[index] !== undefined && whenEquals(expr, right.exprs[index]))
       );
   }
 }

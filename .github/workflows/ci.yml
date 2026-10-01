@@ -28,10 +28,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npm run test:ts
-      - run: npm run pack:packages
-      - run: npm run build --workspace @moritzbrantner/input-bindings-demo
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run check:fast
+      - run: bun run secrets:check
+      - run: bun run test:ts
+      - run: bun run pack:packages
+      - run: bun run --cwd packages/input-bindings-demo build
 
   storybook:
     runs-on: ubuntu-latest
@@ -40,10 +45,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build:storybook
-      - run: npm run test:storybook:built
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bunx --no-install playwright install --with-deps chromium
+      - run: bun run build:storybook
+      - run: bun run test:storybook:built
       - name: Upload Storybook browser evidence
         if: always()
         uses: actions/upload-artifact@v4

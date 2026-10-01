@@ -45,7 +45,7 @@ const CONTEXTS = ["editing", "game", "modal"] as const;
 
 function generatedModifiers(rng: DeterministicRng): Modifiers | undefined {
   const mask = rng.range(8);
-  if (mask === 0) return undefined;
+  if (mask === 0) {return undefined;}
   return {
     ctrl: (mask & 1) !== 0,
     shift: (mask & 2) !== 0,
@@ -112,7 +112,7 @@ function normalizedConflicts(conflicts: readonly Conflict[]): string[] {
 function generatedContexts(rng: DeterministicRng): Set<string> {
   const result = new Set<string>();
   CONTEXTS.forEach((name, index) => {
-    if ((rng.next() & (1 << index)) !== 0) result.add(name);
+    if ((rng.next() & (1 << index)) !== 0) {result.add(name);}
   });
   return result;
 }

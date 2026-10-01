@@ -8,7 +8,7 @@ export type PortableBindingPatch =
   | { op: "remove"; actionId: string; bindingId: string }
   | { op: "replace"; actionId: string; bindingId: string; binding: Binding };
 
-export interface PortableConfigurationV1 {
+export type PortableConfigurationV1 = {
   schemaVersion: typeof PORTABLE_CONFIGURATION_SCHEMA_VERSION;
   registryVersion: number;
   profileId: string;
@@ -16,7 +16,7 @@ export interface PortableConfigurationV1 {
   patches: PortableBindingPatch[];
 }
 
-export interface PresetDefinition {
+export type PresetDefinition = {
   id: string;
   extends?: string;
   patches: PortableBindingPatch[];
@@ -28,7 +28,7 @@ export type MigrationRule =
   | { op: "removeAction"; actionId: string }
   | { op: "renameBinding"; from: string; to: string };
 
-export interface MigrationStep {
+export type MigrationStep = {
   fromVersion: number;
   toVersion: number;
   rules: MigrationRule[];
@@ -51,7 +51,7 @@ export type ConfigurationDiagnosticKind =
   | "missingBinding"
   | "replacementIdMismatch";
 
-export interface ConfigurationDiagnostic {
+export type ConfigurationDiagnostic = {
   severity: ConfigurationDiagnosticSeverity;
   kind: ConfigurationDiagnosticKind;
   source: string;
@@ -62,26 +62,26 @@ export interface ConfigurationDiagnostic {
   toVersion?: number;
 }
 
-export interface EffectiveBindingProvenance {
+export type EffectiveBindingProvenance = {
   layer: "default" | "preset" | "user";
   sourceId: string;
-  source?: Provenance;
+  source?: Provenance | undefined;
   patchIndex?: number;
 }
 
-export interface EffectiveBindingWithProvenance {
+export type EffectiveBindingWithProvenance = {
   binding: Binding;
   provenance: EffectiveBindingProvenance;
 }
 
-export interface PortableConfigurationReport {
+export type PortableConfigurationReport = {
   valid: boolean;
   configuration?: PortableConfigurationV1;
   effectiveBindings: EffectiveBindingWithProvenance[];
   diagnostics: ConfigurationDiagnostic[];
 }
 
-export interface ResolvePortableConfigurationOptions {
+export type ResolvePortableConfigurationOptions = {
   registry: ActionRegistry;
   currentRegistryVersion: number;
   presets?: readonly PresetDefinition[];
@@ -118,7 +118,7 @@ export function resolvePortableConfiguration(
     options.migrations ?? [],
     diagnostics,
   );
-  if (!migrated) return { valid: false, effectiveBindings: [], diagnostics };
+  if (!migrated) {return { valid: false, effectiveBindings: [], diagnostics };}
 
   const knownActions = new Set(options.registry.actions.map((action) => action.id));
   const effective = defaultBindingsWithProvenance(options.registry);
@@ -173,7 +173,7 @@ export function canonicalizePortableConfiguration(
     profileId: configuration.profileId,
     patches: canonicalizePatches(configuration.patches),
   };
-  if (configuration.presetId) canonical.presetId = configuration.presetId;
+  if (configuration.presetId) {canonical.presetId = configuration.presetId;}
   return canonical;
 }
 
@@ -229,7 +229,7 @@ export function portableConfigurationFromProfile(
     profileId: profile.id,
     patches,
   };
-  if (presetId) configuration.presetId = presetId;
+  if (presetId) {configuration.presetId = presetId;}
   return { configuration: canonicalizePortableConfiguration(configuration), diagnostics };
 }
 
@@ -283,7 +283,7 @@ function migrateConfiguration(
       });
       return undefined;
     }
-    for (const rule of step.rules) applyMigrationRule(migrated, rule, diagnostics);
+    for (const rule of step.rules) {applyMigrationRule(migrated, rule, diagnostics);}
     migrated.registryVersion = step.toVersion;
   }
   migrated.patches = canonicalizePatches(migrated.patches);
@@ -298,7 +298,7 @@ function applyMigrationRule(
   switch (rule.op) {
     case "renameAction":
       for (const patch of configuration.patches) {
-        if (patch.actionId === rule.from) patch.actionId = rule.to;
+        if (patch.actionId === rule.from) {patch.actionId = rule.to;}
         if ((patch.op === "add" || patch.op === "replace") && patch.binding.action === rule.from) {
           patch.binding.action = rule.to;
         }
@@ -306,7 +306,7 @@ function applyMigrationRule(
       break;
     case "removeAction":
       configuration.patches = configuration.patches.filter((patch, patchIndex) => {
-        if (patch.actionId !== rule.actionId) return true;
+        if (patch.actionId !== rule.actionId) {return true;}
         diagnostics.push({
           severity: "warning",
           kind: "removedActionOverride",
@@ -321,11 +321,11 @@ function applyMigrationRule(
     case "renameBinding":
       for (const patch of configuration.patches) {
         if (patch.op === "remove") {
-          if (patch.bindingId === rule.from) patch.bindingId = rule.to;
+          if (patch.bindingId === rule.from) {patch.bindingId = rule.to;}
           continue;
         }
-        if (patch.binding.id === rule.from) patch.binding.id = rule.to;
-        if (patch.op === "replace" && patch.bindingId === rule.from) patch.bindingId = rule.to;
+        if (patch.binding.id === rule.from) {patch.binding.id = rule.to;}
+        if (patch.op === "replace" && patch.bindingId === rule.from) {patch.bindingId = rule.to;}
       }
       break;
   }
@@ -365,7 +365,7 @@ function resolvePresetChain(
   const visited = new Set<string>();
 
   const visit = (id: string): boolean => {
-    if (visited.has(id)) return true;
+    if (visited.has(id)) {return true;}
     if (visiting.has(id)) {
       diagnostics.push({ severity: "error", kind: "presetCycle", source: id });
       return false;
@@ -376,7 +376,7 @@ function resolvePresetChain(
       return false;
     }
     visiting.add(id);
-    if (preset.extends && !visit(preset.extends)) return false;
+    if (preset.extends && !visit(preset.extends)) {return false;}
     visiting.delete(id);
     visited.add(id);
     chain.push(preset);
@@ -512,12 +512,12 @@ function patchTargetId(patch: PortableBindingPatch): string {
 }
 
 function stableJson(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(stableJson);
+  if (Array.isArray(value)) {return value.map(stableJson);}
   if (value && typeof value === "object") {
     const result: Record<string, unknown> = {};
     for (const key of Object.keys(value).sort()) {
       const child = (value as Record<string, unknown>)[key];
-      if (child !== undefined) result[key] = stableJson(child);
+      if (child !== undefined) {result[key] = stableJson(child);}
     }
     return result;
   }
@@ -525,5 +525,7 @@ function stableJson(value: unknown): unknown {
 }
 
 function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
+  if (left < right) { return -1; }
+  if (left > right) { return 1; }
+  return 0;
 }

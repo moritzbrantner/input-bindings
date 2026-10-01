@@ -15,9 +15,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:storybook
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bunx --no-install playwright install --with-deps chromium
+      - run: bun run test:storybook
       - name: Upload Storybook evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -34,9 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:pages
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bunx --no-install playwright install --with-deps chromium
+      - run: bun run test:pages
       - name: Upload Pages browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -54,11 +60,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npm run build:pages
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run build:pages
       - name: Start built Pages preview
         run: |
-          npm run preview --workspace @moritzbrantner/input-bindings-demo > /tmp/input-bindings-vite.log 2>&1 &
+          bun run --cwd packages/input-bindings-demo preview > /tmp/input-bindings-vite.log 2>&1 &
           echo $! > /tmp/input-bindings-vite.pid
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:4173/input-bindings/ > /dev/null; then
@@ -69,7 +78,7 @@ jobs:
           cat /tmp/input-bindings-vite.log
           exit 1
       - name: Install Unlighthouse
-        run: npm install --global @unlighthouse/cli@0.18.1 puppeteer@25.11.0
+        run: bun add --global @unlighthouse/cli@0.18.1 puppeteer@25.11.0
       - name: Audit mobile Pages
         run: |
           unlighthouse-ci \

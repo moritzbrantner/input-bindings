@@ -1,13 +1,14 @@
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
-import { extname, join, normalize, resolve } from "node:path";
+import { extname, join, normalize } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = resolve("storybook-static");
+const root = fileURLToPath(new URL("../storybook-static/", import.meta.url));
 const host = process.env.STORYBOOK_HOST ?? "127.0.0.1";
 const port = Number(process.env.STORYBOOK_PORT ?? "6017");
 
 if (!existsSync(join(root, "index.html"))) {
-  throw new Error("storybook-static is missing. Run npm run build:storybook first.");
+  throw new Error("storybook-static is missing. Run bun run build:storybook first.");
 }
 
 const contentTypes = new Map([
@@ -33,7 +34,7 @@ const server = createServer((request, response) => {
     return;
   }
 
-  if (existsSync(path) && statSync(path).isDirectory()) path = join(path, "index.html");
+  if (existsSync(path) && statSync(path).isDirectory()) {path = join(path, "index.html");}
   if (!existsSync(path) || !statSync(path).isFile()) {
     response.writeHead(404).end("Not found");
     return;

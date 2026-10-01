@@ -2,7 +2,7 @@ export type KeyMatch =
   | { kind: "logical"; value: string }
   | { kind: "physical"; value: string };
 
-export interface Modifiers {
+export type Modifiers = {
   ctrl?: boolean;
   alt?: boolean;
   shift?: boolean;
@@ -10,31 +10,31 @@ export interface Modifiers {
   altGraph?: boolean;
 }
 
-export interface KeyStroke {
+export type KeyStroke = {
   key: KeyMatch;
   modifiers?: Modifiers;
 }
 
-export interface MouseButtonStroke {
+export type MouseButtonStroke = {
   device: "mouseButton";
   button: number;
   modifiers?: Modifiers;
 }
 
-export interface WheelStroke {
+export type WheelStroke = {
   device: "wheel";
   direction: "up" | "down" | "left" | "right";
   modifiers?: Modifiers;
 }
 
-export interface GamepadButtonStroke {
+export type GamepadButtonStroke = {
   device: "gamepadButton";
   button: number;
   threshold: number;
   gamepad?: number;
 }
 
-export interface GamepadAxisStroke {
+export type GamepadAxisStroke = {
   device: "gamepadAxis";
   axis: number;
   direction: "positive" | "negative";
@@ -59,7 +59,7 @@ export type WhenExpr =
   | { op: "all"; exprs: WhenExpr[] }
   | { op: "any"; exprs: WhenExpr[] };
 
-export interface Binding {
+export type Binding = {
   id: string;
   action: string;
   sequence: InputStroke[];
@@ -85,7 +85,7 @@ export type ConflictKind =
   | "potentialExact"
   | "potentialPrefix";
 
-export interface Conflict {
+export type Conflict = {
   leftBindingId: string;
   rightBindingId: string;
   kind: ConflictKind;
@@ -97,7 +97,7 @@ export type BindingPatch =
   | { op: "remove"; bindingId: string }
   | { op: "replace"; bindingId: string; binding: Binding };
 
-export interface Profile {
+export type Profile = {
   id: string;
   patches: BindingPatch[];
 }
@@ -107,13 +107,13 @@ export type ProfileDiagnosticKind =
   | "missingBinding"
   | "replacementIdMismatch";
 
-export interface ProfileDiagnostic {
+export type ProfileDiagnostic = {
   patchIndex: number;
   kind: ProfileDiagnosticKind;
   bindingId: string;
 }
 
-export interface ProfileApplication {
+export type ProfileApplication = {
   bindings: Binding[];
   diagnostics: ProfileDiagnostic[];
 }
@@ -126,8 +126,8 @@ export function isKeyStroke(stroke: InputStroke): stroke is KeyStroke {
 }
 
 export function inputDeviceClass(stroke: InputStroke): InputDeviceClass {
-  if (isKeyStroke(stroke)) return "keyboard";
-  if (stroke.device === "mouseButton" || stroke.device === "wheel") return "mouse";
+  if (isKeyStroke(stroke)) {return "keyboard";}
+  if (stroke.device === "mouseButton" || stroke.device === "wheel") {return "mouse";}
   return "gamepad";
 }
 
@@ -196,7 +196,7 @@ export function resolve(
   sequence: readonly InputStroke[],
   activeContexts: ReadonlySet<string>,
 ): Resolution {
-  if (sequence.length === 0) return { kind: "none" };
+  if (sequence.length === 0) {return { kind: "none" };}
 
   const exact: Binding[] = [];
   const continuations: Binding[] = [];
@@ -205,11 +205,11 @@ export function resolve(
     if (!evaluateWhen(binding.when, activeContexts) || sequence.length > binding.sequence.length) {
       continue;
     }
-    if (!sequence.every((stroke, index) => inputStrokeEquals(stroke, binding.sequence[index]))) {
+    if (!sequence.every((stroke, index) => binding.sequence[index] !== undefined && inputStrokeEquals(stroke, binding.sequence[index]))) {
       continue;
     }
-    if (sequence.length === binding.sequence.length) exact.push(binding);
-    else continuations.push(binding);
+    if (sequence.length === binding.sequence.length) {exact.push(binding);}
+    else {continuations.push(binding);}
   }
 
   if (continuations.length > 0) {
@@ -220,9 +220,12 @@ export function resolve(
     };
   }
 
-  if (exact.length === 0) return { kind: "none" };
+  if (exact.length === 0) {return { kind: "none" };}
 
   const topRank = exact.map(bindingRank).sort(compareRankDescending)[0];
+  if (!topRank) {
+    return { kind: "none" };
+  }
   const top = exact
     .filter((binding) => rankEquals(bindingRank(binding), topRank))
     .sort((left, right) => left.id.localeCompare(right.id));
@@ -232,7 +235,11 @@ export function resolve(
     return { kind: "ambiguous", bindingIds: top.map((binding) => binding.id) };
   }
 
-  return { kind: "resolved", bindingId: top[0].id, action: top[0].action };
+  const winner = top[0];
+  if (!winner) {
+    return { kind: "none" };
+  }
+  return { kind: "resolved", bindingId: winner.id, action: winner.action };
 }
 
 export function analyzeConflicts(bindings: readonly Binding[]): Conflict[] {
@@ -241,11 +248,14 @@ export function analyzeConflicts(bindings: readonly Binding[]): Conflict[] {
   for (const [leftIndex, rightIndex] of conflictCandidatePairs(bindings)) {
     const left = bindings[leftIndex];
     const right = bindings[rightIndex];
+    if (!left || !right) {
+      throw new Error("Conflict candidate index is outside the binding registry.");
+    }
     const relation = sequenceRelation(left.sequence, right.sequence);
-    if (relation === "separate") continue;
+    if (relation === "separate") {continue;}
 
     const overlap = contextOverlap(left.when, right.when);
-    if (overlap.kind === "disjoint") continue;
+    if (overlap.kind === "disjoint") {continue;}
 
     let kind: ConflictKind;
     if (overlap.kind === "unknown") {
@@ -278,7 +288,7 @@ export function analyzeConflicts(bindings: readonly Binding[]): Conflict[] {
   return conflicts;
 }
 
-interface ConflictSequenceTrieNode {
+type ConflictSequenceTrieNode = {
   children: Map<string, ConflictSequenceTrieNode>;
   terminalIndices: number[];
   subtreeIndices: number[];
@@ -307,20 +317,20 @@ function conflictCandidateIndices(
   let node = root;
 
   if (sequence.length === 0) {
-    for (const index of root.subtreeIndices) result.add(index);
+    for (const index of root.subtreeIndices) {result.add(index);}
     return result;
   }
 
-  for (const index of root.terminalIndices) result.add(index);
+  for (const index of root.terminalIndices) {result.add(index);}
 
-  for (let strokeIndex = 0; strokeIndex < sequence.length; strokeIndex += 1) {
-    const child = node.children.get(conflictStrokeKey(sequence[strokeIndex]));
-    if (!child) return result;
+  for (const [strokeIndex, stroke] of sequence.entries()) {
+    const child = node.children.get(conflictStrokeKey(stroke));
+    if (!child) {return result;}
     node = child;
 
     const candidates =
       strokeIndex === sequence.length - 1 ? node.subtreeIndices : node.terminalIndices;
-    for (const index of candidates) result.add(index);
+    for (const index of candidates) {result.add(index);}
   }
 
   return result;
@@ -453,7 +463,7 @@ export function inputStrokeEquals(left: InputStroke, right: InputStroke): boolea
   if (isKeyStroke(left) || isKeyStroke(right)) {
     return isKeyStroke(left) && isKeyStroke(right) && keyStrokeEquals(left, right);
   }
-  if (left.device !== right.device) return false;
+  if (left.device !== right.device) {return false;}
   switch (left.device) {
     case "mouseButton":
       return (
@@ -530,14 +540,14 @@ function sequenceRelation(
 ): SequenceRelation {
   if (
     left.length === right.length &&
-    left.every((stroke, index) => inputStrokeEquals(stroke, right[index]))
+    left.every((stroke, index) => right[index] !== undefined && inputStrokeEquals(stroke, right[index]))
   ) {
     return "exact";
   }
 
   const commonLength = Math.min(left.length, right.length);
   const commonPrefix = Array.from({ length: commonLength }, (_, index) => index).every((index) =>
-    inputStrokeEquals(left[index], right[index]),
+    left[index] !== undefined && right[index] !== undefined && inputStrokeEquals(left[index], right[index]),
   );
   return commonPrefix ? "prefix" : "separate";
 }
@@ -557,7 +567,7 @@ function contextOverlap(left: WhenExpr | undefined, right: WhenExpr | undefined)
   for (let mask = 0; mask < assignmentCount; mask += 1) {
     const active = new Set<string>();
     contexts.forEach((context, index) => {
-      if ((mask & 2 ** index) !== 0) active.add(context);
+      if ((mask & 2 ** index) !== 0) {active.add(context);}
     });
     if (evaluateWhen(left, active) && evaluateWhen(right, active)) {
       return { kind: "overlap", witnessContexts: [...active].sort() };

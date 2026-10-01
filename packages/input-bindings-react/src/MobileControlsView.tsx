@@ -13,11 +13,11 @@ import type { ActionRegistry } from "@moritzbrantner/input-bindings";
 export type MobileControlKind = "stick" | "button" | "gestureZone" | "dock";
 export type MobileControlsOrientation = "portrait" | "landscape";
 
-export interface MobileOverlayControl {
+export type MobileOverlayControl = {
   id: string;
   kind: MobileControlKind;
   label: string;
-  actionId?: string;
+  actionId?: string | undefined;
   /** Left edge as a percentage of the preview surface. */
   x: number;
   /** Top edge as a percentage of the preview surface. */
@@ -28,15 +28,15 @@ export interface MobileOverlayControl {
   height: number;
 }
 
-export interface MobileControlsOverlay {
+export type MobileControlsOverlay = {
   orientation: MobileControlsOrientation;
   controls: readonly MobileOverlayControl[];
 }
 
-export interface MobileControlsViewProps {
+export type MobileControlsViewProps = {
   registry: ActionRegistry;
   overlay: MobileControlsOverlay;
-  onOverlayChange?: (overlay: MobileControlsOverlay) => void;
+  onOverlayChange?: ((overlay: MobileControlsOverlay) => void) | undefined;
 }
 
 const CONTROL_DEFAULTS: Record<
@@ -152,7 +152,7 @@ export function MobileControlsView({
     id: string,
     patch: Partial<Omit<MobileOverlayControl, "id" | "kind">>,
   ) => {
-    if (!onOverlayChange) return;
+    if (!onOverlayChange) {return;}
     onOverlayChange({
       ...overlay,
       controls: overlay.controls.map((control) =>
@@ -162,12 +162,12 @@ export function MobileControlsView({
   };
 
   const setOrientation = (orientation: MobileControlsOrientation) => {
-    if (!onOverlayChange || overlay.orientation === orientation) return;
+    if (!onOverlayChange || overlay.orientation === orientation) {return;}
     onOverlayChange({ ...overlay, orientation });
   };
 
   const addControl = (kind: MobileControlKind) => {
-    if (!onOverlayChange) return;
+    if (!onOverlayChange) {return;}
     const id = nextControlId(kind, overlay.controls);
     const offset = (overlay.controls.length % 4) * 2;
     const control = constrainControl({
@@ -181,7 +181,7 @@ export function MobileControlsView({
   };
 
   const removeSelected = () => {
-    if (!onOverlayChange || !selected) return;
+    if (!onOverlayChange || !selected) {return;}
     const nextControls = overlay.controls.filter((control) => control.id !== selected.id);
     onOverlayChange({ ...overlay, controls: nextControls });
     setSelectedId(nextControls[0]?.id);
@@ -192,7 +192,7 @@ export function MobileControlsView({
     control: MobileOverlayControl,
   ) => {
     setSelectedId(control.id);
-    if (!editable) return;
+    if (!editable) {return;}
     const controlRect = event.currentTarget.getBoundingClientRect();
     dragRef.current = {
       id: control.id,
@@ -209,7 +209,7 @@ export function MobileControlsView({
     const control = drag
       ? overlay.controls.find((candidate) => candidate.id === drag.id)
       : undefined;
-    if (!drag || !frame || !control || drag.pointerId !== event.pointerId) return;
+    if (!drag || !frame || !control || drag.pointerId !== event.pointerId) {return;}
 
     const frameRect = frame.getBoundingClientRect();
     const x = ((event.clientX - frameRect.left - drag.offsetX) / frameRect.width) * 100;
@@ -227,7 +227,7 @@ export function MobileControlsView({
     event: ReactKeyboardEvent<HTMLButtonElement>,
     control: MobileOverlayControl,
   ) => {
-    if (!editable) return;
+    if (!editable) {return;}
     const step = event.shiftKey ? 5 : 1;
     let x = control.x;
     let y = control.y;
@@ -454,7 +454,7 @@ function ExactNumberField({
         disabled={disabled}
         onChange={(event) => {
           const parsed = Number(event.target.value);
-          if (Number.isFinite(parsed)) onChange(parsed);
+          if (Number.isFinite(parsed)) {onChange(parsed);}
         }}
       />
     </label>
@@ -465,15 +465,13 @@ function nextControlId(
   kind: MobileControlKind,
   controls: readonly MobileOverlayControl[],
 ): string {
-  const stem =
-    kind === "gestureZone"
-      ? "gesture-zone"
-      : kind === "button"
-        ? "action-button"
-        : kind;
+  const stems: Record<MobileControlKind, string> = {
+    gestureZone: "gesture-zone", button: "action-button", stick: "stick", dock: "dock",
+  };
+  const stem = stems[kind];
   let suffix = 1;
   const ids = new Set(controls.map((control) => control.id));
-  while (ids.has(`${stem}-${suffix}`)) suffix += 1;
+  while (ids.has(`${stem}-${suffix}`)) {suffix += 1;}
   return `${stem}-${suffix}`;
 }
 

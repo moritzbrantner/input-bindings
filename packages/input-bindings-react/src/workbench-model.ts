@@ -11,7 +11,7 @@ import { contextsForWhen } from "./model.ts";
 
 export type InputBindingsKeyboardMode = "logical" | "physical";
 
-export interface InputBindingsContextScenario {
+export type InputBindingsContextScenario = {
   id: string;
   label: string;
   description?: string;
@@ -27,7 +27,7 @@ export type ConflictScenarioOutcome =
   | "ambiguous"
   | "chordWait";
 
-export interface ConflictScenarioAssessment {
+export type ConflictScenarioAssessment = {
   scenarioId: string;
   scenarioLabel: string;
   outcome: ConflictScenarioOutcome;
@@ -108,7 +108,7 @@ export function assessConflictsInScenarios(
   return conflicts.map((conflict) => {
     const left = bindingById.get(conflict.leftBindingId);
     const right = bindingById.get(conflict.rightBindingId);
-    if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) return [];
+    if (!left || !right || left.sequence.length === 0 || right.sequence.length === 0) {return [];}
 
     const sequence = left.sequence.length <= right.sequence.length ? left.sequence : right.sequence;
     const sequenceKey = JSON.stringify(sequence);

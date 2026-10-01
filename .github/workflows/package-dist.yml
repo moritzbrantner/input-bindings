@@ -22,8 +22,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npm run dist:git
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run dist:git
       - name: Summarize distribution commits
         run: |
           {
@@ -42,8 +45,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - run: npm run dist:git -- --push
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run dist:git --push
       - name: Summarize distribution commits
         run: |
           {

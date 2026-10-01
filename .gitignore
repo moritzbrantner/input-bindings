@@ -1,7 +1,13 @@
 /target/
-/node_modules/
+node_modules/
 /release/
 /packages/*/dist/
 .DS_Store
 /storybook-static/
 /test-results/
+/playwright-report/
+/.unlighthouse/
+/benchmark-results/
+.env
+.env.*
+!.env.example

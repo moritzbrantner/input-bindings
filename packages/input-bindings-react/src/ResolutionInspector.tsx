@@ -5,14 +5,14 @@ import type {
   ResolutionTrace,
 } from "@moritzbrantner/input-bindings";
 
-export interface ResolutionHistoryEntry {
+export type ResolutionHistoryEntry = {
   id: number;
   normalized: string;
   physicalCode: string;
   result: string;
 }
 
-export interface ResolutionInspectorProps {
+export type ResolutionInspectorProps = {
   trace: ResolutionTrace;
   history: readonly ResolutionHistoryEntry[];
   actions: ReadonlyMap<string, ActionDefinition>;

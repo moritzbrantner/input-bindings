@@ -8,7 +8,7 @@ if (files.length === 0) {
   throw new Error("Pages build produced no JavaScript assets.");
 }
 
-const failures = [];
+const failures: string[] = [];
 for (const file of files) {
   const source = await readFile(new URL(file, assetsDirectory), "utf8");
   verifyBrowserSource(source, `assets/${file}`, failures);
@@ -50,7 +50,7 @@ console.log(
   `Verified ${files.length} Pages JavaScript assets and the stable input-bindings browser bundle.`,
 );
 
-function verifyBrowserSource(source, label, failures) {
+function verifyBrowserSource(source: string, label: string, failures: string[]) {
   if (/\bReact\.(?:createElement|Fragment)\b/u.test(source)) {
     failures.push(`${label}: contains classic JSX output that requires an unbound React global`);
   }

@@ -43,12 +43,12 @@ export type RuntimeDecisionReason =
   | "reset"
   | "invalidConfiguration";
 
-export interface RuntimeScheduler {
+export type RuntimeScheduler = {
   setTimeout(callback: () => void, delayMs: number): unknown;
   clearTimeout(handle: unknown): void;
 }
 
-export interface RuntimeDispatch {
+export type RuntimeDispatch = {
   action: string;
   bindingId: string;
   phase: RuntimeActionPhase;
@@ -58,7 +58,7 @@ export interface RuntimeDispatch {
   activeContexts: string[];
 }
 
-export interface RuntimeExplanation {
+export type RuntimeExplanation = {
   reason: RuntimeDecisionReason;
   bindingIds?: string[];
   continuationBindingIds?: string[];
@@ -66,7 +66,7 @@ export interface RuntimeExplanation {
   resetReason?: string;
 }
 
-export interface RuntimeDecision {
+export type RuntimeDecision = {
   kind: RuntimeDecisionKind;
   sequence: InputStroke[];
   activeContexts: string[];
@@ -76,7 +76,7 @@ export interface RuntimeDecision {
   explanation: RuntimeExplanation;
 }
 
-export interface RuntimeControllerOptions {
+export type RuntimeControllerOptions = {
   registry: ActionRegistry;
   profile?: Profile;
   getActiveContexts: () => ReadonlySet<string>;
@@ -89,13 +89,13 @@ export interface RuntimeControllerOptions {
   onDecision?: (decision: RuntimeDecision) => void;
 }
 
-export interface InputDownOptions {
+export type InputDownOptions = {
   repeat?: boolean;
 }
 
 export type KeyDownOptions = InputDownOptions;
 
-interface ActiveActivation {
+type ActiveActivation = {
   action: string;
   bindingId: string;
   sequence: InputStroke[];
@@ -118,13 +118,13 @@ export class InputRuntimeController {
   private profile: Profile | undefined;
   private report: RegistryValidationReport;
   private readonly getActiveContexts: () => ReadonlySet<string>;
-  private readonly getContextStack?: () => readonly ContextLayer[];
+  private readonly getContextStack: (() => readonly ContextLayer[]) | undefined;
   private readonly chordTimeoutMs: number;
   private readonly consumePolicy: RuntimeConsumePolicy;
   private readonly retryOnChordMismatch: boolean;
   private readonly scheduler: RuntimeScheduler;
-  private readonly onDispatch?: (dispatch: RuntimeDispatch) => void;
-  private readonly onDecision?: (decision: RuntimeDecision) => void;
+  private readonly onDispatch: ((dispatch: RuntimeDispatch) => void) | undefined;
+  private readonly onDecision: ((decision: RuntimeDecision) => void) | undefined;
   private pending: InputStroke[] = [];
   private pendingExactBindingIds: string[] = [];
   private timer: unknown;
@@ -455,7 +455,7 @@ export class InputRuntimeController {
       sequence: structuredClone(sequence),
       activeContexts: contexts,
     };
-    if (!repeat) this.activate(dispatch, triggerStroke);
+    if (!repeat) {this.activate(dispatch, triggerStroke);}
 
     return this.emit(
       this.decision(
@@ -475,7 +475,7 @@ export class InputRuntimeController {
   }
 
   private scheduleTimeout(): void {
-    if (this.timer !== undefined) this.scheduler.clearTimeout(this.timer);
+    if (this.timer !== undefined) {this.scheduler.clearTimeout(this.timer);}
     this.timer = this.scheduler.setTimeout(() => {
       this.timer = undefined;
       this.flushPendingTimeout();
@@ -483,7 +483,7 @@ export class InputRuntimeController {
   }
 
   private flushPendingTimeout(): void {
-    if (this.pending.length === 0 || !this.report.valid) return;
+    if (this.pending.length === 0 || !this.report.valid) {return;}
 
     const sequence = structuredClone(this.pending);
     const pendingExactBindingIds = new Set(this.pendingExactBindingIds);
@@ -588,7 +588,7 @@ export class InputRuntimeController {
 
   private contexts(contextStack: readonly ContextLayer[] | undefined): string[] {
     const contexts = new Set(this.getActiveContexts());
-    for (const layer of contextStack ?? []) contexts.add(layer.id);
+    for (const layer of contextStack ?? []) {contexts.add(layer.id);}
     return [...contexts].sort();
   }
 
@@ -633,7 +633,7 @@ export class InputRuntimeController {
   }
 
   private emit(decision: RuntimeDecision): RuntimeDecision {
-    for (const dispatch of decision.dispatches) this.onDispatch?.(structuredClone(dispatch));
+    for (const dispatch of decision.dispatches) {this.onDispatch?.(structuredClone(dispatch));}
     this.onDecision?.(structuredClone(decision));
     return decision;
   }

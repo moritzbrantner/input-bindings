@@ -24,7 +24,7 @@ class FakeTarget {
   }
 
   emit(type: string, event: any): void {
-    for (const listener of this.listeners.get(type) ?? []) listener(event);
+    for (const listener of this.listeners.get(type) ?? []) {listener(event);}
   }
 }
 

@@ -31,7 +31,7 @@ import {
   KeyboardView,
   KeybindingEditor,
 } from "./index.tsx";
-import { describeWhen, formatSequence, profileFromBindings } from "./model.ts";
+import { formatSequence, profileFromBindings } from "./model.ts";
 import {
   ResolutionInspector,
   type ResolutionHistoryEntry,
@@ -61,7 +61,7 @@ export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" |
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
 export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
 
-export interface InputBindingsWorkbenchProps {
+export type InputBindingsWorkbenchProps = {
   registry: ActionRegistry;
   profile: Profile;
   onProfileChange: (profile: Profile) => void;
@@ -124,24 +124,16 @@ export function InputBindingsWorkbench({
   );
 
   const [mode, setMode] = useState<InputBindingsWorkbenchMode>(
-    initialMode ??
-      (initialView === "conflicts"
-        ? "conflicts"
-        : initialView === "preview"
-          ? "preview"
-          : "shortcuts"),
+    initialMode ?? modeForView(initialView),
   );
   const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
     initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
   );
   const compactPresentation = useCompactControlsPresentation();
   const visibleMode = compactPresentation && mode === "preview" ? "shortcuts" : mode;
+  const keyboardPresentation = compactPresentation ? "mobile" : "keyboard";
   const visiblePresentation: "list" | "keyboard" | "mobile" =
-    presentation === "list"
-      ? "list"
-      : compactPresentation
-        ? "mobile"
-        : "keyboard";
+    presentation === "list" ? "list" : keyboardPresentation;
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
   const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
   const [keyboardMode, setKeyboardMode] = useState<InputBindingsKeyboardMode>(
@@ -291,7 +283,7 @@ function WorkbenchTabs({
   const activate = (index: number) => {
     const normalizedIndex = (index + tabs.length) % tabs.length;
     const tab = tabs[normalizedIndex];
-    if (!tab) return;
+    if (!tab) {return;}
     onChange(tab.id);
     queueMicrotask(() => tabRefs.current[normalizedIndex]?.focus());
   };
@@ -519,20 +511,20 @@ function PreviewMode({
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!capturing) return;
+    if (!capturing) {return;}
     event.preventDefault();
     event.stopPropagation();
     if (event.code) {
       setPressedCodes((current) => new Set([...current, event.code]));
     }
-    if (event.repeat || event.nativeEvent.isComposing) return;
+    if (event.repeat || event.nativeEvent.isComposing) {return;}
 
     const stroke = keyboardEventToStroke(event.nativeEvent, {
       mode: keyboardMode,
       respectDefaultPrevented: false,
       ignoreComposing: true,
     });
-    if (!stroke) return;
+    if (!stroke) {return;}
 
     let nextSequence = trace.resolution.kind === "pending" ? [...sequence, stroke] : [stroke];
     let nextTrace = explainResolutionWithContextStack(
@@ -565,7 +557,7 @@ function PreviewMode({
   };
 
   const onKeyUp = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!event.code) return;
+    if (!event.code) {return;}
     setPressedCodes((current) => {
       const next = new Set(current);
       next.delete(event.code);
@@ -740,4 +732,9 @@ function cloneScenario(scenario: InputBindingsContextScenario): InputBindingsCon
     activeContexts: [...(scenario.activeContexts ?? [])],
     stack: (scenario.stack ?? []).map((layer) => ({ ...layer })),
   };
+}
+
+function modeForView(view: InputBindingsWorkbenchView | undefined): InputBindingsWorkbenchMode {
+  if (view === "conflicts" || view === "preview") { return view; }
+  return "shortcuts";
 }

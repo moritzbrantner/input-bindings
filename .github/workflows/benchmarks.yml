@@ -14,8 +14,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
       - uses: dtolnay/rust-toolchain@stable
-      - run: npm ci --ignore-scripts
+      - run: bun install --frozen-lockfile
       - run: mkdir -p benchmark-results
       - name: Capture environment
         run: |
@@ -29,9 +32,9 @@ jobs:
             lscpu
           } > benchmark-results/environment.txt
       - name: Run TypeScript benchmarks
-        run: npm run bench:ts -- benchmark-results/typescript.json
+        run: bun run bench:ts benchmark-results/typescript.json
       - name: Run Rust benchmarks
-        run: npm run bench:rust -- benchmark-results/rust.json
+        run: bun run bench:rust benchmark-results/rust.json
       - uses: actions/upload-artifact@v4
         with:
           name: input-bindings-benchmarks-${{ github.sha }}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "profile": "input-bindings",
+  "tiers": {
+    "fast": [
+      "format:check",
+      "lint",
+      "typecheck"
+    ],
+    "full": [
+      "format:check",
+      "lint",
+      "typecheck",
+      "test:unit",
+      "test:integration",
+      "build",
+      "test:e2e"
+    ]
+  },
+  "requiredCapabilities": [
+    "format:check",
+    "lint",
+    "typecheck",
+    "test:unit",
+    "build"
+  ],
+  "optionalCapabilities": [
+    "test:integration",
+    "test:e2e"
+  ],
+  "capabilityCommands": {
+    "input-bindings-workspace": {
+      "test:e2e": [
+        "bun",
+        "run",
+        "test:e2e"
+      ]
+    },
+    "input-bindings": {
+      "lint": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    }
+  }
+}

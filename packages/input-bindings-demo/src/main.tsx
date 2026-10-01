@@ -1,7 +1,7 @@
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { ActionRegistry, Binding, Profile, WhenExpr } from "@moritzbrantner/input-bindings";
+import type { ActionRegistry, Modifiers, Binding, Profile, WhenExpr } from "@moritzbrantner/input-bindings";
 import {
   createStarterMobileControlsOverlay,
   InputBindingsWorkbench,
@@ -21,7 +21,7 @@ const logical = (
   id: string,
   action: string,
   key: string,
-  modifiers: Binding["sequence"][number]["modifiers"] = {},
+  modifiers: Modifiers = {},
   when: WhenExpr = { op: "always" },
   priority = 0,
 ): Binding => ({
@@ -314,7 +314,7 @@ const contextScenarios: InputBindingsContextScenario[] = [
 function loadProfile(): Profile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { id: PROFILE_ID, patches: [] };
+    if (!raw) {return { id: PROFILE_ID, patches: [] };}
     const parsed = JSON.parse(raw) as Partial<Profile>;
     if (typeof parsed.id === "string" && Array.isArray(parsed.patches)) {
       return parsed as Profile;
@@ -329,9 +329,9 @@ function loadProfile(): Profile {
 function loadMobileOverlay(): MobileControlsOverlay {
   try {
     const raw = localStorage.getItem(MOBILE_OVERLAY_STORAGE_KEY);
-    if (!raw) return DEFAULT_MOBILE_OVERLAY;
+    if (!raw) {return DEFAULT_MOBILE_OVERLAY;}
     const parsed: unknown = JSON.parse(raw);
-    if (isMobileControlsOverlay(parsed)) return parsed;
+    if (isMobileControlsOverlay(parsed)) {return parsed;}
   } catch {
     // Corrupt local state is ignored rather than reinterpreted.
   }
@@ -339,14 +339,14 @@ function loadMobileOverlay(): MobileControlsOverlay {
 }
 
 function isMobileControlsOverlay(value: unknown): value is MobileControlsOverlay {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {return false;}
   const candidate = value as { orientation?: unknown; controls?: unknown };
-  if (candidate.orientation !== "portrait" && candidate.orientation !== "landscape") return false;
+  if (candidate.orientation !== "portrait" && candidate.orientation !== "landscape") {return false;}
   return Array.isArray(candidate.controls) && candidate.controls.every(isMobileOverlayControl);
 }
 
 function isMobileOverlayControl(value: unknown): value is MobileOverlayControl {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object") {return false;}
   const candidate = value as Partial<Record<keyof MobileOverlayControl, unknown>>;
   return (
     typeof candidate.id === "string" &&
@@ -405,7 +405,7 @@ function App() {
 }
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing #root element");
+if (!root) {throw new Error("Missing #root element");}
 createRoot(root).render(
   <StrictMode>
     <App />
