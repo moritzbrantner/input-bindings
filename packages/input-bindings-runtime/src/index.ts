@@ -1,6 +1,7 @@
 export * from "./analog.ts";
 export * from "./gesture-features.ts";
 export * from "./gesture-primitives.ts";
+export * from "./gesture-trace.ts";
 export * from "./pointer-stroke.ts";
 
 import {
