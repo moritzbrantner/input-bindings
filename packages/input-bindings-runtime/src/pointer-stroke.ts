@@ -8,6 +8,7 @@ export type PointerStrokeCancelReason =
   | "hidden"
   | "detach"
   | "superseded"
+  | "multiPointer"
   | "reset";
 
 /** Element rectangle in viewport CSS pixels, frozen when a stroke starts. */

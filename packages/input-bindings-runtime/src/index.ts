@@ -3,6 +3,7 @@ export * from "./gesture-features.ts";
 export * from "./gesture-primitives.ts";
 export * from "./gesture-templates.ts";
 export * from "./gesture-trace.ts";
+export * from "./multi-pointer.ts";
 export * from "./pointer-stroke.ts";
 
 import {
