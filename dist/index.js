@@ -26,8 +26,11 @@ export function gestureMatchIdentity(gesture) {
         case "drag":
         case "swipe":
         case "slash":
+        case "pinch":
+        case "twoFingerSwipe":
             return [gesture.kind, gesture.direction ?? "any"].join(":");
         case "circle":
+        case "rotate":
             return [gesture.kind, gesture.orientation ?? "any"].join(":");
         case "symbol":
             return [gesture.kind, gesture.id].join(":");
