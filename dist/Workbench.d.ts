@@ -1,12 +1,12 @@
 import { type ActionRegistry, type Profile } from "@moritzbrantner/input-bindings";
-import type { MobileActionInputEvent, MobileAnalogInputEvent } from "./MobileControlsRuntimeSurface.js";
+import type { MobileActionInputEvent, MobileAnalogInputEvent, MobileGestureRuntime } from "./MobileControlsRuntimeSurface.js";
 import { type MobileAnalogActionOption, type MobileControlsOverlay } from "./MobileControlsView.js";
 import { type InputBindingsContextScenario } from "./workbench-model.js";
 export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.js";
 export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.js";
 export { MobileControlsRuntimeSurface } from "./MobileControlsRuntimeSurface.js";
 export type { MobileAnalogActionOption, MobileControlKind, MobileControlsOrientation, MobileControlsOverlay, MobileControlsViewProps, MobileOverlayControl, } from "./MobileControlsView.js";
-export type { MobileActionInputEvent, MobileAnalogInputEvent, MobileAxis2D, MobileControlsRuntimeSurfaceProps, } from "./MobileControlsRuntimeSurface.js";
+export type { MobileActionInputEvent, MobileAnalogInputEvent, MobileAxis2D, MobileControlsRuntimeSurfaceProps, MobileGestureInputEvent, MobileGestureRuntime, MobileGestureStrokeEvent, } from "./MobileControlsRuntimeSurface.js";
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
 export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
@@ -25,6 +25,7 @@ export type InputBindingsWorkbenchProps = {
     onMobileOverlayChange?: (overlay: MobileControlsOverlay) => void;
     onMobileActionInput?: (event: MobileActionInputEvent) => void;
     onMobileAnalogInput?: (event: MobileAnalogInputEvent) => void;
+    mobileGestureRuntime?: MobileGestureRuntime;
     className?: string;
 };
-export declare function InputBindingsWorkbench({ registry, profile, onProfileChange, contextScenarios, title, description, initialView, initialMode, initialPresentation, mobileOverlay, mobileAnalogActions, onMobileOverlayChange, onMobileActionInput, onMobileAnalogInput, className, }: InputBindingsWorkbenchProps): import("react").JSX.Element;
+export declare function InputBindingsWorkbench({ registry, profile, onProfileChange, contextScenarios, title, description, initialView, initialMode, initialPresentation, mobileOverlay, mobileAnalogActions, onMobileOverlayChange, onMobileActionInput, onMobileAnalogInput, mobileGestureRuntime, className, }: InputBindingsWorkbenchProps): import("react").JSX.Element;

@@ -1,12 +1,17 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { pointerAxisFromCenter, pointerAxisFromOrigin } from "@moritzbrantner/input-bindings-web";
+import { attachGestureRuntime, pointerAxisFromCenter, pointerAxisFromOrigin, strokeGestureRecognizer, } from "@moritzbrantner/input-bindings-web";
 import { useEffect, useRef, useState, } from "react";
-export function MobileControlsRuntimeSurface({ overlay, onActionInput, onAnalogInput, className, }) {
+export function MobileControlsRuntimeSurface({ overlay, onActionInput, onAnalogInput, gestureRuntime, className, }) {
     const activePointers = useRef(new Map());
     const actionInputRef = useRef(onActionInput);
     const analogInputRef = useRef(onAnalogInput);
+    const gestureRuntimeRef = useRef(gestureRuntime);
     actionInputRef.current = onActionInput;
     analogInputRef.current = onAnalogInput;
+    gestureRuntimeRef.current = gestureRuntime;
+    const controlElements = useRef(new Map());
+    const gestureZones = useRef(new Map());
+    const gestureController = gestureRuntime?.controller;
     const [axisByControl, setAxisByControl] = useState({});
     const emitAxis = (control, value, phase = "update") => {
         setAxisByControl((current) => ({ ...current, [control.id]: value }));
@@ -36,7 +41,7 @@ export function MobileControlsRuntimeSurface({ overlay, onActionInput, onAnalogI
         });
     };
     const start = (control, event) => {
-        if (activePointers.current.has(control.id)) {
+        if (isGestureZone(control) || activePointers.current.has(control.id)) {
             return;
         }
         event.preventDefault();
@@ -122,6 +127,72 @@ export function MobileControlsRuntimeSurface({ overlay, onActionInput, onAnalogI
             });
         }
     }, [overlay.controls]);
+    // Gesture zones attach the shared stroke runtime to their element. A zone is re-attached only
+    // when its element, context, or controller changes, so unrelated overlay edits and orientation
+    // changes keep an active stroke alive.
+    useEffect(() => {
+        const zones = gestureZones.current;
+        const desired = new Map();
+        for (const control of overlay.controls) {
+            const element = controlElements.current.get(control.id);
+            const context = control.gestureContext?.trim();
+            if (gestureController && element && isGestureZone(control) && context) {
+                desired.set(control.id, { key: context, element, context });
+            }
+        }
+        for (const [controlId, zone] of [...zones.entries()]) {
+            const next = desired.get(controlId);
+            if (!next || next.key !== zone.key || next.element !== zone.element) {
+                zone.detach();
+                zones.delete(controlId);
+            }
+        }
+        if (!gestureController) {
+            return;
+        }
+        for (const [controlId, next] of desired) {
+            if (zones.has(controlId)) {
+                continue;
+            }
+            zones.set(controlId, {
+                key: next.key,
+                element: next.element,
+                detach: attachGestureRuntime(gestureController, {
+                    target: next.element,
+                    sourceId: `mobile-zone:${controlId}`,
+                    recognize: (stroke) => ({
+                        ...strokeGestureRecognizer(gestureRuntimeRef.current?.recognition)(stroke),
+                        contexts: [next.context],
+                    }),
+                    onStroke: (event) => {
+                        if (event.phase === "update") {
+                            return;
+                        }
+                        gestureRuntimeRef.current?.onStroke?.({
+                            controlId,
+                            phase: event.phase,
+                            ...(event.stroke.cancelReason ? { cancelReason: event.stroke.cancelReason } : {}),
+                        });
+                    },
+                    onGesture: ({ input, decision }) => gestureRuntimeRef.current?.onGesture?.({
+                        controlId,
+                        context: next.context,
+                        matches: input.matches,
+                        decision,
+                    }),
+                }),
+            });
+        }
+    }, [overlay.controls, gestureController]);
+    useEffect(() => {
+        const zones = gestureZones.current;
+        return () => {
+            for (const zone of zones.values()) {
+                zone.detach();
+            }
+            zones.clear();
+        };
+    }, []);
     useEffect(() => {
         return () => {
             for (const pointer of activePointers.current.values()) {
@@ -139,7 +210,14 @@ export function MobileControlsRuntimeSurface({ overlay, onActionInput, onAnalogI
                         "--ib-mobile-height": `${control.height}%`,
                     };
                     const mapped = control.analogActionId ?? control.actionId;
-                    return (_jsxs("button", { type: "button", className: [
+                    return (_jsxs("button", { ref: (element) => {
+                            if (element) {
+                                controlElements.current.set(control.id, element);
+                            }
+                            else {
+                                controlElements.current.delete(control.id);
+                            }
+                        }, type: "button", className: [
                             "ib-mobile-overlay-control",
                             "is-runtime",
                             `is-${control.kind}`,
@@ -152,10 +230,14 @@ export function MobileControlsRuntimeSurface({ overlay, onActionInput, onAnalogI
                                 control.analogActionId && _jsx("small", { children: formatAxis(axis) })] }, control.id));
                 })] }) }));
 }
+function isGestureZone(control) {
+    return control.kind === "gestureZone" && control.gestureContext !== undefined;
+}
 function hasSameRuntimeMapping(left, right) {
     return (left.kind === right.kind &&
         left.actionId === right.actionId &&
-        left.analogActionId === right.analogActionId);
+        left.analogActionId === right.analogActionId &&
+        left.gestureContext === right.gestureContext);
 }
 function emitRuntimeRelease(control, onActionInput, onAnalogInput) {
     if ((control.kind === "stick" || control.kind === "gestureZone") && control.analogActionId) {
