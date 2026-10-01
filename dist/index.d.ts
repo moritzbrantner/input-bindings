@@ -1,6 +1,6 @@
 import { type GamepadAxisStroke, type GamepadButtonStroke, type KeyStroke, type MouseButtonStroke, type WheelStroke } from "@moritzbrantner/input-bindings";
 import type { InputRuntimeController } from "@moritzbrantner/input-bindings-runtime";
-export interface KeyboardEventLike {
+export type KeyboardEventLike = {
     key: string;
     code: string;
     ctrlKey: boolean;
@@ -10,21 +10,21 @@ export interface KeyboardEventLike {
     isComposing?: boolean;
     defaultPrevented?: boolean;
     getModifierState?: (key: string) => boolean;
-}
-export interface KeyboardAdapterOptions {
+};
+export type KeyboardAdapterOptions = {
     mode?: "logical" | "physical";
     altGraph?: "distinct" | "ctrlAlt";
     ignoreComposing?: boolean;
     ignoreModifierOnly?: boolean;
     respectDefaultPrevented?: boolean;
-}
-export interface RuntimeKeyboardEventLike extends KeyboardEventLike {
+};
+export type RuntimeKeyboardEventLike = {
     repeat?: boolean;
     target?: unknown;
     preventDefault?: () => void;
     stopPropagation?: () => void;
-}
-export interface PointerEventLike {
+} & KeyboardEventLike;
+export type PointerEventLike = {
     button: number;
     ctrlKey: boolean;
     altKey: boolean;
@@ -35,8 +35,8 @@ export interface PointerEventLike {
     getModifierState?: (key: string) => boolean;
     preventDefault?: () => void;
     stopPropagation?: () => void;
-}
-export interface WheelEventLike {
+};
+export type WheelEventLike = {
     deltaX: number;
     deltaY: number;
     ctrlKey: boolean;
@@ -48,16 +48,16 @@ export interface WheelEventLike {
     getModifierState?: (key: string) => boolean;
     preventDefault?: () => void;
     stopPropagation?: () => void;
-}
-export interface RuntimeEventTargetLike {
+};
+export type RuntimeEventTargetLike = {
     addEventListener(type: string, listener: (event: any) => void, options?: unknown): void;
     removeEventListener(type: string, listener: (event: any) => void, options?: unknown): void;
-}
-export interface VisibilityEventTargetLike extends RuntimeEventTargetLike {
+};
+export type VisibilityEventTargetLike = {
     hidden?: boolean;
     visibilityState?: string;
-}
-export interface BrowserRuntimeAdapterOptions {
+} & RuntimeEventTargetLike;
+export type BrowserRuntimeAdapterOptions = {
     keyTarget?: RuntimeEventTargetLike;
     focusTarget?: RuntimeEventTargetLike;
     visibilityTarget?: VisibilityEventTargetLike;
@@ -68,33 +68,33 @@ export interface BrowserRuntimeAdapterOptions {
     resetOnBlur?: boolean;
     resetOnHidden?: boolean;
     resetOnDetach?: boolean;
-}
-export interface MouseRuntimeAdapterOptions {
+};
+export type MouseRuntimeAdapterOptions = {
     target?: RuntimeEventTargetLike;
     ignoreTextEntry?: boolean;
     stopPropagation?: boolean;
     respectDefaultPrevented?: boolean;
     resetOnDetach?: boolean;
-}
-export interface GamepadButtonLike {
+};
+export type GamepadButtonLike = {
     pressed?: boolean;
     value: number;
-}
-export interface GamepadLike {
+};
+export type GamepadLike = {
     index: number;
     connected?: boolean;
     buttons: readonly GamepadButtonLike[];
     axes: readonly number[];
-}
-export interface FrameScheduler {
+};
+export type FrameScheduler = {
     requestFrame(callback: () => void): unknown;
     cancelFrame(handle: unknown): void;
-}
-export interface GamepadRuntimeAdapterOptions {
+};
+export type GamepadRuntimeAdapterOptions = {
     getGamepads?: () => readonly (GamepadLike | null)[];
     scheduler?: FrameScheduler;
     resetOnDetach?: boolean;
-}
+};
 export declare function isModifierOnlyKeyboardValue(value: string, mode?: "logical" | "physical"): boolean;
 export declare function keyboardEventToStroke(event: KeyboardEventLike, options?: KeyboardAdapterOptions): KeyStroke | null;
 export declare function mouseEventToStroke(event: PointerEventLike): MouseButtonStroke | null;

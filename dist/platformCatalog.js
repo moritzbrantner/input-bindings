@@ -91,24 +91,32 @@ export function detectPlatformConflictEnvironment(navigatorLike = globalThis.nav
 }
 export function detectPlatform(platformHint, userAgent = "") {
     const value = `${platformHint} ${userAgent}`.toLocaleLowerCase();
-    if (/android/u.test(value))
+    if (/android/u.test(value)) {
         return "android";
-    if (/iphone|ipad|ipod/u.test(value))
+    }
+    if (/iphone|ipad|ipod/u.test(value)) {
         return "ios";
-    if (/win/u.test(value))
+    }
+    if (/win/u.test(value)) {
         return "windows";
-    if (/mac/u.test(value))
+    }
+    if (/mac/u.test(value)) {
         return "macos";
-    if (/linux|x11/u.test(value))
+    }
+    if (/linux|x11/u.test(value)) {
         return "linux";
+    }
     return "unknown";
 }
 export function detectBrowser(userAgent) {
-    if (/firefox|fxios/iu.test(userAgent))
+    if (/firefox|fxios/iu.test(userAgent)) {
         return "firefox";
-    if (/edg|chrome|chromium|crios/iu.test(userAgent))
+    }
+    if (/edg|chrome|chromium|crios/iu.test(userAgent)) {
         return "chromium";
-    if (/safari/iu.test(userAgent))
+    }
+    if (/safari/iu.test(userAgent)) {
         return "safari";
+    }
     return "unknown";
 }

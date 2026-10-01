@@ -19,14 +19,18 @@ export function isModifierOnlyKeyboardValue(value, mode = "logical") {
 }
 export function keyboardEventToStroke(event, options = {}) {
     const { mode = "logical", altGraph = "distinct", ignoreComposing = true, ignoreModifierOnly = true, respectDefaultPrevented = true, } = options;
-    if (ignoreComposing && event.isComposing)
+    if (ignoreComposing && event.isComposing) {
         return null;
-    if (respectDefaultPrevented && event.defaultPrevented)
+    }
+    if (respectDefaultPrevented && event.defaultPrevented) {
         return null;
-    if (ignoreModifierOnly && isModifierOnlyKeyboardValue(event.key))
+    }
+    if (ignoreModifierOnly && isModifierOnlyKeyboardValue(event.key)) {
         return null;
-    if (event.key === "Unidentified" || event.key === "Process")
+    }
+    if (event.key === "Unidentified" || event.key === "Process") {
         return null;
+    }
     const altGraphActive = event.getModifierState?.("AltGraph") ?? event.key === "AltGraph";
     const modifiers = {
         ctrl: event.ctrlKey,
@@ -47,10 +51,12 @@ export function keyboardEventToStroke(event, options = {}) {
     };
 }
 export function mouseEventToStroke(event) {
-    if (event.defaultPrevented)
+    if (event.defaultPrevented) {
         return null;
-    if (!Number.isInteger(event.button) || event.button < 0)
+    }
+    if (!Number.isInteger(event.button) || event.button < 0) {
         return null;
+    }
     return {
         device: "mouseButton",
         button: event.button,
@@ -58,19 +64,21 @@ export function mouseEventToStroke(event) {
     };
 }
 export function wheelEventToStroke(event) {
-    if (event.defaultPrevented)
+    if (event.defaultPrevented) {
         return null;
+    }
     const horizontal = Math.abs(event.deltaX);
     const vertical = Math.abs(event.deltaY);
-    if (horizontal === 0 && vertical === 0)
+    if (horizontal === 0 && vertical === 0) {
         return null;
-    const direction = vertical >= horizontal
-        ? event.deltaY < 0
-            ? "up"
-            : "down"
-        : event.deltaX < 0
-            ? "left"
-            : "right";
+    }
+    let direction;
+    if (vertical >= horizontal) {
+        direction = event.deltaY < 0 ? "up" : "down";
+    }
+    else {
+        direction = event.deltaX < 0 ? "left" : "right";
+    }
     return {
         device: "wheel",
         direction,
@@ -78,23 +86,29 @@ export function wheelEventToStroke(event) {
     };
 }
 export function normalizeLogicalKey(key) {
-    if (key === " ")
+    if (key === " ") {
         return "Space";
-    if (key === "Esc")
+    }
+    if (key === "Esc") {
         return "Escape";
-    if (key.length === 1)
+    }
+    if (key.length === 1) {
         return key.toLowerCase();
+    }
     return key;
 }
 export function isTextEntryTarget(target) {
-    if (typeof target !== "object" || target === null)
+    if (typeof target !== "object" || target === null) {
         return false;
+    }
     const candidate = target;
     const tagName = candidate.tagName?.toUpperCase();
-    if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT")
+    if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT") {
         return true;
-    if (candidate.isContentEditable)
+    }
+    if (candidate.isContentEditable) {
         return true;
+    }
     const role = candidate.role ?? candidate.getAttribute?.("role");
     return role === "textbox" || role === "searchbox" || role === "combobox";
 }
@@ -112,11 +126,13 @@ export function attachKeyboardRuntime(controller, options = {}) {
     const resetOnDetach = options.resetOnDetach ?? true;
     const pressedStrokes = new Map();
     const applyConsumption = (event, decision) => {
-        if (!decision.consumed)
+        if (!decision.consumed) {
             return;
+        }
         event.preventDefault?.();
-        if (options.stopPropagation)
+        if (options.stopPropagation) {
             event.stopPropagation?.();
+        }
     };
     const currentMode = () => typeof options.mode === "function" ? options.mode() : (options.mode ?? "logical");
     const normalize = (event, overrides = {}) => keyboardEventToStroke(event, {
@@ -127,15 +143,18 @@ export function attachKeyboardRuntime(controller, options = {}) {
     const eventIdentity = (event) => event.code || event.key;
     const onKeyDown = (rawEvent) => {
         const event = rawEvent;
-        if (ignoreTextEntry && isTextEntryTarget(event.target))
+        if (ignoreTextEntry && isTextEntryTarget(event.target)) {
             return;
+        }
         const identity = eventIdentity(event);
         const existingStroke = pressedStrokes.get(identity);
         const stroke = existingStroke ?? normalize(event);
-        if (!stroke)
+        if (!stroke) {
             return;
-        if (!existingStroke)
+        }
+        if (!existingStroke) {
             pressedStrokes.set(identity, structuredClone(stroke));
+        }
         const decision = controller.handleKeyDown(stroke, { repeat: Boolean(event.repeat) });
         applyConsumption(event, decision);
     };
@@ -149,8 +168,9 @@ export function attachKeyboardRuntime(controller, options = {}) {
                 ignoreComposing: false,
                 respectDefaultPrevented: false,
             });
-        if (!stroke)
+        if (!stroke) {
             return;
+        }
         const decision = controller.handleKeyUp(stroke);
         applyConsumption(event, decision);
     };
@@ -159,8 +179,9 @@ export function attachKeyboardRuntime(controller, options = {}) {
         controller.reset(reason);
     };
     const onBlur = () => {
-        if (resetOnBlur)
+        if (resetOnBlur) {
             reset("blur");
+        }
     };
     const onVisibilityChange = () => {
         if (resetOnHidden &&
@@ -178,8 +199,9 @@ export function attachKeyboardRuntime(controller, options = {}) {
         focusTarget?.removeEventListener("blur", onBlur);
         visibilityTarget?.removeEventListener("visibilitychange", onVisibilityChange);
         pressedStrokes.clear();
-        if (resetOnDetach)
+        if (resetOnDetach) {
             controller.reset("detached");
+        }
     };
 }
 export function attachMouseRuntime(controller, options = {}) {
@@ -192,21 +214,26 @@ export function attachMouseRuntime(controller, options = {}) {
     const resetOnDetach = options.resetOnDetach ?? true;
     const pressed = new Map();
     const applyConsumption = (event, decision) => {
-        if (!decision.consumed)
+        if (!decision.consumed) {
             return;
+        }
         event.preventDefault?.();
-        if (options.stopPropagation)
+        if (options.stopPropagation) {
             event.stopPropagation?.();
+        }
     };
     const onMouseDown = (rawEvent) => {
         const event = rawEvent;
-        if (ignoreTextEntry && isTextEntryTarget(event.target))
+        if (ignoreTextEntry && isTextEntryTarget(event.target)) {
             return;
-        if ((options.respectDefaultPrevented ?? true) && event.defaultPrevented)
+        }
+        if ((options.respectDefaultPrevented ?? true) && event.defaultPrevented) {
             return;
+        }
         const stroke = mouseEventToStroke({ ...event, defaultPrevented: false });
-        if (!stroke)
+        if (!stroke) {
             return;
+        }
         pressed.set(event.button, structuredClone(stroke));
         applyConsumption(event, controller.handleInputDown(stroke));
     };
@@ -214,19 +241,23 @@ export function attachMouseRuntime(controller, options = {}) {
         const event = rawEvent;
         const stroke = pressed.get(event.button) ?? mouseEventToStroke({ ...event, defaultPrevented: false });
         pressed.delete(event.button);
-        if (!stroke)
+        if (!stroke) {
             return;
+        }
         applyConsumption(event, controller.handleInputUp(stroke));
     };
     const onWheel = (rawEvent) => {
         const event = rawEvent;
-        if (ignoreTextEntry && isTextEntryTarget(event.target))
+        if (ignoreTextEntry && isTextEntryTarget(event.target)) {
             return;
-        if ((options.respectDefaultPrevented ?? true) && event.defaultPrevented)
+        }
+        if ((options.respectDefaultPrevented ?? true) && event.defaultPrevented) {
             return;
+        }
         const stroke = wheelEventToStroke({ ...event, defaultPrevented: false });
-        if (!stroke)
+        if (!stroke) {
             return;
+        }
         const down = controller.handleInputDown(stroke);
         controller.handleInputUp(stroke);
         applyConsumption(event, down);
@@ -239,8 +270,9 @@ export function attachMouseRuntime(controller, options = {}) {
         target.removeEventListener("mouseup", onMouseUp);
         target.removeEventListener("wheel", onWheel, { passive: false });
         pressed.clear();
-        if (resetOnDetach)
+        if (resetOnDetach) {
             controller.reset("mouseDetached");
+        }
     };
 }
 export function attachGamepadRuntime(controller, options = {}) {
@@ -253,8 +285,9 @@ export function attachGamepadRuntime(controller, options = {}) {
     let stopped = false;
     let frame;
     const poll = () => {
-        if (stopped)
+        if (stopped) {
             return;
+        }
         const gamepads = getGamepads();
         for (const trigger of triggers) {
             const identity = inputStrokeIdentity(trigger);
@@ -267,8 +300,9 @@ export function attachGamepadRuntime(controller, options = {}) {
             else if (isActive && !nextActive) {
                 const stored = active.get(identity);
                 active.delete(identity);
-                if (stored)
+                if (stored) {
                     controller.handleInputUp(stored);
+                }
             }
         }
         frame = scheduler.requestFrame(poll);
@@ -276,13 +310,16 @@ export function attachGamepadRuntime(controller, options = {}) {
     frame = scheduler.requestFrame(poll);
     return () => {
         stopped = true;
-        if (frame !== undefined)
+        if (frame !== undefined) {
             scheduler.cancelFrame(frame);
-        for (const stroke of active.values())
+        }
+        for (const stroke of active.values()) {
             controller.handleInputUp(stroke);
+        }
         active.clear();
-        if (resetOnDetach)
+        if (resetOnDetach) {
             controller.reset("gamepadDetached");
+        }
     };
 }
 export function gamepadStrokeActive(stroke, gamepads, wasActive = false) {
@@ -292,16 +329,18 @@ export function gamepadStrokeActive(stroke, gamepads, wasActive = false) {
     if (stroke.device === "gamepadButton") {
         return candidates.some((gamepad) => {
             const button = gamepad.buttons[stroke.button];
-            return Boolean(button) && (button.pressed === true || button.value * 100 >= stroke.threshold);
+            return (button !== undefined && (button.pressed === true || button.value * 100 >= stroke.threshold));
         });
     }
     return candidates.some((gamepad) => {
         const value = gamepad.axes[stroke.axis];
-        if (!Number.isFinite(value))
+        if (value === undefined || !Number.isFinite(value)) {
             return false;
+        }
         const signMatches = stroke.direction === "positive" ? value > 0 : value < 0;
-        if (!signMatches)
+        if (!signMatches) {
             return false;
+        }
         const magnitude = Math.abs(value) * 100;
         return wasActive ? magnitude > stroke.deadzone : magnitude >= stroke.threshold;
     });
@@ -310,7 +349,8 @@ function gamepadTriggers(bindings) {
     const result = new Map();
     for (const binding of bindings) {
         for (const stroke of binding.sequence) {
-            if ("device" in stroke && (stroke.device === "gamepadButton" || stroke.device === "gamepadAxis")) {
+            if ("device" in stroke &&
+                (stroke.device === "gamepadButton" || stroke.device === "gamepadAxis")) {
                 result.set(inputStrokeIdentity(stroke), structuredClone(stroke));
             }
         }
