@@ -1,4 +1,5 @@
 export * from "./analog.js";
+export * from "./control-state.js";
 export * from "./gesture-features.js";
 export * from "./gesture-primitives.js";
 export * from "./gesture-templates.js";
