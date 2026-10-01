@@ -18,7 +18,7 @@ pub use context_stack::{
 pub use gesture::{GestureResolution, gesture_match_candidates, resolve_gesture};
 pub use model::{
     AxisDirection, Binding, CompassDirection, DeviceStroke, GestureMatch, GestureOrientation,
-    InputStroke, KeyMatch, KeyStroke, Modifiers, WheelDirection, WhenExpr,
+    InputStroke, KeyMatch, KeyStroke, Modifiers, PinchDirection, WheelDirection, WhenExpr,
 };
 pub use persistence::{
     ConfigurationDiagnostic, ConfigurationDiagnosticKind, ConfigurationDiagnosticSeverity,

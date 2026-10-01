@@ -60,6 +60,18 @@ export const gestureLabRegistry: ActionRegistry = {
     action("spell.ward", "Ward", [
       bind("spell.ward", "spell.ward", { kind: "symbol", id: "triangle" }, casting),
     ]),
+    action("view.zoomIn", "Zoom in", [
+      bind("view.zoomIn", "view.zoomIn", { kind: "pinch", direction: "out" }, gameplay),
+    ]),
+    action("view.zoomOut", "Zoom out", [
+      bind("view.zoomOut", "view.zoomOut", { kind: "pinch", direction: "in" }, gameplay),
+    ]),
+    action("view.rotate", "Rotate view", [
+      bind("view.rotate", "view.rotate", { kind: "rotate" }, gameplay),
+    ]),
+    action("view.pan", "Pan view", [
+      bind("view.pan", "view.pan", { kind: "twoFingerSwipe" }, gameplay),
+    ]),
     action("menu.select", "Select menu item", [
       bind("menu.select", "menu.select", { kind: "tap" }, menu),
     ]),

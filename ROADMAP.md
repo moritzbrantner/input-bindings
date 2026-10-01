@@ -125,7 +125,7 @@ Acceptance: release artifacts are reproducible and versioned, serialization comp
 
 ## 11. Rich gestures and temporal input — in progress
 
-Pointer gestures are tracked in #55. Implemented so far:
+Pointer gestures (#55) are implemented:
 
 - One Pointer Events stroke-capture path for mouse, touch, and pen with explicit lifecycle and cancellation evidence, exercised in the Pages gesture lab (#56).
 - Deterministic stroke features and single-stroke primitive recognition with explicit thresholds and evidence (#57).
@@ -134,11 +134,12 @@ Pointer gestures are tracked in #55. Implemented so far:
 - Deterministic single-stroke template recognition for runes and drawn symbols (#59).
 - Mobile gesture zones as geometry around the shared gesture runtime, with zone-scoped contexts and explicit drag-out/cancellation policies (#61).
 - Pages dogfood of slash, encircle, and rune bindings with contexts, a modal menu, profiles, speed-dependent parameters, consumer-owned hit-testing, and replay (#63).
+- Two-pointer pinch, rotate, and two-finger swipe gestures with hysteresis, explicit cancellation, and the same binding path (#62).
 
 Remaining:
 
-- Multi-pointer gestures (#62).
-- Tap versus hold and press/release-specific bindings.
+- Tap versus hold and press/release-specific bindings for keys and buttons (pointer tap/hold primitives exist).
+- Multi-stroke runes and user-defined symbol templates.
 - Double-tap and ordered key/button sequences beyond the current chord model.
 - Analog threshold and directional-axis gestures with deterministic hysteresis rules where needed.
 - Keep timing policy in the runtime layer; do not leak clocks into the pure resolver.

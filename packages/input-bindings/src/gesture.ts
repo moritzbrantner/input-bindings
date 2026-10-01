@@ -71,9 +71,12 @@ export function generalizedGesture(gesture: GestureMatch): GestureMatch | undefi
     case "drag":
     case "swipe":
     case "slash":
+    case "pinch":
+    case "twoFingerSwipe":
       return gesture.direction ? { kind: gesture.kind } : undefined;
     case "circle":
-      return gesture.orientation ? { kind: "circle" } : undefined;
+    case "rotate":
+      return gesture.orientation ? { kind: gesture.kind } : undefined;
     case "tap":
     case "hold":
     case "symbol":
@@ -89,10 +92,19 @@ function canonicalGesture(gesture: GestureMatch): GestureMatch {
       return gesture.direction
         ? { kind: gesture.kind, direction: gesture.direction }
         : { kind: gesture.kind };
+    case "twoFingerSwipe":
+      return gesture.direction
+        ? { kind: "twoFingerSwipe", direction: gesture.direction }
+        : { kind: "twoFingerSwipe" };
+    case "pinch":
+      return gesture.direction
+        ? { kind: "pinch", direction: gesture.direction }
+        : { kind: "pinch" };
     case "circle":
+    case "rotate":
       return gesture.orientation
-        ? { kind: "circle", orientation: gesture.orientation }
-        : { kind: "circle" };
+        ? { kind: gesture.kind, orientation: gesture.orientation }
+        : { kind: gesture.kind };
     case "tap":
     case "hold":
       return { kind: gesture.kind };

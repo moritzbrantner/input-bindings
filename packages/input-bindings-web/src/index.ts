@@ -1,5 +1,6 @@
 export * from "./analog.ts";
 export * from "./gesture-runtime.ts";
+export * from "./multi-pointer.ts";
 export * from "./pointer-stroke.ts";
 
 import {

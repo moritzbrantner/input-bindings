@@ -8,7 +8,11 @@
     {"id": "rune.fire.copy", "action": "spell.fire", "sequence": [{"device": "gesture", "gesture": {"kind": "symbol", "id": "fire-rune"}}], "when": {"op": "context", "id": "casting"}},
     {"id": "tap", "action": "ui.select", "sequence": [{"device": "gesture", "gesture": {"kind": "tap"}}]},
     {"id": "drag.scroll", "action": "menu.scroll", "sequence": [{"device": "gesture", "gesture": {"kind": "drag"}}], "when": {"op": "context", "id": "menu"}},
-    {"id": "drag.page", "action": "menu.page", "sequence": [{"device": "gesture", "gesture": {"kind": "drag"}}], "when": {"op": "context", "id": "menu"}}
+    {"id": "drag.page", "action": "menu.page", "sequence": [{"device": "gesture", "gesture": {"kind": "drag"}}], "when": {"op": "context", "id": "menu"}},
+    {"id": "zoom.in", "action": "view.zoomIn", "sequence": [{"device": "gesture", "gesture": {"kind": "pinch", "direction": "out"}}]},
+    {"id": "zoom.out", "action": "view.zoomOut", "sequence": [{"device": "gesture", "gesture": {"kind": "pinch", "direction": "in"}}]},
+    {"id": "view.rotate", "action": "view.rotate", "sequence": [{"device": "gesture", "gesture": {"kind": "rotate"}}]},
+    {"id": "view.pan", "action": "view.pan", "sequence": [{"device": "gesture", "gesture": {"kind": "twoFingerSwipe"}}]}
   ],
   "resolutionCases": [
     {
@@ -105,6 +109,32 @@
         "resolution": {"kind": "resolved", "bindingId": "tap", "action": "ui.select"},
         "matched": {"kind": "tap"},
         "candidates": [{"kind": "tap"}]
+      }
+    },
+    {
+      "name": "a directional pinch resolves to its bound zoom",
+      "recognized": [{"kind": "pinch", "direction": "in"}, {"kind": "twoFingerSwipe", "direction": "E"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "zoom.out", "action": "view.zoomOut"},
+        "matched": {"kind": "pinch", "direction": "in"},
+        "candidates": [
+          {"kind": "pinch", "direction": "in"}, {"kind": "pinch"},
+          {"kind": "twoFingerSwipe", "direction": "E"}, {"kind": "twoFingerSwipe"}
+        ]
+      }
+    },
+    {
+      "name": "rotation and two-finger swipe generalize like single-pointer gestures",
+      "recognized": [{"kind": "rotate", "orientation": "counterClockwise"}, {"kind": "twoFingerSwipe", "direction": "S"}],
+      "activeContexts": [],
+      "expected": {
+        "resolution": {"kind": "resolved", "bindingId": "view.rotate", "action": "view.rotate"},
+        "matched": {"kind": "rotate"},
+        "candidates": [
+          {"kind": "rotate", "orientation": "counterClockwise"}, {"kind": "rotate"},
+          {"kind": "twoFingerSwipe", "direction": "S"}, {"kind": "twoFingerSwipe"}
+        ]
       }
     },
     {
