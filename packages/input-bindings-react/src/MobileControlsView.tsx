@@ -13,6 +13,7 @@ import {
   MobileControlsRuntimeSurface,
   type MobileActionInputEvent,
   type MobileAnalogInputEvent,
+  type MobileGestureRuntime,
 } from "./MobileControlsRuntimeSurface.tsx";
 
 export type MobileControlKind = "stick" | "button" | "gestureZone" | "dock";
@@ -24,6 +25,11 @@ export type MobileOverlayControl = {
   label: string;
   actionId?: string | undefined;
   analogActionId?: string | undefined;
+  /**
+   * Gesture zones only. When set, strokes that begin in the zone are recognized and resolved as
+   * gesture bindings with this context active, instead of driving `analogActionId`.
+   */
+  gestureContext?: string | undefined;
   /** Left edge as a percentage of the preview surface. */
   x: number;
   /** Top edge as a percentage of the preview surface. */
@@ -51,6 +57,8 @@ export type MobileControlsViewProps = {
   onOverlayChange?: ((overlay: MobileControlsOverlay) => void) | undefined;
   onActionInput?: ((event: MobileActionInputEvent) => void) | undefined;
   onAnalogInput?: ((event: MobileAnalogInputEvent) => void) | undefined;
+  /** Runs gesture zones in Test mode through the shared gesture runtime. */
+  gestureRuntime?: MobileGestureRuntime | undefined;
 };
 
 const CONTROL_DEFAULTS: Record<MobileControlKind, Omit<MobileOverlayControl, "id">> = {
@@ -134,6 +142,7 @@ export function MobileControlsView({
   onOverlayChange,
   onActionInput,
   onAnalogInput,
+  gestureRuntime,
 }: MobileControlsViewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -291,7 +300,7 @@ export function MobileControlsView({
           </p>
         </div>
         <div className="ib-mobile-controls-modes">
-          {(onActionInput || onAnalogInput) && (
+          {(onActionInput || onAnalogInput || gestureRuntime) && (
             <fieldset className="ib-mode-switch">
               <legend>Mode</legend>
               <button
@@ -341,6 +350,7 @@ export function MobileControlsView({
           overlay={overlay}
           onActionInput={onActionInput}
           onAnalogInput={onAnalogInput}
+          gestureRuntime={gestureRuntime}
         />
       ) : (
         <div className="ib-mobile-overlay-layout">
@@ -392,7 +402,11 @@ export function MobileControlsView({
                       <span className="ib-mobile-stick-knob" aria-hidden="true" />
                     )}
                     <strong>{control.label}</strong>
-                    {control.kind === "gestureZone" && <small>drag / swipe</small>}
+                    {control.kind === "gestureZone" && (
+                      <small>
+                        {control.gestureContext === undefined ? "drag / swipe" : "gestures"}
+                      </small>
+                    )}
                     {analogAction && <small>{analogAction.title}</small>}
                     {!analogAction && action && <small>{action.title}</small>}
                   </button>
@@ -438,59 +452,96 @@ export function MobileControlsView({
                   />
                 </label>
 
-                {selected.kind === "stick" || selected.kind === "gestureZone" ? (
+                {selected.kind === "gestureZone" && (
                   <label>
-                    <span>Analog action</span>
-                    {sortedAnalogActions.length > 0 ? (
-                      <select
-                        value={selected.analogActionId ?? ""}
-                        disabled={!editable}
-                        onChange={(event) =>
-                          updateControl(selected.id, {
-                            analogActionId: event.target.value || undefined,
-                          })
-                        }
-                      >
-                        <option value="">No analog action</option>
-                        {sortedAnalogActions.map((action) => (
-                          <option key={action.id} value={action.id}>
-                            {action.title}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        value={selected.analogActionId ?? ""}
-                        disabled={!editable}
-                        placeholder="game.move"
-                        onChange={(event) =>
-                          updateControl(selected.id, {
-                            analogActionId: event.target.value || undefined,
-                          })
-                        }
-                      />
-                    )}
-                  </label>
-                ) : (
-                  <label>
-                    <span>Semantic action</span>
+                    <span>Zone input</span>
                     <select
-                      value={selected.actionId ?? ""}
+                      value={selected.gestureContext === undefined ? "analog" : "gestures"}
                       disabled={!editable}
                       onChange={(event) =>
-                        updateControl(selected.id, {
-                          actionId: event.target.value || undefined,
-                        })
+                        updateControl(
+                          selected.id,
+                          event.target.value === "gestures"
+                            ? { gestureContext: `zone.${selected.id}`, analogActionId: undefined }
+                            : { gestureContext: undefined },
+                        )
                       }
                     >
-                      <option value="">No direct action</option>
-                      {sortedActions.map((action) => (
-                        <option key={action.id} value={action.id}>
-                          {action.title}
-                        </option>
-                      ))}
+                      <option value="analog">Analog look</option>
+                      <option value="gestures">Gestures</option>
                     </select>
                   </label>
+                )}
+
+                {selected.kind === "gestureZone" && selected.gestureContext !== undefined ? (
+                  <label>
+                    <span>Gesture context</span>
+                    <input
+                      value={selected.gestureContext}
+                      disabled={!editable}
+                      placeholder="zone.spells"
+                      onChange={(event) =>
+                        updateControl(selected.id, { gestureContext: event.target.value })
+                      }
+                    />
+                  </label>
+                ) : (
+                  <>
+                    {selected.kind === "stick" || selected.kind === "gestureZone" ? (
+                      <label>
+                        <span>Analog action</span>
+                        {sortedAnalogActions.length > 0 ? (
+                          <select
+                            value={selected.analogActionId ?? ""}
+                            disabled={!editable}
+                            onChange={(event) =>
+                              updateControl(selected.id, {
+                                analogActionId: event.target.value || undefined,
+                              })
+                            }
+                          >
+                            <option value="">No analog action</option>
+                            {sortedAnalogActions.map((action) => (
+                              <option key={action.id} value={action.id}>
+                                {action.title}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            value={selected.analogActionId ?? ""}
+                            disabled={!editable}
+                            placeholder="game.move"
+                            onChange={(event) =>
+                              updateControl(selected.id, {
+                                analogActionId: event.target.value || undefined,
+                              })
+                            }
+                          />
+                        )}
+                      </label>
+                    ) : (
+                      <label>
+                        <span>Semantic action</span>
+                        <select
+                          value={selected.actionId ?? ""}
+                          disabled={!editable}
+                          onChange={(event) =>
+                            updateControl(selected.id, {
+                              actionId: event.target.value || undefined,
+                            })
+                          }
+                        >
+                          <option value="">No direct action</option>
+                          {sortedActions.map((action) => (
+                            <option key={action.id} value={action.id}>
+                              {action.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  </>
                 )}
 
                 <fieldset className="ib-mobile-control-geometry">

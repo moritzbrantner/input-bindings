@@ -1,4 +1,17 @@
-import { pointerAxisFromCenter, pointerAxisFromOrigin } from "@moritzbrantner/input-bindings-web";
+import type { GestureMatch } from "@moritzbrantner/input-bindings";
+import type {
+  GestureTraceAnalysisOptions,
+  InputRuntimeController,
+  PointerStrokeCancelReason,
+  PointerStrokePhase,
+  RuntimeDecision,
+} from "@moritzbrantner/input-bindings-runtime";
+import {
+  attachGestureRuntime,
+  pointerAxisFromCenter,
+  pointerAxisFromOrigin,
+  strokeGestureRecognizer,
+} from "@moritzbrantner/input-bindings-web";
 import {
   useEffect,
   useRef,
@@ -28,11 +41,40 @@ export type MobileAnalogInputEvent = {
   value: MobileAxis2D;
 };
 
+export type MobileGestureStrokeEvent = {
+  controlId: string;
+  phase: PointerStrokePhase;
+  cancelReason?: PointerStrokeCancelReason;
+};
+
+export type MobileGestureInputEvent = {
+  controlId: string;
+  context: string;
+  matches: readonly GestureMatch[];
+  decision: RuntimeDecision;
+};
+
+/** Connects gesture zones to the same recognizer and runtime used by unrestricted surfaces. */
+export type MobileGestureRuntime = {
+  controller: InputRuntimeController;
+  recognition?: GestureTraceAnalysisOptions | undefined;
+  onStroke?: ((event: MobileGestureStrokeEvent) => void) | undefined;
+  onGesture?: ((event: MobileGestureInputEvent) => void) | undefined;
+};
+
 export type MobileControlsRuntimeSurfaceProps = {
   overlay: MobileControlsOverlay;
   onActionInput?: ((event: MobileActionInputEvent) => void) | undefined;
   onAnalogInput?: ((event: MobileAnalogInputEvent) => void) | undefined;
+  /** Required for gesture zones (`gestureContext`); without it they stay inert. */
+  gestureRuntime?: MobileGestureRuntime | undefined;
   className?: string | undefined;
+};
+
+type AttachedGestureZone = {
+  key: string;
+  element: HTMLElement;
+  detach: () => void;
 };
 
 type ActivePointer = {
@@ -46,13 +88,19 @@ export function MobileControlsRuntimeSurface({
   overlay,
   onActionInput,
   onAnalogInput,
+  gestureRuntime,
   className,
 }: MobileControlsRuntimeSurfaceProps) {
   const activePointers = useRef(new Map<string, ActivePointer>());
   const actionInputRef = useRef(onActionInput);
   const analogInputRef = useRef(onAnalogInput);
+  const gestureRuntimeRef = useRef(gestureRuntime);
   actionInputRef.current = onActionInput;
   analogInputRef.current = onAnalogInput;
+  gestureRuntimeRef.current = gestureRuntime;
+  const controlElements = useRef(new Map<string, HTMLButtonElement>());
+  const gestureZones = useRef(new Map<string, AttachedGestureZone>());
+  const gestureController = gestureRuntime?.controller;
   const [axisByControl, setAxisByControl] = useState<Record<string, MobileAxis2D>>({});
 
   const emitAxis = (
@@ -98,7 +146,7 @@ export function MobileControlsRuntimeSurface({
   };
 
   const start = (control: MobileOverlayControl, event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (activePointers.current.has(control.id)) {
+    if (isGestureZone(control) || activePointers.current.has(control.id)) {
       return;
     }
     event.preventDefault();
@@ -199,6 +247,75 @@ export function MobileControlsRuntimeSurface({
     }
   }, [overlay.controls]);
 
+  // Gesture zones attach the shared stroke runtime to their element. A zone is re-attached only
+  // when its element, context, or controller changes, so unrelated overlay edits and orientation
+  // changes keep an active stroke alive.
+  useEffect(() => {
+    const zones = gestureZones.current;
+    const desired = new Map<string, { key: string; element: HTMLElement; context: string }>();
+    for (const control of overlay.controls) {
+      const element = controlElements.current.get(control.id);
+      const context = control.gestureContext?.trim();
+      if (gestureController && element && isGestureZone(control) && context) {
+        desired.set(control.id, { key: context, element, context });
+      }
+    }
+    for (const [controlId, zone] of [...zones.entries()]) {
+      const next = desired.get(controlId);
+      if (!next || next.key !== zone.key || next.element !== zone.element) {
+        zone.detach();
+        zones.delete(controlId);
+      }
+    }
+    if (!gestureController) {
+      return;
+    }
+    for (const [controlId, next] of desired) {
+      if (zones.has(controlId)) {
+        continue;
+      }
+      zones.set(controlId, {
+        key: next.key,
+        element: next.element,
+        detach: attachGestureRuntime(gestureController, {
+          target: next.element,
+          sourceId: `mobile-zone:${controlId}`,
+          recognize: (stroke) => ({
+            ...strokeGestureRecognizer(gestureRuntimeRef.current?.recognition)(stroke),
+            contexts: [next.context],
+          }),
+          onStroke: (event) => {
+            if (event.phase === "update") {
+              return;
+            }
+            gestureRuntimeRef.current?.onStroke?.({
+              controlId,
+              phase: event.phase,
+              ...(event.stroke.cancelReason ? { cancelReason: event.stroke.cancelReason } : {}),
+            });
+          },
+          onGesture: ({ input, decision }) =>
+            gestureRuntimeRef.current?.onGesture?.({
+              controlId,
+              context: next.context,
+              matches: input.matches,
+              decision,
+            }),
+        }),
+      });
+    }
+  }, [overlay.controls, gestureController]);
+
+  useEffect(() => {
+    const zones = gestureZones.current;
+    return () => {
+      for (const zone of zones.values()) {
+        zone.detach();
+      }
+      zones.clear();
+    };
+  }, []);
+
   useEffect(() => {
     return () => {
       for (const pointer of activePointers.current.values()) {
@@ -235,6 +352,13 @@ export function MobileControlsRuntimeSurface({
           return (
             <button
               key={control.id}
+              ref={(element) => {
+                if (element) {
+                  controlElements.current.set(control.id, element);
+                } else {
+                  controlElements.current.delete(control.id);
+                }
+              }}
               type="button"
               className={[
                 "ib-mobile-overlay-control",
@@ -274,11 +398,16 @@ export function MobileControlsRuntimeSurface({
   );
 }
 
+function isGestureZone(control: MobileOverlayControl): boolean {
+  return control.kind === "gestureZone" && control.gestureContext !== undefined;
+}
+
 function hasSameRuntimeMapping(left: MobileOverlayControl, right: MobileOverlayControl): boolean {
   return (
     left.kind === right.kind &&
     left.actionId === right.actionId &&
-    left.analogActionId === right.analogActionId
+    left.analogActionId === right.analogActionId &&
+    left.gestureContext === right.gestureContext
   );
 }
 
