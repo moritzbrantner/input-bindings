@@ -47,6 +47,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@moritzbrantner/input-bindings": "0.1.0",
+        "@moritzbrantner/input-bindings-runtime": "0.1.0",
         "@moritzbrantner/input-bindings-web": "0.1.0",
       },
       "peerDependencies": {

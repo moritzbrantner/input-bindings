@@ -81,6 +81,11 @@ export type RuntimeGestureInput = {
   matches: readonly GestureMatch[];
   /** Structured-cloneable recognition evidence passed through to dispatches unchanged. */
   evidence?: unknown;
+  /**
+   * Contexts active for this gesture only, such as the overlay zone it started in. They are
+   * added to the consumer's active contexts and, with a context stack, as non-blocking top layers.
+   */
+  contexts?: readonly string[] | undefined;
 };
 
 export type RuntimeExplanation = {
@@ -314,8 +319,12 @@ export class InputRuntimeController {
    * release immediately, so gestures never hold an action. A pending keyboard chord is cancelled.
    */
   handleGesture(input: RuntimeGestureInput): RuntimeDecision {
-    const contextStack = this.contextStack();
-    const contexts = this.contexts(contextStack);
+    const extraContexts = [...new Set(input.contexts ?? [])];
+    const baseStack = this.contextStack();
+    const contextStack = baseStack
+      ? [...baseStack, ...extraContexts.map((id): ContextLayer => ({ id }))]
+      : undefined;
+    const contexts = [...new Set([...this.contexts(baseStack), ...extraContexts])].sort();
 
     if (!this.report.valid) {
       return this.emit(

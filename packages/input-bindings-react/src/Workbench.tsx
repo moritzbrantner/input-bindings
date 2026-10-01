@@ -25,6 +25,7 @@ import { KeyboardView, KeybindingEditor } from "./index.tsx";
 import type {
   MobileActionInputEvent,
   MobileAnalogInputEvent,
+  MobileGestureRuntime,
 } from "./MobileControlsRuntimeSurface.tsx";
 import {
   createStarterMobileControlsOverlay,
@@ -58,6 +59,9 @@ export type {
   MobileAnalogInputEvent,
   MobileAxis2D,
   MobileControlsRuntimeSurfaceProps,
+  MobileGestureInputEvent,
+  MobileGestureRuntime,
+  MobileGestureStrokeEvent,
 } from "./MobileControlsRuntimeSurface.tsx";
 
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
@@ -79,6 +83,7 @@ export type InputBindingsWorkbenchProps = {
   onMobileOverlayChange?: (overlay: MobileControlsOverlay) => void;
   onMobileActionInput?: (event: MobileActionInputEvent) => void;
   onMobileAnalogInput?: (event: MobileAnalogInputEvent) => void;
+  mobileGestureRuntime?: MobileGestureRuntime;
   className?: string;
 };
 
@@ -108,6 +113,7 @@ export function InputBindingsWorkbench({
   onMobileOverlayChange,
   onMobileActionInput,
   onMobileAnalogInput,
+  mobileGestureRuntime,
   className,
 }: InputBindingsWorkbenchProps) {
   const compiledRegistry = useMemo(() => compileActionRegistry(registry), [registry]);
@@ -212,6 +218,7 @@ export function InputBindingsWorkbench({
               onOverlayChange={onMobileOverlayChange}
               onActionInput={onMobileActionInput}
               onAnalogInput={onMobileAnalogInput}
+              gestureRuntime={mobileGestureRuntime}
             />
           ) : (
             <KeybindingEditor
