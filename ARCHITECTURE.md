@@ -18,7 +18,7 @@ Keyboard bindings distinguish logical keys from physical positions. A logical `z
 
 `AltGraph` is represented independently rather than being silently collapsed into `Ctrl+Alt`. This prevents common European keyboard layouts from accidentally triggering unrelated shortcuts while entering characters.
 
-Recognized pointer gestures are `pointer`-class strokes (`{ device: "gesture", gesture: { kind, ... } }`) and must be a binding's only stroke. Omitting a slash/swipe/drag direction or a circle orientation matches any value. See [ADR 0002](docs/adr/0002-gesture-bindings.md) for the resolution order.
+Recognized pointer gestures are `pointer`-class strokes (`{ device: "gesture", gesture: { kind, ... } }`) and must be a binding's only stroke. Omitting a slash/swipe/drag/two-finger-swipe direction, a pinch direction, or a circle/rotate orientation matches any value. See [ADR 0002](docs/adr/0002-gesture-bindings.md) for the resolution order.
 
 ## Context model
 
@@ -78,6 +78,10 @@ The tracker is single-pointer by default. A pointer that begins while the active
 `recognizeGesturePrimitives` classifies one completed single-pointer stroke into `circle`, `slash`, `swipe`, `drag`, `hold`, and `tap`. Every threshold is an explicit, overridable value in CSS pixels, milliseconds, px/ms, degrees, or unitless ratios; shape criteria use ratios so they are translation and scale invariant above minimum sizes. Every satisfied primitive is reported, most specific first, with parameters such as direction, speed class, orientation, closure, center, radius, and bounds. Scores are relative margins past each gating threshold and are evidence only; they never reorder candidates. Stationary strokes between the tap and hold limits deliberately match neither.
 
 Recognition does not decide what a slash hits, what a circle encloses, or whether an object was caught. It returns path and bounds evidence for the consumer to interpret.
+
+### Multi-pointer gestures
+
+`MultiPointerTracker` groups exactly two concurrent pointers into a session, separately from single-pointer strokes and from virtual-stick aggregation. Pointers are ordered by id, so centroid, translation, scale, and rotation never depend on which finger arrived first; movement before the pair forms is not counted. Pinch (|ln scale|), rotation (degrees), and pan (centroid pixels) each activate at an explicit threshold and deactivate only below a lower one, so values hovering at a boundary cannot flicker. Lifting either pointer completes the session; cancelling either pointer, losing capture, blur, hidden visibility, or detach cancels it, and cancelled sessions never produce gestures. Update events expose continuous metrics for consumer behavior such as camera zoom; a completed session's active modes resolve as `pinch` (in/out), `rotate` (orientation), and `twoFingerSwipe` (direction) bindings through the same `handleGesture` path. `attachMultiPointerGestures` adapts browser Pointer Events; composed with `attachGestureRuntime({ cancelOnAdditionalPointer: true })` on the same element, a second finger cancels the single-pointer stroke as `multiPointer` and the pair takes over.
 
 ### Symbol templates
 

@@ -3,7 +3,8 @@
 Recognized pointer gestures are a binding input kind, not a parallel callback system. A gesture
 stroke is `{ "device": "gesture", "gesture": { "kind": ..., ... } }` with the kinds `tap`, `hold`,
 `drag`, `swipe`, `slash` (optional compass `direction`), `circle` (optional `orientation`), and
-`symbol` (required `id`). It belongs to the existing `pointer` device class, flows through the
+`symbol` (required `id`), plus the two-pointer kinds `pinch` (optional `in`/`out` direction),
+`rotate` (optional orientation), and `twoFingerSwipe` (optional compass direction). It belongs to the existing `pointer` device class, flows through the
 ordinary context expressions, ordered context stacks, profile patches, validation, persistence,
 and conflict analysis, and serializes as part of the existing portable configuration schema.
 
@@ -13,7 +14,8 @@ action or extend a keyboard chord; a pending chord is cancelled when a gesture a
 
 Fuzzy shapes cannot be proven disjoint, so gesture resolution uses one explicit order instead of
 pretending they never overlap. The recognizer reports every satisfied gesture most specific first
-(primitives: circle, slash, swipe, drag, hold, tap; symbols: best-ranked first). Each recognized
+(primitives: circle, slash, swipe, drag, hold, tap; symbols: best-ranked first; two-pointer
+sessions: pinch, rotate, two-finger swipe). Each recognized
 gesture is followed by its generalization without direction or orientation, and the first
 candidate whose single-stroke resolution is not `none` decides. A more specific bound gesture
 therefore always wins over a less specific one, while equal-rank bindings for different actions
