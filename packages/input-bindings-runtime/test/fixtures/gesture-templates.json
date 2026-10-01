@@ -1,0 +1,36 @@
+{
+  "templates": [
+    {
+      "id": "lightning",
+      "points": [{"x": 60, "y": 0}, {"x": 30, "y": 50}, {"x": 70, "y": 50}, {"x": 40, "y": 100}],
+      "rotation": "fixed",
+      "direction": "directed",
+      "maxDistance": 0.1,
+      "provenance": {"source": "authored-runes", "version": "1"}
+    },
+    {
+      "id": "triangle",
+      "points": [{"x": 50, "y": 0}, {"x": 100, "y": 87}, {"x": 0, "y": 87}, {"x": 50, "y": 0}],
+      "rotation": "invariant",
+      "direction": "either",
+      "maxDistance": 0.1,
+      "provenance": {"source": "authored-runes", "version": "1"}
+    },
+    {
+      "id": "check",
+      "points": [{"x": 0, "y": 55}, {"x": 35, "y": 90}, {"x": 100, "y": 0}],
+      "rotation": "fixed",
+      "direction": "directed",
+      "maxDistance": 0.1,
+      "provenance": {"source": "authored-runes", "version": "1"}
+    },
+    {
+      "id": "caret",
+      "points": [{"x": 0, "y": 100}, {"x": 50, "y": 0}, {"x": 100, "y": 100}],
+      "rotation": "fixed",
+      "direction": "either",
+      "maxDistance": 0.1,
+      "provenance": {"source": "authored-runes", "version": "1"}
+    }
+  ]
+}
