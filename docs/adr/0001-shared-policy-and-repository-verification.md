@@ -13,7 +13,9 @@ boundaries are unchanged. Existing package publication-order tests and shared
 Rust/TypeScript fixtures remain the semantic verification authority.
 
 Native compiler, formatter, linter, secret-scanner, and browser checks provide
-repeatable verification. Fast gates stay separate from full builds and browser
+repeatable verification. Source-checking configurations resolve sibling workspace
+source; separate build configurations emit distributable declarations. Lint and
+type checks therefore run before any generated package output exists. Fast gates stay separate from full builds and browser
 tests; local hooks call those same repository commands. Browser tests allocate
 one port per suite and share it with workers through the process environment.
 Storybook accessibility audits enumerate every story in the built story index

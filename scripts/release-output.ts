@@ -15,18 +15,25 @@ function contains(parent: string, child: string): boolean {
   return difference === "" || (!difference.startsWith("..") && !isAbsolute(difference));
 }
 
-export function releaseOutput(root: string, requested: string): string {
+export function releaseOutput(root: string, requested: string, runnerTemporary?: string): string {
   const repository = canonicalPath(root);
   const output = canonicalPath(resolve(root, requested));
-  const temporary = canonicalPath(tmpdir());
+  const temporaryRoots = [canonicalPath(tmpdir())];
+  if (runnerTemporary !== undefined) {
+    const runnerRoot = canonicalPath(runnerTemporary);
+    if (!contains(repository, runnerRoot) && !contains(runnerRoot, repository)) {
+      temporaryRoots.push(runnerRoot);
+    }
+  }
   const releases = join(repository, "release");
   if (
     contains(output, repository) ||
-    output === temporary ||
-    (!contains(releases, output) && !contains(temporary, output))
+    temporaryRoots.includes(output) ||
+    (!contains(releases, output) &&
+      !temporaryRoots.some((temporary) => contains(temporary, output)))
   ) {
     throw new Error(
-      "Release output must be inside release/ or OS temporary storage, outside source roots.",
+      "Release output must be inside release/ or declared temporary storage, outside source roots.",
     );
   }
   return output;

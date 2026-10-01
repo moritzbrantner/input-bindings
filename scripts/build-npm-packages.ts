@@ -27,7 +27,7 @@ for (const packagePath of packages) {
   const absolute = resolve(root, packagePath);
   const dist = resolve(absolute, "dist");
   rmSync(dist, { recursive: true, force: true });
-  run(process.execPath, [tsc, "-p", resolve(absolute, "tsconfig.json")]);
+  run(process.execPath, [tsc, "-p", resolve(absolute, "tsconfig.build.json")]);
   rewriteDeclarationSpecifiers(dist);
 }
 

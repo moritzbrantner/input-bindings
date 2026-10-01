@@ -30,3 +30,16 @@ await test("release output rejects a temporary symlink pointing into repository 
     rmSync(scratch, { recursive: true, force: true });
   }
 });
+
+await test("release output accepts a declared runner temporary directory outside OS temporary storage", () => {
+  const runnerTemporary = resolve(root, "../_temp");
+  assert.equal(
+    releaseOutput(root, join(runnerTemporary, "release-a"), runnerTemporary),
+    join(runnerTemporary, "release-a"),
+  );
+  assert.throws(
+    () => releaseOutput(root, runnerTemporary, runnerTemporary),
+    /Release output must be/,
+  );
+  assert.throws(() => releaseOutput(root, "packages", root), /Release output must be/);
+});

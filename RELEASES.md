@@ -15,7 +15,7 @@
 
 The manifest deliberately contains no build time, runner path, commit-local temporary directory, or other machine-specific data. A release version must match the Cargo workspace version and every npm workspace version before any artifact is built.
 
-Use `bun run release:artifacts --version 0.1.0 --output release` after `bun install --frozen-lockfile`. The builder replaces the selected output directory after the build succeeds; do not store unrelated files there. Outputs must stay within `release/` or OS temporary storage, and source roots and unsafe symlink targets are rejected before building.
+Use `bun run release:artifacts --version 0.1.0 --output release` after `bun install --frozen-lockfile`. The builder replaces the selected output directory after the build succeeds; do not store unrelated files there. Outputs must stay within `release/` or OS temporary storage (including the runner directory declared by `RUNNER_TEMP`), and source roots and unsafe symlink targets are rejected before building.
 
 ## Reproducibility gate
 

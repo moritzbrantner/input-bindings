@@ -9,7 +9,11 @@ import { releaseOutput } from "./release-output.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const args = process.argv.slice(2);
 const requestedVersion = argumentValue("--version");
-const outputDirectory = releaseOutput(root, argumentValue("--output") ?? "release");
+const outputDirectory = releaseOutput(
+  root,
+  argumentValue("--output") ?? "release",
+  process.env.RUNNER_TEMP,
+);
 
 const packageManifests = [
   "packages/input-bindings/package.json",
