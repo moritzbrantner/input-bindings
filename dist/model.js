@@ -149,6 +149,15 @@ export function formatGesture(gesture) {
             return gesture.orientation === "clockwise" ? "Circle clockwise" : "Circle counter-clockwise";
         case "symbol":
             return `Symbol ${gesture.id}`;
+        case "pinch":
+            return gesture.direction ? `Pinch ${gesture.direction}` : "Pinch";
+        case "rotate":
+            if (!gesture.orientation) {
+                return "Rotate";
+            }
+            return gesture.orientation === "clockwise" ? "Rotate clockwise" : "Rotate counter-clockwise";
+        case "twoFingerSwipe":
+            return ["Two-finger swipe", gesture.direction].filter(Boolean).join(" ");
     }
 }
 export function formatSequence(sequence) {
