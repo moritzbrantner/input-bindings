@@ -30,7 +30,7 @@ Read every file in `data.files`. Repository-local instructions take precedence w
 
 These rules govern how work is sliced and when expensive checks run. They never relax the authority and verification rules above.
 
-- **One task = one branch = one PR.** A task is one GitHub issue: a remaining `ROADMAP.md` item, a consumer request, or an explicitly specified Rust/TypeScript semantics half or React/Pages half per `docs/AGENT_TASKS.md`. Deliver the complete declared scope on one branch, including Rust, the TypeScript mirror, shared fixtures, runtime/browser adapters, React/Pages surfaces and docs (`ROADMAP.md`, `CONSUMERS.md`) it requires, in small commits. Do not split a task into new issues or follow-up PRs on your own; if it cannot land as one PR, stop and propose the split on the issue.
+- **One task = one branch = one PR.** A task is one GitHub issue: a remaining `ROADMAP.md` item, a consumer request, or an explicitly specified Rust/TypeScript semantics half or React/Pages half of one. Deliver the complete declared scope on one branch, including Rust, the TypeScript mirror, shared fixtures, runtime/browser adapters, React/Pages surfaces and docs (`ROADMAP.md`, `CONSUMERS.md`) it requires, in small commits. Do not split a task into new issues or follow-up PRs on your own; if it cannot land as one PR, stop and propose the split on the issue.
 - **Stay inside the task.** Do not start tooling, CI, dependency, release or maintenance work unless the task cannot be completed without it. Note unrelated findings in one line of the PR description; do not open issues for them.
 - **No new ratchets unless the task asks for one.** Do not add benchmark thresholds, baselines or gates on your own initiative. Benchmarks stay non-gating.
 - **One schema bump per task.** Settle portable configuration schema, fixture-format and public package API changes before implementing; a task bumps the configuration schema version at most once and keeps Rust/TypeScript parity in the same PR.
@@ -38,8 +38,6 @@ These rules govern how work is sliced and when expensive checks run. They never 
 - **Codex reviews the PR.** Codex reviews automatically when a PR is opened or marked ready, so open it (or mark a draft ready) only once the branch is complete. Address or explicitly answer every Codex finding before merge; after substantial fixes, comment `@codex review` for another pass.
 - **Decide and continue.** When a task leaves a design choice open, pick the simplest option consistent with this file, record it in the PR description (or an ADR in `docs/adr/` when consequential) and keep going.
 - **Short PR descriptions.** At most about 15 lines: what changed, schema/API/compatibility changes, one line naming the checks that ran, and anything not verified. Leave detailed evidence to CI and the tests. Never write a closing keyword next to an issue you do not close ("not close #N" still closes it); write "part of #N" instead.
-
-Tasks arrive as GitHub issues in the format, labels and pickup rules of `docs/AGENT_TASKS.md`; implement only `spec:ready` issues labeled for you. Claude Opus runs the loop with the `/agent-loop` skill (`.claude/skills/agent-loop/`); Sol runs the Codex `implementer-loop` skill (`.agents/skills/implementer-loop/`).
 
 ## Done means
 
