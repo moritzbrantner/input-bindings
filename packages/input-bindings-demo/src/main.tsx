@@ -565,9 +565,9 @@ function App() {
         <a href="https://github.com/moritzbrantner/input-bindings">Repository</a>
       </header>
       <p className="site-note">
-        Desktop uses list and keyboard presentations. Narrow screens replace the keyboard map with
-        an editable mobile overlay for thumbsticks, action buttons, gesture zones, and command
-        docks; keyboard-only preview is omitted there.
+        Width only changes the compact layout. Touch-first environments use the editable mobile
+        overlay, while narrow desktop and hybrid fine-pointer environments keep keyboard
+        configuration and preview.
       </p>
       <InputBindingsWorkbench
         registry={registry}
