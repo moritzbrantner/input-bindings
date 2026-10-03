@@ -66,7 +66,7 @@ export type {
 
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
-export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
 
 export type InputBindingsWorkbenchProps = {
   registry: ActionRegistry;
@@ -97,8 +97,6 @@ const DEFAULT_SCENARIO: InputBindingsContextScenario = {
 
 const DEFAULT_MOBILE_OVERLAY = createStarterMobileControlsOverlay();
 const COMPACT_PRESENTATION_QUERY = "(max-width: 620px)";
-const PRIMARY_COARSE_POINTER_QUERY = "(pointer: coarse)";
-const ANY_FINE_POINTER_QUERY = "(any-pointer: fine)";
 
 export function InputBindingsWorkbench({
   registry,
@@ -147,11 +145,9 @@ export function InputBindingsWorkbench({
     initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
   );
   const compactLayout = useCompactControlsLayout();
-  const mobileControlsPresentation = useMobileControlsPresentation();
-  const visibleMode = mobileControlsPresentation && mode === "preview" ? "shortcuts" : mode;
-  const keyboardPresentation = mobileControlsPresentation ? "mobile" : "keyboard";
-  const visiblePresentation: "list" | "keyboard" | "mobile" =
-    presentation === "list" ? "list" : keyboardPresentation;
+  const touchControlsAvailable = useTouchControlsAvailability();
+  const visibleMode = mode;
+  const visiblePresentation = presentation;
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
   const scenario =
     scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
@@ -164,12 +160,6 @@ export function InputBindingsWorkbench({
       setScenarioId(scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
     }
   }, [scenarioId, scenarios]);
-
-  useEffect(() => {
-    if (mobileControlsPresentation && mode === "preview") {
-      setMode("shortcuts");
-    }
-  }, [mobileControlsPresentation, mode]);
 
   useEffect(() => {
     setKeyboardMode(scenario.defaultKeyboardMode ?? "logical");
@@ -198,12 +188,7 @@ export function InputBindingsWorkbench({
             {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
           </p>
         </div>
-        <WorkbenchTabs
-          mode={visibleMode}
-          compact={compactLayout}
-          mobileControls={mobileControlsPresentation}
-          onChange={setMode}
-        />
+        <WorkbenchTabs mode={visibleMode} compact={compactLayout} onChange={setMode} />
       </header>
 
       {visibleMode === "shortcuts" && (
@@ -215,7 +200,7 @@ export function InputBindingsWorkbench({
         >
           <PresentationToolbar
             presentation={visiblePresentation}
-            mobileControls={mobileControlsPresentation}
+            touchControlsAvailable={touchControlsAvailable}
             onChange={setPresentation}
           />
           {visiblePresentation === "mobile" ? (
@@ -290,35 +275,29 @@ export function InputBindingsWorkbench({
 function WorkbenchTabs({
   mode,
   compact,
-  mobileControls,
   onChange,
 }: {
   mode: InputBindingsWorkbenchMode;
   compact: boolean;
-  mobileControls: boolean;
   onChange: (mode: InputBindingsWorkbenchMode) => void;
 }) {
-  const tabs: { id: InputBindingsWorkbenchMode; label: string; description: string }[] = [
+  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] = [
     {
       id: "shortcuts",
-      label: compact || mobileControls ? "Bindings" : "Shortcuts",
-      description: mobileControls
-        ? "Browse bindings or arrange the mobile control overlay."
-        : "Browse and edit shortcuts in either list or keyboard presentation.",
+      label: compact ? "Bindings" : "Shortcuts",
+      description: "Browse and edit bindings in list or device-specific presentations.",
     },
     {
       id: "conflicts",
       label: "Conflicts",
       description: "Understand overlaps and apply explicit deterministic repairs.",
     },
-  ];
-  if (!mobileControls) {
-    tabs.push({
+    {
       id: "preview",
       label: "Try shortcuts",
       description: "Press real keys and inspect exactly why the current context resolves them.",
-    });
-  }
+    },
+  ];
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const activate = (index: number) => {
@@ -378,11 +357,11 @@ function WorkbenchTabs({
 
 function PresentationToolbar({
   presentation,
-  mobileControls,
+  touchControlsAvailable,
   onChange,
 }: {
-  presentation: InputBindingsWorkbenchPresentation | "mobile";
-  mobileControls: boolean;
+  presentation: InputBindingsWorkbenchPresentation;
+  touchControlsAvailable: boolean;
   onChange: (presentation: InputBindingsWorkbenchPresentation) => void;
 }) {
   return (
@@ -406,14 +385,22 @@ function PresentationToolbar({
         </button>
         <button
           type="button"
-          aria-pressed={presentation === (mobileControls ? "mobile" : "keyboard")}
-          className={
-            presentation === (mobileControls ? "mobile" : "keyboard") ? "is-active" : undefined
-          }
+          aria-pressed={presentation === "keyboard"}
+          className={presentation === "keyboard" ? "is-active" : undefined}
           onClick={() => onChange("keyboard")}
         >
-          {mobileControls ? "Mobile controls" : "Keyboard"}
+          Keyboard
         </button>
+        {touchControlsAvailable && (
+          <button
+            type="button"
+            aria-pressed={presentation === "mobile"}
+            className={presentation === "mobile" ? "is-active" : undefined}
+            onClick={() => onChange("mobile")}
+          >
+            Mobile controls
+          </button>
+        )}
       </fieldset>
     </section>
   );
@@ -434,29 +421,16 @@ function useCompactControlsLayout(): boolean {
   return compact;
 }
 
-function useMobileControlsPresentation(): boolean {
-  // Prefer the touch overlay only for touch-first environments. A narrow desktop
-  // remains a keyboard environment, and hybrid devices with any fine pointer keep
-  // the keyboard presentation rather than being classified as mobile by width.
-  const [mobileControls, setMobileControls] = useState(false);
+function useTouchControlsAvailability(): boolean {
+  // Touch support is a capability, not a device class. Width still controls only
+  // layout, and keyboard configuration remains available on touch/hybrid devices.
+  const [available, setAvailable] = useState(false);
 
   useEffect(() => {
-    const primaryCoarse = window.matchMedia(PRIMARY_COARSE_POINTER_QUERY);
-    const anyFine = window.matchMedia(ANY_FINE_POINTER_QUERY);
-    const update = () => {
-      const touchCapable = navigator.maxTouchPoints > 0;
-      setMobileControls(touchCapable && primaryCoarse.matches && !anyFine.matches);
-    };
-    update();
-    primaryCoarse.addEventListener("change", update);
-    anyFine.addEventListener("change", update);
-    return () => {
-      primaryCoarse.removeEventListener("change", update);
-      anyFine.removeEventListener("change", update);
-    };
+    setAvailable(navigator.maxTouchPoints > 0);
   }, []);
 
-  return mobileControls;
+  return available;
 }
 
 function ScenarioToolbar({
