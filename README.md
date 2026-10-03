@@ -28,7 +28,7 @@ A game, editor, website, and desktop tool should not depend on one another merel
 - Explainable ordered-context resolution traces exposing candidates, modal barriers, shadowing, rank decisions, chord waiting, ambiguity, and the winning binding in Rust and TypeScript.
 - Profile deltas with add/remove/replace patches and diagnostics for stale or invalid overrides.
 - First-class action registry and fail-closed configuration validation.
-- Reusable React controls-settings workbench with all-bindings editing, dedicated conflict review/repair, a context-aware desktop keyboard map, a narrow-screen mobile overlay editor for sticks/buttons/gesture zones/command docks, and live desktop preview that explains the same ordered-context decision used at runtime.
+- Reusable React controls-settings workbench with all-bindings editing, dedicated conflict review/repair, a context-aware desktop keyboard map, a capability-selected mobile overlay editor for sticks/buttons/gesture zones/command docks, and live desktop preview that explains the same ordered-context decision used at runtime; viewport width only controls responsive layout.
 - Search, filters, logical/physical recording, declared context-scenario evidence, normalized input history, reset, provenance, local profile persistence, and separately persisted consumer-owned mobile overlay geometry in the Pages dogfood.
 - Runtime controller for chord timeouts, cancellation, repeat policy, press/release lifecycle, reset safety, event consumption, and explainable dispatch decisions.
 - Consumer-side held control state for fixed-tick games: multi-device holders, digital axes, and queued one-shot presses retired through the runtime lifecycle.
