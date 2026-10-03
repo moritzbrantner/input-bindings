@@ -42,7 +42,7 @@ The List and Keyboard presentations are peers within one Shortcuts task on deskt
 - Keep the overlay controlled by the consumer through `mobileOverlay` / `onMobileOverlayChange`; the consumer owns persistence and application behavior.
 - Keep Edit and Test modes distinct. Test mode executes the real touch surface, including stick/look Axis2D values, rather than simulating keyboard input.
 - Do not pretend touch gestures are keyboard shortcuts. Overlay geometry and analog mappings remain separate from `Profile` key-binding deltas.
-- Use viewport width only for responsive layout. Prefer the mobile overlay and omit the keyboard-only **Try shortcuts** task only for touch-first environments with a coarse primary pointer and no fine pointer; narrow desktop and hybrid fine-pointer environments keep keyboard configuration and preview.
+- Use viewport width only for responsive layout. Expose the mobile overlay from touch capability, not device class, and keep keyboard configuration plus **Try shortcuts** available independently because touch and keyboard/fine-pointer input can coexist.
 - Never request gyroscope permission merely because settings rendered. Motion access begins only from an explicit user action.
 
 ### Conflicts
