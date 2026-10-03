@@ -162,18 +162,18 @@ test("mobile settings support exact binding edits and an editable touch overlay"
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
   const tabs = taskTabs.getByRole("tab");
-  await expect(tabs).toHaveCount(2);
+  await expect(tabs).toHaveCount(3);
   const firstBox = await tabs.nth(0).boundingBox();
-  const lastBox = await tabs.nth(1).boundingBox();
+  const lastBox = await tabs.nth(2).boundingBox();
   expect(firstBox).not.toBeNull();
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
   await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
-  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toBeVisible();
 
   const presentation = page.getByLabel("Shortcut presentation");
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toBeVisible();
   await expect(presentation.getByRole("button", { name: "Mobile controls" })).toBeVisible();
-  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
 
   await expect(page.getByLabel("Category")).toBeHidden();
   const filters = page.getByRole("button", { name: "Filters", exact: true });
