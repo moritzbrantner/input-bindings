@@ -565,9 +565,8 @@ function App() {
         <a href="https://github.com/moritzbrantner/input-bindings">Repository</a>
       </header>
       <p className="site-note">
-        Width only changes the compact layout. Touch-first environments use the editable mobile
-        overlay, while narrow desktop and hybrid fine-pointer environments keep keyboard
-        configuration and preview.
+        Width only changes the compact layout. Touch-capable environments add the editable mobile
+        overlay, while keyboard configuration and preview stay available independently.
       </p>
       <InputBindingsWorkbench
         registry={registry}
