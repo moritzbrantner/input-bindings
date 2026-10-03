@@ -4,13 +4,13 @@
 
 ## Default information architecture
 
-On desktop, the reusable workbench has three primary tasks: **Shortcuts**, **Conflicts**, and **Try shortcuts**. Presentation is a separate axis inside the Shortcuts task. On narrow touch-oriented layouts the keyboard-only preview task is omitted, **Shortcuts** is labeled **Bindings**, and the desktop keyboard map is replaced by a mobile-controls overlay presentation.
+The reusable workbench has three primary tasks: **Shortcuts**, **Conflicts**, and **Try shortcuts**. Presentation is a separate axis inside the Shortcuts task. Narrow layouts may relabel **Shortcuts** as **Bindings** and compact the surface, but viewport width never decides which input capabilities exist.
 
 ### Shortcuts
 
 This is the configuration task and the default landing surface. It owns ordinary browsing, selection, and editing regardless of presentation.
 
-Desktop exposes **List / Keyboard**. Narrow layouts expose **List / Mobile controls** instead. The action registry remains the semantic authority; changing presentation must not create a second action registry or silently reinterpret persisted key bindings.
+The workbench exposes **List / Keyboard** wherever keyboard configuration is meaningful, independent of viewport width. Touch-capable environments additionally expose **Mobile controls**. The action registry remains the semantic authority; changing presentation must not create a second action registry or silently reinterpret persisted key bindings.
 
 #### List presentation
 
@@ -33,7 +33,7 @@ The List and Keyboard presentations are peers within one Shortcuts task on deskt
 
 #### Mobile controls presentation
 
-- Replace the keyboard diagram on narrow screens rather than squeezing a desktop keyboard into a phone viewport.
+- Expose the mobile-controls presentation when touch is available; do not infer touch from viewport width or remove the keyboard presentation merely because the layout is narrow.
 - Preview the application's touch layer directly: virtual thumbsticks, action buttons, gesture zones, and compact command docks.
 - Support portrait and landscape previews and keep a visible safe-area inset.
 - Let users drag controls for coarse placement, but always pair that with exact X/Y/width/height percentage fields and keyboard nudging for precision.
