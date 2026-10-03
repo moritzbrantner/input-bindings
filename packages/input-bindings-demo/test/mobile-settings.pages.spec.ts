@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("mobile Pages settings expose touch controls without hiding keyboard configuration", async ({ page }) => {
+test("mobile Pages keeps keyboard configuration with touch controls", async ({ page }) => {
   await page.goto("./");
 
   await expect(page.getByRole("heading", { name: "Controls" })).toBeVisible();
