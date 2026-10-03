@@ -9,7 +9,7 @@ export type { MobileAnalogActionOption, MobileControlKind, MobileControlsOrienta
 export type { MobileActionInputEvent, MobileAnalogInputEvent, MobileAxis2D, MobileControlsRuntimeSurfaceProps, MobileGestureInputEvent, MobileGestureRuntime, MobileGestureStrokeEvent, } from "./MobileControlsRuntimeSurface.js";
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
-export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
 export type InputBindingsWorkbenchProps = {
     registry: ActionRegistry;
     profile: Profile;
