@@ -66,7 +66,7 @@ export type {
 
 export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
 export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
-export type InputBindingsWorkbenchPresentation = "list" | "keyboard";
+export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
 
 export type InputBindingsWorkbenchProps = {
   registry: ActionRegistry;
@@ -144,11 +144,10 @@ export function InputBindingsWorkbench({
   const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
     initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
   );
-  const compactPresentation = useCompactControlsPresentation();
-  const visibleMode = compactPresentation && mode === "preview" ? "shortcuts" : mode;
-  const keyboardPresentation = compactPresentation ? "mobile" : "keyboard";
-  const visiblePresentation: "list" | "keyboard" | "mobile" =
-    presentation === "list" ? "list" : keyboardPresentation;
+  const compactLayout = useCompactControlsLayout();
+  const touchControlsAvailable = useTouchControlsAvailability();
+  const visibleMode = mode;
+  const visiblePresentation = presentation;
   const [scenarioId, setScenarioId] = useState(() => scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
   const scenario =
     scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0] ?? DEFAULT_SCENARIO;
@@ -161,12 +160,6 @@ export function InputBindingsWorkbench({
       setScenarioId(scenarios[0]?.id ?? DEFAULT_SCENARIO.id);
     }
   }, [scenarioId, scenarios]);
-
-  useEffect(() => {
-    if (compactPresentation && mode === "preview") {
-      setMode("shortcuts");
-    }
-  }, [compactPresentation, mode]);
 
   useEffect(() => {
     setKeyboardMode(scenario.defaultKeyboardMode ?? "logical");
@@ -195,7 +188,7 @@ export function InputBindingsWorkbench({
             {report.conflicts.length} conflict{report.conflicts.length === 1 ? "" : "s"}
           </p>
         </div>
-        <WorkbenchTabs mode={visibleMode} compact={compactPresentation} onChange={setMode} />
+        <WorkbenchTabs mode={visibleMode} compact={compactLayout} onChange={setMode} />
       </header>
 
       {visibleMode === "shortcuts" && (
@@ -207,7 +200,7 @@ export function InputBindingsWorkbench({
         >
           <PresentationToolbar
             presentation={visiblePresentation}
-            compact={compactPresentation}
+            touchControlsAvailable={touchControlsAvailable}
             onChange={setPresentation}
           />
           {visiblePresentation === "mobile" ? (
@@ -288,38 +281,23 @@ function WorkbenchTabs({
   compact: boolean;
   onChange: (mode: InputBindingsWorkbenchMode) => void;
 }) {
-  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] =
-    compact
-      ? [
-          {
-            id: "shortcuts",
-            label: "Bindings",
-            description: "Browse bindings or arrange the mobile control overlay.",
-          },
-          {
-            id: "conflicts",
-            label: "Conflicts",
-            description: "Understand overlaps and apply explicit deterministic repairs.",
-          },
-        ]
-      : [
-          {
-            id: "shortcuts",
-            label: "Shortcuts",
-            description: "Browse and edit shortcuts in either list or keyboard presentation.",
-          },
-          {
-            id: "conflicts",
-            label: "Conflicts",
-            description: "Understand overlaps and apply explicit deterministic repairs.",
-          },
-          {
-            id: "preview",
-            label: "Try shortcuts",
-            description:
-              "Press real keys and inspect exactly why the current context resolves them.",
-          },
-        ];
+  const tabs: readonly { id: InputBindingsWorkbenchMode; label: string; description: string }[] = [
+    {
+      id: "shortcuts",
+      label: compact ? "Bindings" : "Shortcuts",
+      description: "Browse and edit bindings in list or device-specific presentations.",
+    },
+    {
+      id: "conflicts",
+      label: "Conflicts",
+      description: "Understand overlaps and apply explicit deterministic repairs.",
+    },
+    {
+      id: "preview",
+      label: "Try shortcuts",
+      description: "Press real keys and inspect exactly why the current context resolves them.",
+    },
+  ];
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const activate = (index: number) => {
@@ -379,11 +357,11 @@ function WorkbenchTabs({
 
 function PresentationToolbar({
   presentation,
-  compact,
+  touchControlsAvailable,
   onChange,
 }: {
-  presentation: InputBindingsWorkbenchPresentation | "mobile";
-  compact: boolean;
+  presentation: InputBindingsWorkbenchPresentation;
+  touchControlsAvailable: boolean;
   onChange: (presentation: InputBindingsWorkbenchPresentation) => void;
 }) {
   return (
@@ -407,20 +385,29 @@ function PresentationToolbar({
         </button>
         <button
           type="button"
-          aria-pressed={presentation === (compact ? "mobile" : "keyboard")}
-          className={presentation === (compact ? "mobile" : "keyboard") ? "is-active" : undefined}
+          aria-pressed={presentation === "keyboard"}
+          className={presentation === "keyboard" ? "is-active" : undefined}
           onClick={() => onChange("keyboard")}
         >
-          {compact ? "Mobile controls" : "Keyboard"}
+          Keyboard
         </button>
+        {touchControlsAvailable && (
+          <button
+            type="button"
+            aria-pressed={presentation === "mobile"}
+            className={presentation === "mobile" ? "is-active" : undefined}
+            onClick={() => onChange("mobile")}
+          >
+            Mobile controls
+          </button>
+        )}
       </fieldset>
     </section>
   );
 }
 
-function useCompactControlsPresentation(): boolean {
-  // Keep the server render and the browser's first render identical. Responsive
-  // presentation is applied after hydration from the actual media query.
+function useCompactControlsLayout(): boolean {
+  // Width controls layout only. Input-device presentation is resolved separately.
   const [compact, setCompact] = useState(false);
 
   useEffect(() => {
@@ -432,6 +419,18 @@ function useCompactControlsPresentation(): boolean {
   }, []);
 
   return compact;
+}
+
+function useTouchControlsAvailability(): boolean {
+  // Touch support is a capability, not a device class. Width still controls only
+  // layout, and keyboard configuration remains available on touch/hybrid devices.
+  const [available, setAvailable] = useState(false);
+
+  useEffect(() => {
+    setAvailable(navigator.maxTouchPoints > 0);
+  }, []);
+
+  return available;
 }
 
 function ScenarioToolbar({

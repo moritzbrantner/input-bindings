@@ -120,25 +120,25 @@ test("live preview is explicitly activated and announces the resolution", async 
   await expect(page.getByRole("button", { name: "Start preview" })).toBeVisible();
 });
 
-test("narrow screens replace keyboard-only surfaces with mobile controls", async ({ page }) => {
+test("narrow desktop keeps keyboard surfaces while using the compact layout", async ({ page }) => {
   await page.setViewportSize({ width: 420, height: 900 });
   await openStory(page, "keyboard");
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
-  await expect(taskTabs.getByRole("tab")).toHaveCount(2);
+  await expect(taskTabs.getByRole("tab")).toHaveCount(3);
   await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
   await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toBeVisible();
-  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toBeVisible();
 
   const presentation = page.getByLabel("Shortcut presentation");
   await expect(presentation.getByRole("button", { name: "List" })).toBeVisible();
-  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toHaveAttribute(
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Mobile controls" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Keyboard overview" })).toHaveCount(0);
+  await expect(presentation.getByRole("button", { name: "Mobile controls" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Keyboard overview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mobile controls" })).toHaveCount(0);
 
   const metrics = await page.locator("html").evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
@@ -148,25 +148,32 @@ test("narrow screens replace keyboard-only surfaces with mobile controls", async
 });
 
 test("mobile settings support exact binding edits and an editable touch overlay", async ({
-  page,
+  browser,
+  baseURL,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  const context = await browser.newContext({
+    baseURL,
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
   await openStory(page, "mobile-settings");
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
   const tabs = taskTabs.getByRole("tab");
-  await expect(tabs).toHaveCount(2);
+  await expect(tabs).toHaveCount(3);
   const firstBox = await tabs.nth(0).boundingBox();
-  const lastBox = await tabs.nth(1).boundingBox();
+  const lastBox = await tabs.nth(2).boundingBox();
   expect(firstBox).not.toBeNull();
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
   await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
-  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toBeVisible();
 
   const presentation = page.getByLabel("Shortcut presentation");
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toBeVisible();
   await expect(presentation.getByRole("button", { name: "Mobile controls" })).toBeVisible();
-  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
 
   await expect(page.getByLabel("Category")).toBeHidden();
   const filters = page.getByRole("button", { name: "Filters", exact: true });
@@ -237,6 +244,7 @@ test("mobile settings support exact binding edits and an editable touch overlay"
     path: "test-results/storybook/workbench-mobile-overlay.png",
     fullPage: true,
   });
+  await context.close();
 });
 
 test("keyboard presentation produces inspectable visual evidence", async ({ page }) => {

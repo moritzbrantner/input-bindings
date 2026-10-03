@@ -1,26 +1,26 @@
 import { expect, test } from "@playwright/test";
 
-test("mobile Pages settings use touch controls instead of a keyboard map", async ({ page }) => {
+test("mobile Pages keeps keyboard configuration with touch controls", async ({ page }) => {
   await page.goto("./");
 
   await expect(page.getByRole("heading", { name: "Controls" })).toBeVisible();
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
-  await expect(taskTabs.getByRole("tab")).toHaveCount(2);
+  await expect(taskTabs.getByRole("tab")).toHaveCount(3);
   await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
   await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toBeVisible();
-  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toHaveCount(0);
+  await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toBeVisible();
 
   const firstBox = await taskTabs.getByRole("tab").nth(0).boundingBox();
-  const lastBox = await taskTabs.getByRole("tab").nth(1).boundingBox();
+  const lastBox = await taskTabs.getByRole("tab").nth(2).boundingBox();
   expect(firstBox).not.toBeNull();
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
 
   const presentation = page.getByLabel("Shortcut presentation");
   await expect(presentation.getByRole("button", { name: "List" })).toBeVisible();
+  await expect(presentation.getByRole("button", { name: "Keyboard" })).toBeVisible();
   await expect(presentation.getByRole("button", { name: "Mobile controls" })).toBeVisible();
-  await expect(presentation.getByRole("button", { name: "Keyboard" })).toHaveCount(0);
   await expect(page.getByText("Hotkeys ?", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Shortcuts ?", { exact: true })).toBeHidden();
 
