@@ -444,7 +444,7 @@ function useMobileControlsPresentation(): boolean {
     const primaryCoarse = window.matchMedia(PRIMARY_COARSE_POINTER_QUERY);
     const anyFine = window.matchMedia(ANY_FINE_POINTER_QUERY);
     const update = () => {
-      const touchCapable = navigator.maxTouchPoints > 0 || primaryCoarse.matches;
+      const touchCapable = navigator.maxTouchPoints > 0;
       setMobileControls(touchCapable && primaryCoarse.matches && !anyFine.matches);
     };
     update();
