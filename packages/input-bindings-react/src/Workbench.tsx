@@ -146,7 +146,7 @@ export function InputBindingsWorkbench({
   const [presentation, setPresentation] = useState<InputBindingsWorkbenchPresentation>(
     initialPresentation ?? (initialView === "keyboard" ? "keyboard" : "list"),
   );
-  const compactPresentation = useCompactControlsPresentation();
+  const compactLayout = useCompactControlsLayout();
   const mobileControlsPresentation = useMobileControlsPresentation();
   const visibleMode = mobileControlsPresentation && mode === "preview" ? "shortcuts" : mode;
   const keyboardPresentation = mobileControlsPresentation ? "mobile" : "keyboard";
@@ -166,10 +166,10 @@ export function InputBindingsWorkbench({
   }, [scenarioId, scenarios]);
 
   useEffect(() => {
-    if (compactPresentation && mode === "preview") {
+    if (mobileControlsPresentation && mode === "preview") {
       setMode("shortcuts");
     }
-  }, [compactPresentation, mode]);
+  }, [mobileControlsPresentation, mode]);
 
   useEffect(() => {
     setKeyboardMode(scenario.defaultKeyboardMode ?? "logical");
@@ -200,7 +200,7 @@ export function InputBindingsWorkbench({
         </div>
         <WorkbenchTabs
           mode={visibleMode}
-          compact={compactPresentation}
+          compact={compactLayout}
           mobileControls={mobileControlsPresentation}
           onChange={setMode}
         />
@@ -419,7 +419,7 @@ function PresentationToolbar({
   );
 }
 
-function useCompactControlsPresentation(): boolean {
+function useCompactControlsLayout(): boolean {
   // Width controls layout only. Input-device presentation is resolved separately.
   const [compact, setCompact] = useState(false);
 
