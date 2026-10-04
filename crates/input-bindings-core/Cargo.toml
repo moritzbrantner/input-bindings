@@ -14,4 +14,4 @@ include = ["src/**", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
 serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
-serde_json = "1"
+serde_json = "=1.0.151"
