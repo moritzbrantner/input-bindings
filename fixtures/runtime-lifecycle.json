@@ -2332,6 +2332,99 @@
           "presses": []
         }
       ]
+    },
+    {
+      "name": "an unbound repeat during a pending chord is not consumed",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyM"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyM"
+            }
+          },
+          "repeat": true,
+          "atMs": 40
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 50
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        }
+      ]
     }
   ]
 }

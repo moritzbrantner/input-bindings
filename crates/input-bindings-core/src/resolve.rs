@@ -66,12 +66,12 @@ pub(crate) fn finish_resolution(exact: Vec<&Binding>, continuations: Vec<&Bindin
             .iter()
             .map(|binding| binding.id.clone())
             .collect::<Vec<_>>();
-        exact_binding_ids.sort();
+        exact_binding_ids.sort_by(|left, right| code_unit_order(left, right));
         let mut continuation_binding_ids = continuations
             .iter()
             .map(|binding| binding.id.clone())
             .collect::<Vec<_>>();
-        continuation_binding_ids.sort();
+        continuation_binding_ids.sort_by(|left, right| code_unit_order(left, right));
         return Resolution::Pending {
             exact_binding_ids,
             continuation_binding_ids,

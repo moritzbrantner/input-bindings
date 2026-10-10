@@ -537,8 +537,13 @@ impl InputRuntime {
             })
             .collect::<Vec<_>>();
         if dispatches.is_empty() {
+            // Bound means held, part of the pending chord, or resolvable on its own; an
+            // unrelated repeat during a pending chord keeps its default behaviour.
             let matched = !held.is_empty()
-                || !self.pending.is_empty()
+                || self
+                    .pending
+                    .iter()
+                    .any(|pending| TriggerKey::of(pending) == trigger)
                 || self.resolve(std::slice::from_ref(&stroke), &contexts, None) != Resolution::None;
             if !matched {
                 return decision(

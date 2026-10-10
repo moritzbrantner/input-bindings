@@ -310,7 +310,7 @@ export class InputRuntimeController {
     if (dispatches.length === 0) {
       const matched =
         held.length > 0 ||
-        this.pending.length > 0 ||
+        this.pending.some((pending) => inputStrokeIdentity(pending) === triggerKey) ||
         this.resolve([structuredClone(stroke)], contexts, contextStack).kind !== "none";
       if (!matched) {
         return this.emit(
