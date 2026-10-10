@@ -2,7 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Binding, InputStroke, Resolution, WhenExpr, resolve::finish_resolution};
+use crate::{
+    Binding, InputStroke, Resolution, WhenExpr,
+    resolve::{code_unit_order, finish_resolution},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -126,7 +129,7 @@ pub fn explain_resolution_with_context_stack(
     }
 
     let mut sorted_bindings = bindings.iter().collect::<Vec<_>>();
-    sorted_bindings.sort_by(|left, right| left.id.cmp(&right.id));
+    sorted_bindings.sort_by(|left, right| code_unit_order(&left.id, &right.id));
 
     let mut candidates = Vec::with_capacity(sorted_bindings.len());
     let mut working = Vec::new();

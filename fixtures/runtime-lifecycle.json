@@ -382,6 +382,83 @@
             ]
           }
         ]
+      },
+      {
+        "id": "panLeft",
+        "title": "panLeft",
+        "repeatPolicy": "allow",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "panLeft.default",
+            "action": "panLeft",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "g"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "h"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "panReset",
+        "title": "panReset",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "panReset.default",
+            "action": "panReset",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "g"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "h"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "r"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -1960,6 +2037,296 @@
           ],
           "dispatches": [
             "release zoomIn zoomIn.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a held movement keeps repeating while an unrelated chord is pending",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": true,
+          "atMs": 40
+        },
+        {
+          "op": "advance",
+          "atMs": 310
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 320
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 330
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press leader leader.default timeout"
+          ],
+          "held": [
+            "leader",
+            "moveUp"
+          ],
+          "presses": [
+            "leader"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release leader leader.default keyUp"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.w keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a fired multi-stroke prefix repeats from its held activation",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "g"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "g"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "h"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 20
+        },
+        {
+          "op": "advance",
+          "atMs": 320
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "h"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 350
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "h"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 400
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press panLeft panLeft.default timeout"
+          ],
+          "held": [
+            "panLeft"
+          ],
+          "presses": [
+            "panLeft"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat panLeft panLeft.default chord"
+          ],
+          "held": [
+            "panLeft"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release panLeft panLeft.default keyUp"
           ],
           "held": [],
           "presses": []

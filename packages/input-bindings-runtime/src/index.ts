@@ -247,42 +247,14 @@ export class InputRuntimeController {
       );
     }
 
-    if (repeat && this.pending.length > 0) {
-      return this.emit(
-        this.decision(
-          "repeatSuppressed",
-          structuredClone(this.pending),
-          contexts,
-          [],
-          this.shouldConsume(true, false),
-          { reason: "repeatSuppressed" },
-        ),
-      );
+    // An auto-repeat belongs to what its input already holds and never resolves afresh, so
+    // it cannot start, cancel or re-press a chord.
+    if (repeat) {
+      return this.repeatHeld(stroke, triggerKey, contexts, contextStack);
     }
 
     const sequence = [...this.pending, structuredClone(stroke)];
     const resolution = this.resolve(sequence, contexts, contextStack);
-
-    // An auto-repeat never starts a chord: scheduling another timeout would press the prefix
-    // a second time. A prefix that already fired and is still held repeats like any resolved
-    // binding, as its repeat policy decides.
-    if (repeat && resolution.kind === "pending") {
-      const fired = (this.active.get(triggerKey) ?? []).find((activation) =>
-        resolution.exactBindingIds.includes(activation.bindingId),
-      );
-      if (fired) {
-        return this.finishInputDown(sequence, stroke, repeat, contexts, {
-          kind: "resolved",
-          bindingId: fired.bindingId,
-          action: fired.action,
-        });
-      }
-      return this.emit(
-        this.decision("repeatSuppressed", sequence, contexts, [], this.shouldConsume(true, false), {
-          reason: "repeatSuppressed",
-        }),
-      );
-    }
 
     if (resolution.kind === "none" && this.pending.length > 0) {
       const cancelledSequence = structuredClone(this.pending);
@@ -304,6 +276,73 @@ export class InputRuntimeController {
     }
 
     return this.finishInputDown(sequence, stroke, repeat, contexts, resolution);
+  }
+
+  /**
+   * Each activation held on the repeated input repeats as its action's policy allows,
+   * including a fired chord prefix and while an unrelated chord is pending. A repeat of an
+   * input that holds nothing dispatches nothing; it is consumed when the input is bound.
+   */
+  private repeatHeld(
+    stroke: InputStroke,
+    triggerKey: string,
+    contexts: string[],
+    contextStack: readonly ContextLayer[] | undefined,
+  ): RuntimeDecision {
+    const held = (this.active.get(triggerKey) ?? [])
+      .slice()
+      .sort((left, right) => codeUnitOrder(left.bindingId, right.bindingId));
+    const dispatches = held
+      .filter(
+        (activation) =>
+          this.registry.actions.find((action) => action.id === activation.action)?.repeatPolicy ===
+          "allow",
+      )
+      .map<RuntimeDispatch>((activation) => ({
+        action: activation.action,
+        bindingId: activation.bindingId,
+        phase: "repeat",
+        repeat: true,
+        reason: activation.sequence.length > 1 ? "chord" : "direct",
+        sequence: structuredClone(activation.sequence),
+        activeContexts: contexts,
+      }));
+    if (dispatches.length === 0) {
+      const matched =
+        held.length > 0 ||
+        this.pending.length > 0 ||
+        this.resolve([structuredClone(stroke)], contexts, contextStack).kind !== "none";
+      if (!matched) {
+        return this.emit(
+          this.decision("none", [structuredClone(stroke)], contexts, [], false, {
+            reason: "unmatched",
+          }),
+        );
+      }
+      return this.emit(
+        this.decision(
+          "repeatSuppressed",
+          [structuredClone(stroke)],
+          contexts,
+          [],
+          this.shouldConsume(true, false),
+          {
+            reason: "repeatSuppressed",
+            bindingIds: held.map((activation) => activation.bindingId),
+          },
+        ),
+      );
+    }
+    return this.emit(
+      this.decision(
+        "dispatched",
+        [structuredClone(stroke)],
+        contexts,
+        dispatches,
+        this.shouldConsume(true, true),
+        { reason: "resolved", bindingIds: dispatches.map((dispatch) => dispatch.bindingId) },
+      ),
+    );
   }
 
   handleKeyUp(stroke: KeyStroke): RuntimeDecision {

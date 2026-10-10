@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     ActionRegistry, Binding, CompiledActionRegistry, ContextLayer, DeviceStroke, InputStroke,
     KeyMatch, Profile, RegistryValidationReport, RepeatPolicy, Resolution, compile_action_registry,
-    resolve, resolve_with_context_stack, validate_compiled_registry,
+    resolve, resolve::code_unit_order, resolve_with_context_stack, validate_compiled_registry,
 };
 
 /// Default chord timeout, identical to the browser runtime.
@@ -457,57 +457,15 @@ impl InputRuntime {
             return invalid(vec![stroke], contexts);
         }
 
-        if repeat && !self.pending.is_empty() {
-            let consumed = self.should_consume(true, false);
-            return decision(
-                RuntimeDecisionKind::RepeatSuppressed,
-                self.pending.clone(),
-                contexts,
-                Vec::new(),
-                consumed,
-                RuntimeExplanation::new(RuntimeDecisionReason::RepeatSuppressed),
-                None,
-            );
+        // An auto-repeat belongs to what its input already holds and never resolves
+        // afresh, so it cannot start, cancel or re-press a chord.
+        if repeat {
+            return self.repeat_held(stroke, contexts);
         }
 
         let mut sequence = self.pending.clone();
         sequence.push(stroke.clone());
         let resolution = self.resolve(&sequence, &contexts, None);
-
-        // An auto-repeat never starts a chord: scheduling another timeout would press the
-        // prefix a second time. A prefix that already fired and is still held repeats like
-        // any resolved binding, as its repeat policy decides.
-        if repeat
-            && let Resolution::Pending {
-                exact_binding_ids, ..
-            } = &resolution
-        {
-            let trigger = TriggerKey::of(&stroke);
-            let fired = self
-                .active
-                .iter()
-                .filter(|(key, _)| key == &trigger)
-                .flat_map(|(_, activations)| activations)
-                .find(|activation| exact_binding_ids.contains(&activation.binding_id))
-                .map(|activation| Resolution::Resolved {
-                    binding_id: activation.binding_id.clone(),
-                    action: activation.action.clone(),
-                });
-            if let Some(fired) = fired {
-                return self
-                    .finish_input_down(sequence, &stroke, repeat, contexts, fired, None, now_ms);
-            }
-            let consumed = self.should_consume(true, false);
-            return decision(
-                RuntimeDecisionKind::RepeatSuppressed,
-                sequence,
-                contexts,
-                Vec::new(),
-                consumed,
-                RuntimeExplanation::new(RuntimeDecisionReason::RepeatSuppressed),
-                None,
-            );
-        }
 
         if resolution == Resolution::None && !self.pending.is_empty() {
             let cancelled = std::mem::take(&mut self.pending);
@@ -540,6 +498,87 @@ impl InputRuntime {
 
         self.finish_input_down(
             sequence, &stroke, repeat, contexts, resolution, None, now_ms,
+        )
+    }
+
+    /// Each activation held on the repeated input repeats as its action's policy allows,
+    /// including a fired chord prefix and while an unrelated chord is pending. A repeat of
+    /// an input that holds nothing dispatches nothing; it is consumed when the input is bound.
+    fn repeat_held(&self, stroke: InputStroke, contexts: Vec<String>) -> RuntimeDecision {
+        let trigger = TriggerKey::of(&stroke);
+        let mut held = self
+            .active
+            .iter()
+            .filter(|(key, _)| key == &trigger)
+            .flat_map(|(_, activations)| activations)
+            .collect::<Vec<_>>();
+        held.sort_by(|left, right| code_unit_order(&left.binding_id, &right.binding_id));
+        let dispatches = held
+            .iter()
+            .filter(|activation| {
+                self.registry
+                    .actions
+                    .iter()
+                    .find(|definition| definition.id == activation.action)
+                    .is_some_and(|definition| definition.repeat_policy == RepeatPolicy::Allow)
+            })
+            .map(|activation| RuntimeDispatch {
+                action: activation.action.clone(),
+                binding_id: activation.binding_id.clone(),
+                phase: RuntimeActionPhase::Repeat,
+                repeat: true,
+                reason: if activation.sequence.len() > 1 {
+                    RuntimeDispatchReason::Chord
+                } else {
+                    RuntimeDispatchReason::Direct
+                },
+                sequence: activation.sequence.clone(),
+                active_contexts: contexts.clone(),
+            })
+            .collect::<Vec<_>>();
+        if dispatches.is_empty() {
+            let matched = !held.is_empty()
+                || !self.pending.is_empty()
+                || self.resolve(std::slice::from_ref(&stroke), &contexts, None) != Resolution::None;
+            if !matched {
+                return decision(
+                    RuntimeDecisionKind::None,
+                    vec![stroke],
+                    contexts,
+                    Vec::new(),
+                    false,
+                    RuntimeExplanation::new(RuntimeDecisionReason::Unmatched),
+                    None,
+                );
+            }
+            let consumed = self.should_consume(true, false);
+            return decision(
+                RuntimeDecisionKind::RepeatSuppressed,
+                vec![stroke],
+                contexts,
+                Vec::new(),
+                consumed,
+                RuntimeExplanation::new(RuntimeDecisionReason::RepeatSuppressed).bindings(
+                    held.iter()
+                        .map(|activation| activation.binding_id.clone())
+                        .collect(),
+                ),
+                None,
+            );
+        }
+        let binding_ids = dispatches
+            .iter()
+            .map(|dispatch| dispatch.binding_id.clone())
+            .collect();
+        let consumed = self.should_consume(true, true);
+        decision(
+            RuntimeDecisionKind::Dispatched,
+            vec![stroke],
+            contexts,
+            dispatches,
+            consumed,
+            RuntimeExplanation::new(RuntimeDecisionReason::Resolved).bindings(binding_ids),
+            None,
         )
     }
 
@@ -1014,10 +1053,4 @@ impl SemanticControlState {
         self.holders.clear();
         self.presses.clear();
     }
-}
-
-/// Orders ids by UTF-16 code units, the order of the browser runtime's `<` comparison and
-/// default `sort()`, so observable orderings match across languages for every valid id.
-fn code_unit_order(left: &str, right: &str) -> std::cmp::Ordering {
-    left.encode_utf16().cmp(right.encode_utf16())
 }
