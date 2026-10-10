@@ -121,5 +121,6 @@ Shared foundation:
 - normalized keyboard and gamepad runtime adapters, text-entry exclusion, blur/visibility/disconnect release,
 - ordered-context resolution, profiles, and press/release pairing by activation identity,
 - `SemanticControlState`, which mirrors runtime dispatches into multi-holder held state (`isHeld`, `axis`) and queues one-shot presses (`drainPresses`) so a tick never misses a press that was released between ticks.
+- for the native client (mmorpg#41, mmorpg#72), the Rust `input_bindings_core::InputRuntime` and `SemanticControlState` with the same lifecycle: the client feeds normalized key/button down/up strokes with its clock, calls `reset` on focus loss, and changes contexts through the runtime, which retires held actions on each transition.
 
 `packages/input-bindings-web/test/mmorpg-consumer.test.ts` proves the pattern through the public adapters: keyboard and gamepad produce the same movement intent, several devices hold one action, chat/menu transitions cannot leak gameplay input, non-blocking overlays fall through, and context or profile changes while a key is held cannot strand the action. The binding editor reaches MMORPG settings through the settings repository's composition seam rather than mirrored setting values.

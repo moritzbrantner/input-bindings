@@ -1,0 +1,2430 @@
+{
+  "registry": {
+    "actions": [
+      {
+        "id": "moveUp",
+        "title": "moveUp",
+        "repeatPolicy": "allow",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "moveUp.w",
+            "action": "moveUp",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyW"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          },
+          {
+            "id": "moveUp.arrow",
+            "action": "moveUp",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "ArrowUp"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "moveLeft",
+        "title": "moveLeft",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "moveLeft.a",
+            "action": "moveLeft",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyA"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "moveRight",
+        "title": "moveRight",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "moveRight.d",
+            "action": "moveRight",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyD"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "attack",
+        "title": "attack",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "gamepad",
+          "mouse"
+        ],
+        "defaults": [
+          {
+            "id": "attack.pad",
+            "action": "attack",
+            "sequence": [
+              {
+                "device": "gamepadButton",
+                "button": 0,
+                "threshold": 50,
+                "gamepad": 0
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          },
+          {
+            "id": "attack.mouse",
+            "action": "attack",
+            "sequence": [
+              {
+                "device": "mouseButton",
+                "button": 0
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "save",
+        "title": "save",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "save.default",
+            "action": "save",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "s"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "leader",
+        "title": "leader",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "leader.default",
+            "action": "leader",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "k"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "comment",
+        "title": "comment",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "comment.default",
+            "action": "comment",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "k"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "c"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "menuConfirm",
+        "title": "menuConfirm",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "menu.confirm",
+            "action": "menuConfirm",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyW"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "menu"
+            }
+          }
+        ]
+      },
+      {
+        "id": "zoom",
+        "title": "zoom",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "zed.key",
+            "action": "zoom",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyZ"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "mark",
+        "title": "mark",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "äpfel.key",
+            "action": "mark",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyQ"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "slash",
+        "title": "slash",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "pointer"
+        ],
+        "defaults": [
+          {
+            "id": "slash.gesture",
+            "action": "slash",
+            "sequence": [
+              {
+                "device": "gesture",
+                "gesture": {
+                  "kind": "slash"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "zoomIn",
+        "title": "zoomIn",
+        "repeatPolicy": "allow",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "zoomIn.default",
+            "action": "zoomIn",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "j"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "zoomReset",
+        "title": "zoomReset",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "zoomReset.default",
+            "action": "zoomReset",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "j"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "r"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "panLeft",
+        "title": "panLeft",
+        "repeatPolicy": "allow",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "panLeft.default",
+            "action": "panLeft",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "g"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "h"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "panReset",
+        "title": "panReset",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "panReset.default",
+            "action": "panReset",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "g"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "h"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "r"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "direct press and modifier-free key-up release",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            }
+          },
+          "atMs": 10
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press save save.default direct"
+          ],
+          "held": [
+            "save"
+          ],
+          "presses": [
+            "save"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release save save.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a prefix waits and the longer chord resolves before the timeout",
+      "chordTimeoutMs": 500,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 20
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "c"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 100
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "c"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 120
+        },
+        {
+          "op": "advance",
+          "atMs": 2000
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press comment comment.default chord"
+          ],
+          "held": [
+            "comment"
+          ],
+          "presses": [
+            "comment"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release comment comment.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "the exact prefix fires at the timeout and stays held while its key is down",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "advance",
+          "atMs": 299
+        },
+        {
+          "op": "advance",
+          "atMs": 300
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 400
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press leader leader.default timeout"
+          ],
+          "held": [
+            "leader"
+          ],
+          "presses": [
+            "leader"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release leader leader.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "the timeout fires before a later input event",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 50
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 500
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved",
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press leader leader.default timeout",
+            "release leader leader.default keyUp",
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "leader",
+            "moveUp"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a mismatched chord retries the stroke as a fresh shortcut",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press save save.default direct"
+          ],
+          "held": [
+            "save"
+          ],
+          "presses": [
+            "save"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "repeat policy allows movement repeats and suppresses one-shot repeats",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": true,
+          "atMs": 30
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 40
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "s"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 70
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 80
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press save save.default direct"
+          ],
+          "held": [
+            "moveUp",
+            "save"
+          ],
+          "presses": [
+            "save"
+          ]
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [
+            "moveUp",
+            "save"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.w keyUp"
+          ],
+          "held": [
+            "save"
+          ],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "two bindings hold one action until both release",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "ArrowUp"
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 20
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "ArrowUp"
+            }
+          },
+          "atMs": 30
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.arrow direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.w keyUp"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.arrow keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "opposing movement keys and device buttons",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyA"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyD"
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyA"
+            }
+          },
+          "atMs": 20
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "device": "gamepadButton",
+            "button": 0,
+            "threshold": 50,
+            "gamepad": 0
+          },
+          "repeat": false,
+          "atMs": 30
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "device": "gamepadButton",
+            "button": 0,
+            "threshold": 50,
+            "gamepad": 0
+          },
+          "atMs": 40
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "device": "mouseButton",
+            "button": 0
+          },
+          "repeat": false,
+          "atMs": 50
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "device": "mouseButton",
+            "button": 0
+          },
+          "atMs": 60
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveLeft moveLeft.a direct"
+          ],
+          "held": [
+            "moveLeft"
+          ],
+          "presses": [
+            "moveLeft"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveRight moveRight.d direct"
+          ],
+          "held": [
+            "moveLeft",
+            "moveRight"
+          ],
+          "presses": [
+            "moveRight"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release moveLeft moveLeft.a keyUp"
+          ],
+          "held": [
+            "moveRight"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press attack attack.pad direct"
+          ],
+          "held": [
+            "attack",
+            "moveRight"
+          ],
+          "presses": [
+            "attack"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release attack attack.pad keyUp"
+          ],
+          "held": [
+            "moveRight"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press attack attack.mouse direct"
+          ],
+          "held": [
+            "attack",
+            "moveRight"
+          ],
+          "presses": [
+            "attack"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release attack attack.mouse keyUp"
+          ],
+          "held": [
+            "moveRight"
+          ],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "focus loss cancels a pending chord and releases held actions",
+      "chordTimeoutMs": 500,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "reset",
+          "reason": "blur"
+        },
+        {
+          "op": "advance",
+          "atMs": 2000
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 2100
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "reset:reset"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.w reset"
+          ],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a context change retires held movement",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyD"
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "setActiveContexts",
+          "contexts": [
+            "menu"
+          ]
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 20
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 30
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 40
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveRight moveRight.d direct"
+          ],
+          "held": [
+            "moveRight",
+            "moveUp"
+          ],
+          "presses": [
+            "moveRight"
+          ]
+        },
+        {
+          "decisions": [
+            "reset:reset"
+          ],
+          "dispatches": [
+            "release moveRight moveRight.d reset",
+            "release moveUp moveUp.w reset"
+          ],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press menuConfirm menu.confirm direct"
+          ],
+          "held": [
+            "menuConfirm"
+          ],
+          "presses": [
+            "menuConfirm"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release menuConfirm menu.confirm keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "pushing and popping a modal layer retires held actions",
+      "contextStack": [
+        {
+          "id": "gameplay"
+        }
+      ],
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "pushContext",
+          "layer": {
+            "id": "menu",
+            "blocksLower": true
+          }
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyD"
+            }
+          },
+          "repeat": false,
+          "atMs": 20
+        },
+        {
+          "op": "popContext"
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 30
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyD"
+            }
+          },
+          "repeat": false,
+          "atMs": 40
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "reset:reset"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.w reset"
+          ],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press menuConfirm menu.confirm direct"
+          ],
+          "held": [
+            "menuConfirm"
+          ],
+          "presses": [
+            "menuConfirm"
+          ]
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [
+            "menuConfirm"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "reset:reset"
+          ],
+          "dispatches": [
+            "release menuConfirm menu.confirm reset"
+          ],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveRight moveRight.d direct"
+          ],
+          "held": [
+            "moveRight"
+          ],
+          "presses": [
+            "moveRight"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "an auto-repeat of a fired chord prefix does not press it again",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "advance",
+          "atMs": 300
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 330
+        },
+        {
+          "op": "advance",
+          "atMs": 700
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 800
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press leader leader.default timeout"
+          ],
+          "held": [
+            "leader"
+          ],
+          "presses": [
+            "leader"
+          ]
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [
+            "leader"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [
+            "leader"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release leader leader.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a gesture stroke given as input down is never held",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "device": "gesture",
+            "gesture": {
+              "kind": "slash"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "device": "gesture",
+            "gesture": {
+              "kind": "slash"
+            }
+          },
+          "atMs": 10
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "reset releases held bindings in code-unit order",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyQ"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyZ"
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "reset",
+          "reason": "focusLost"
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press mark äpfel.key direct"
+          ],
+          "held": [
+            "mark"
+          ],
+          "presses": [
+            "mark"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press zoom zed.key direct"
+          ],
+          "held": [
+            "mark",
+            "zoom"
+          ],
+          "presses": [
+            "zoom"
+          ]
+        },
+        {
+          "decisions": [
+            "reset:reset"
+          ],
+          "dispatches": [
+            "release zoom zed.key reset",
+            "release mark äpfel.key reset"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a fired prefix whose action allows repeats repeats while held",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 100
+        },
+        {
+          "op": "advance",
+          "atMs": 300
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 330
+        },
+        {
+          "op": "advance",
+          "atMs": 700
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 800
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press zoomIn zoomIn.default timeout"
+          ],
+          "held": [
+            "zoomIn"
+          ],
+          "presses": [
+            "zoomIn"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat zoomIn zoomIn.default direct"
+          ],
+          "held": [
+            "zoomIn"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [
+            "zoomIn"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release zoomIn zoomIn.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a held movement keeps repeating while an unrelated chord is pending",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "repeat": true,
+          "atMs": 40
+        },
+        {
+          "op": "advance",
+          "atMs": 310
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 320
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyW"
+            }
+          },
+          "atMs": 330
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": [
+            "moveUp"
+          ]
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat moveUp moveUp.w direct"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press leader leader.default timeout"
+          ],
+          "held": [
+            "leader",
+            "moveUp"
+          ],
+          "presses": [
+            "leader"
+          ]
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release leader leader.default keyUp"
+          ],
+          "held": [
+            "moveUp"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release moveUp moveUp.w keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a fired multi-stroke prefix repeats from its held activation",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "g"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "g"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "h"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 20
+        },
+        {
+          "op": "advance",
+          "atMs": 320
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "h"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 350
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "h"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 400
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press panLeft panLeft.default timeout"
+          ],
+          "held": [
+            "panLeft"
+          ],
+          "presses": [
+            "panLeft"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat panLeft panLeft.default chord"
+          ],
+          "held": [
+            "panLeft"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release panLeft panLeft.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "an unbound repeat during a pending chord is not consumed",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyM"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyM"
+            }
+          },
+          "repeat": true,
+          "atMs": 40
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 50
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        }
+      ]
+    }
+  ]
+}

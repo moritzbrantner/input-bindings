@@ -35,6 +35,8 @@ Acceptance: users can understand what was captured, inspect occupied/conflicting
 - Reusable runtime controller for chord timeout/cancellation, key/input down/up, repeat policy, event consumption, dispatch evidence, and reset safety.
 - Browser attachment handles text-entry exclusion, stable release identity, blur/visibility reset, and cleanup.
 - Runtime configuration fails closed on invalid catalog/profile state.
+- Native consumers use the Rust `InputRuntime` and `SemanticControlState` in `input-bindings-core`: platform-neutral down/up events with a caller-owned clock, held actions, repeat policy, chord timeouts and reset, sharing the `runtime-lifecycle` fixture with the browser controller (#81).
+- A chord whose exact prefix fires on timeout after its last input was already released now presses and releases at once instead of leaving the action held.
 
 Acceptance: a browser consumer attaches one controller and dispatches semantic actions without reimplementing chord/timer/repeat/release state.
 

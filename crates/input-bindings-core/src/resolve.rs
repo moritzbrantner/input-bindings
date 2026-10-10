@@ -66,12 +66,12 @@ pub(crate) fn finish_resolution(exact: Vec<&Binding>, continuations: Vec<&Bindin
             .iter()
             .map(|binding| binding.id.clone())
             .collect::<Vec<_>>();
-        exact_binding_ids.sort();
+        exact_binding_ids.sort_by(|left, right| code_unit_order(left, right));
         let mut continuation_binding_ids = continuations
             .iter()
             .map(|binding| binding.id.clone())
             .collect::<Vec<_>>();
-        continuation_binding_ids.sort();
+        continuation_binding_ids.sort_by(|left, right| code_unit_order(left, right));
         return Resolution::Pending {
             exact_binding_ids,
             continuation_binding_ids,
@@ -86,7 +86,7 @@ pub(crate) fn finish_resolution(exact: Vec<&Binding>, continuations: Vec<&Bindin
         .into_iter()
         .filter(|binding| binding.rank() == top_rank)
         .collect::<Vec<_>>();
-    top.sort_by(|left, right| left.id.cmp(&right.id));
+    top.sort_by(|left, right| code_unit_order(&left.id, &right.id));
 
     let actions = top
         .iter()
@@ -104,4 +104,10 @@ pub(crate) fn finish_resolution(exact: Vec<&Binding>, continuations: Vec<&Bindin
         binding_id: binding.id.clone(),
         action: binding.action.clone(),
     }
+}
+
+/// Orders ids by UTF-16 code units, the order of the browser runtime's `<` comparison and
+/// default `sort()`, so observable orderings match across languages for every valid id.
+pub(crate) fn code_unit_order(left: &str, right: &str) -> std::cmp::Ordering {
+    left.encode_utf16().cmp(right.encode_utf16())
 }

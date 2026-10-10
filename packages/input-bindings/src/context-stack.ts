@@ -8,6 +8,7 @@ import {
   type Resolution,
   type WhenExpr,
 } from "./index.ts";
+import { compareCodeUnits } from "./order.ts";
 
 export type ContextLayer = {
   id: string;
@@ -197,7 +198,7 @@ export function explainResolutionWithContextStack(
 
   const candidates: ResolutionCandidateTrace[] = [];
   const working: WorkingCandidate[] = [];
-  const sortedBindings = [...bindings].sort((left, right) => left.id.localeCompare(right.id));
+  const sortedBindings = [...bindings].sort((left, right) => compareCodeUnits(left.id, right.id));
 
   for (const binding of sortedBindings) {
     const base = {

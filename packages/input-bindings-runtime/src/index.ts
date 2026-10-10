@@ -217,6 +217,22 @@ export class InputRuntimeController {
   }
 
   handleInputDown(stroke: InputStroke, options: InputDownOptions = {}): RuntimeDecision {
+    if ("device" in stroke && stroke.device === "gesture") {
+      // A recognised gesture has no up edge, so it never becomes held input; gestures
+      // resolve through `handleGesture`, which presses and releases at once.
+      return this.emit(
+        this.decision(
+          "none",
+          [structuredClone(stroke)],
+          this.contexts(this.contextStack()),
+          [],
+          false,
+          {
+            reason: "unmatched",
+          },
+        ),
+      );
+    }
     const repeat = options.repeat ?? false;
     const triggerKey = inputStrokeIdentity(stroke);
     this.pressedInputs.add(triggerKey);
@@ -231,17 +247,10 @@ export class InputRuntimeController {
       );
     }
 
-    if (repeat && this.pending.length > 0) {
-      return this.emit(
-        this.decision(
-          "repeatSuppressed",
-          structuredClone(this.pending),
-          contexts,
-          [],
-          this.shouldConsume(true, false),
-          { reason: "repeatSuppressed" },
-        ),
-      );
+    // An auto-repeat belongs to what its input already holds and never resolves afresh, so
+    // it cannot start, cancel or re-press a chord.
+    if (repeat) {
+      return this.repeatHeld(stroke, triggerKey, contexts, contextStack);
     }
 
     const sequence = [...this.pending, structuredClone(stroke)];
@@ -267,6 +276,73 @@ export class InputRuntimeController {
     }
 
     return this.finishInputDown(sequence, stroke, repeat, contexts, resolution);
+  }
+
+  /**
+   * Each activation held on the repeated input repeats as its action's policy allows,
+   * including a fired chord prefix and while an unrelated chord is pending. A repeat of an
+   * input that holds nothing dispatches nothing; it is consumed when the input is bound.
+   */
+  private repeatHeld(
+    stroke: InputStroke,
+    triggerKey: string,
+    contexts: string[],
+    contextStack: readonly ContextLayer[] | undefined,
+  ): RuntimeDecision {
+    const held = (this.active.get(triggerKey) ?? [])
+      .slice()
+      .sort((left, right) => codeUnitOrder(left.bindingId, right.bindingId));
+    const dispatches = held
+      .filter(
+        (activation) =>
+          this.registry.actions.find((action) => action.id === activation.action)?.repeatPolicy ===
+          "allow",
+      )
+      .map<RuntimeDispatch>((activation) => ({
+        action: activation.action,
+        bindingId: activation.bindingId,
+        phase: "repeat",
+        repeat: true,
+        reason: activation.sequence.length > 1 ? "chord" : "direct",
+        sequence: structuredClone(activation.sequence),
+        activeContexts: contexts,
+      }));
+    if (dispatches.length === 0) {
+      const matched =
+        held.length > 0 ||
+        this.pending.some((pending) => inputStrokeIdentity(pending) === triggerKey) ||
+        this.resolve([structuredClone(stroke)], contexts, contextStack).kind !== "none";
+      if (!matched) {
+        return this.emit(
+          this.decision("none", [structuredClone(stroke)], contexts, [], false, {
+            reason: "unmatched",
+          }),
+        );
+      }
+      return this.emit(
+        this.decision(
+          "repeatSuppressed",
+          [structuredClone(stroke)],
+          contexts,
+          [],
+          this.shouldConsume(true, false),
+          {
+            reason: "repeatSuppressed",
+            bindingIds: held.map((activation) => activation.bindingId),
+          },
+        ),
+      );
+    }
+    return this.emit(
+      this.decision(
+        "dispatched",
+        [structuredClone(stroke)],
+        contexts,
+        dispatches,
+        this.shouldConsume(true, true),
+        { reason: "resolved", bindingIds: dispatches.map((dispatch) => dispatch.bindingId) },
+      ),
+    );
   }
 
   handleKeyUp(stroke: KeyStroke): RuntimeDecision {
@@ -296,7 +372,7 @@ export class InputRuntimeController {
 
     const dispatches = activations
       .slice()
-      .sort((left, right) => left.bindingId.localeCompare(right.bindingId))
+      .sort((left, right) => codeUnitOrder(left.bindingId, right.bindingId))
       .map<RuntimeDispatch>((activation) => ({
         action: activation.action,
         bindingId: activation.bindingId,
@@ -433,7 +509,7 @@ export class InputRuntimeController {
 
     const dispatches = [...this.active.values()]
       .flat()
-      .sort((left, right) => left.bindingId.localeCompare(right.bindingId))
+      .sort((left, right) => codeUnitOrder(left.bindingId, right.bindingId))
       .map<RuntimeDispatch>((activation) => ({
         action: activation.action,
         bindingId: activation.bindingId,
@@ -622,15 +698,19 @@ export class InputRuntimeController {
         activeContexts: contexts,
       };
       const finalStroke = sequence.at(-1);
+      const dispatches = [dispatch];
       if (finalStroke && this.pressedInputs.has(inputStrokeIdentity(finalStroke))) {
         this.activate(dispatch, finalStroke);
+      } else {
+        // The chord's last input is already up: release at once so nothing stays held.
+        dispatches.push({ ...dispatch, phase: "release", reason: "keyUp" });
       }
       this.emit(
         this.decision(
           "dispatched",
           sequence,
           contexts,
-          [dispatch],
+          dispatches,
           false,
           { reason: "timeoutResolved", bindingIds: [resolution.bindingId] },
           resolution,
@@ -755,6 +835,15 @@ export class InputRuntimeController {
     this.onDecision?.(structuredClone(decision));
     return decision;
   }
+}
+
+// Binding ids order by UTF-16 code units, as the Rust runtime orders them, so dispatch order
+// is locale-independent and matches across languages.
+function codeUnitOrder(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
 }
 
 function gestureStroke(gesture: GestureMatch): GestureStroke {

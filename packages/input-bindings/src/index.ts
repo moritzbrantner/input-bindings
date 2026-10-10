@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./order.ts";
 export type KeyMatch = { kind: "logical"; value: string } | { kind: "physical"; value: string };
 
 export type Modifiers = {
@@ -300,7 +301,7 @@ export function resolve(
   }
   const top = exact
     .filter((binding) => rankEquals(bindingRank(binding), topRank))
-    .sort((left, right) => left.id.localeCompare(right.id));
+    .sort((left, right) => compareCodeUnits(left.id, right.id));
   const actions = new Set(top.map((binding) => binding.action));
 
   if (actions.size > 1) {
