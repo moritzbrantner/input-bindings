@@ -8,6 +8,7 @@ mod profile;
 mod registry;
 mod repair;
 mod resolve;
+mod runtime;
 
 pub use conflict::{Conflict, ConflictKind, ContextOverlap, analyze_conflicts};
 pub use context_stack::{
@@ -47,3 +48,9 @@ pub use repair::{
     apply_conflict_repair, plan_conflict_repairs,
 };
 pub use resolve::{Resolution, resolve};
+pub use runtime::{
+    DEFAULT_CHORD_TIMEOUT_MS, InputRuntime, InputRuntimeOptions, RuntimeActionPhase,
+    RuntimeConsumePolicy, RuntimeDecision, RuntimeDecisionKind, RuntimeDecisionReason,
+    RuntimeDispatch, RuntimeDispatchReason, RuntimeExplanation, SemanticControlSnapshot,
+    SemanticControlState,
+};
