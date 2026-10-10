@@ -1,4 +1,5 @@
 import { evaluateWhen, inputStrokeEquals, resolve, whenSpecificity, } from "./index.js";
+import { compareCodeUnits } from "./order.js";
 /**
  * Mutable application-owned context stack. The last layer is the highest-priority layer.
  * Duplicate context ids are allowed so nested owners can push/pop the same semantic context safely.
@@ -96,7 +97,7 @@ export function explainResolutionWithContextStack(bindings, sequence, activeCont
     }
     const candidates = [];
     const working = [];
-    const sortedBindings = [...bindings].sort((left, right) => left.id.localeCompare(right.id));
+    const sortedBindings = [...bindings].sort((left, right) => compareCodeUnits(left.id, right.id));
     for (const binding of sortedBindings) {
         const base = {
             bindingId: binding.id,

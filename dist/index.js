@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./order.js";
 const MAX_EXHAUSTIVE_CONTEXTS = 16;
 const ALWAYS = { op: "always" };
 export function isKeyStroke(stroke) {
@@ -132,7 +133,7 @@ export function resolve(bindings, sequence, activeContexts) {
     }
     const top = exact
         .filter((binding) => rankEquals(bindingRank(binding), topRank))
-        .sort((left, right) => left.id.localeCompare(right.id));
+        .sort((left, right) => compareCodeUnits(left.id, right.id));
     const actions = new Set(top.map((binding) => binding.action));
     if (actions.size > 1) {
         return { kind: "ambiguous", bindingIds: top.map((binding) => binding.id) };
