@@ -622,15 +622,19 @@ export class InputRuntimeController {
         activeContexts: contexts,
       };
       const finalStroke = sequence.at(-1);
+      const dispatches = [dispatch];
       if (finalStroke && this.pressedInputs.has(inputStrokeIdentity(finalStroke))) {
         this.activate(dispatch, finalStroke);
+      } else {
+        // The chord's last input is already up: release at once so nothing stays held.
+        dispatches.push({ ...dispatch, phase: "release", reason: "keyUp" });
       }
       this.emit(
         this.decision(
           "dispatched",
           sequence,
           contexts,
-          [dispatch],
+          dispatches,
           false,
           { reason: "timeoutResolved", bindingIds: [resolution.bindingId] },
           resolution,
