@@ -37,9 +37,9 @@
     }
   },
   "dependencies": {
-    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#51fa7db46d066554fc0eff4c487a713220f6326b",
-    "@moritzbrantner/input-bindings-runtime": "github:moritzbrantner/input-bindings#0d8fe2486a9e4ae2c1f23d09209962ddd57d761f",
-    "@moritzbrantner/input-bindings-web": "github:moritzbrantner/input-bindings#82b6882eb736d871539187acc2a129e6e4382433"
+    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#e8996d383d47dfaa05b684a68cc97f2bb9ed0170",
+    "@moritzbrantner/input-bindings-runtime": "github:moritzbrantner/input-bindings#7683fc7b8572b38124d3b99c3c274ae32ab24f19",
+    "@moritzbrantner/input-bindings-web": "github:moritzbrantner/input-bindings#bcb5834545bcf92cf74d4fb80496f410dea3bcaf"
   },
   "peerDependencies": {
     "react": ">=19"
