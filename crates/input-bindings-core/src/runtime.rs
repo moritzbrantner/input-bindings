@@ -410,7 +410,7 @@ impl InputRuntime {
             .into_iter()
             .flat_map(|(_, activations)| activations)
             .collect::<Vec<_>>();
-        activations.sort_by(|left, right| left.binding_id.cmp(&right.binding_id));
+        activations.sort_by(|left, right| code_unit_order(&left.binding_id, &right.binding_id));
         let dispatches = activations
             .into_iter()
             .map(|activation| release(activation, RuntimeDispatchReason::Reset, &contexts))
@@ -434,6 +434,19 @@ impl InputRuntime {
         repeat: bool,
         now_ms: u64,
     ) -> RuntimeDecision {
+        if matches!(stroke, InputStroke::Device(DeviceStroke::Gesture { .. })) {
+            // A recognised gesture has no up edge, so it never becomes held input; gestures
+            // resolve through the gesture path, which presses and releases at once.
+            return decision(
+                RuntimeDecisionKind::None,
+                vec![stroke],
+                self.contexts(),
+                Vec::new(),
+                false,
+                RuntimeExplanation::new(RuntimeDecisionReason::Unmatched),
+                None,
+            );
+        }
         let trigger = TriggerKey::of(&stroke);
         if !self.pressed.contains(&trigger) {
             self.pressed.push(trigger);
@@ -460,6 +473,21 @@ impl InputRuntime {
         let mut sequence = self.pending.clone();
         sequence.push(stroke.clone());
         let resolution = self.resolve(&sequence, &contexts, None);
+
+        // An auto-repeat never starts a chord: the prefix it repeats already fired or is
+        // still pending, and scheduling another timeout would press it a second time.
+        if repeat && matches!(resolution, Resolution::Pending { .. }) {
+            let consumed = self.should_consume(true, false);
+            return decision(
+                RuntimeDecisionKind::RepeatSuppressed,
+                sequence,
+                contexts,
+                Vec::new(),
+                consumed,
+                RuntimeExplanation::new(RuntimeDecisionReason::RepeatSuppressed),
+                None,
+            );
+        }
 
         if resolution == Resolution::None && !self.pending.is_empty() {
             let cancelled = std::mem::take(&mut self.pending);
@@ -519,7 +547,7 @@ impl InputRuntime {
                 None,
             );
         }
-        activations.sort_by(|left, right| left.binding_id.cmp(&right.binding_id));
+        activations.sort_by(|left, right| code_unit_order(&left.binding_id, &right.binding_id));
         let dispatches = activations
             .into_iter()
             .map(|activation| release(activation, RuntimeDispatchReason::KeyUp, &contexts))
@@ -957,4 +985,10 @@ impl SemanticControlState {
         self.holders.clear();
         self.presses.clear();
     }
+}
+
+/// Orders binding ids by UTF-16 code units, the order the browser runtime's `<` comparison
+/// uses, so dispatch order matches across languages for every valid id.
+fn code_unit_order(left: &str, right: &str) -> std::cmp::Ordering {
+    left.encode_utf16().cmp(right.encode_utf16())
 }

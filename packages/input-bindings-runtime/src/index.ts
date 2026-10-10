@@ -217,6 +217,22 @@ export class InputRuntimeController {
   }
 
   handleInputDown(stroke: InputStroke, options: InputDownOptions = {}): RuntimeDecision {
+    if ("device" in stroke && stroke.device === "gesture") {
+      // A recognised gesture has no up edge, so it never becomes held input; gestures
+      // resolve through `handleGesture`, which presses and releases at once.
+      return this.emit(
+        this.decision(
+          "none",
+          [structuredClone(stroke)],
+          this.contexts(this.contextStack()),
+          [],
+          false,
+          {
+            reason: "unmatched",
+          },
+        ),
+      );
+    }
     const repeat = options.repeat ?? false;
     const triggerKey = inputStrokeIdentity(stroke);
     this.pressedInputs.add(triggerKey);
@@ -246,6 +262,16 @@ export class InputRuntimeController {
 
     const sequence = [...this.pending, structuredClone(stroke)];
     const resolution = this.resolve(sequence, contexts, contextStack);
+
+    // An auto-repeat never starts a chord: the prefix it repeats already fired or is still
+    // pending, and scheduling another timeout would press it a second time.
+    if (repeat && resolution.kind === "pending") {
+      return this.emit(
+        this.decision("repeatSuppressed", sequence, contexts, [], this.shouldConsume(true, false), {
+          reason: "repeatSuppressed",
+        }),
+      );
+    }
 
     if (resolution.kind === "none" && this.pending.length > 0) {
       const cancelledSequence = structuredClone(this.pending);
@@ -296,7 +322,7 @@ export class InputRuntimeController {
 
     const dispatches = activations
       .slice()
-      .sort((left, right) => left.bindingId.localeCompare(right.bindingId))
+      .sort((left, right) => codeUnitOrder(left.bindingId, right.bindingId))
       .map<RuntimeDispatch>((activation) => ({
         action: activation.action,
         bindingId: activation.bindingId,
@@ -433,7 +459,7 @@ export class InputRuntimeController {
 
     const dispatches = [...this.active.values()]
       .flat()
-      .sort((left, right) => left.bindingId.localeCompare(right.bindingId))
+      .sort((left, right) => codeUnitOrder(left.bindingId, right.bindingId))
       .map<RuntimeDispatch>((activation) => ({
         action: activation.action,
         bindingId: activation.bindingId,
@@ -759,6 +785,15 @@ export class InputRuntimeController {
     this.onDecision?.(structuredClone(decision));
     return decision;
   }
+}
+
+// Binding ids order by UTF-16 code units, as the Rust runtime orders them, so dispatch order
+// is locale-independent and matches across languages.
+function codeUnitOrder(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
 }
 
 function gestureStroke(gesture: GestureMatch): GestureStroke {

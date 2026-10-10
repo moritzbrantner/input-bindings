@@ -245,6 +245,84 @@
             }
           }
         ]
+      },
+      {
+        "id": "zoom",
+        "title": "zoom",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "zed.key",
+            "action": "zoom",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyZ"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "mark",
+        "title": "mark",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "äpfel.key",
+            "action": "mark",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "KeyQ"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
+      },
+      {
+        "id": "slash",
+        "title": "slash",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "pointer"
+        ],
+        "defaults": [
+          {
+            "id": "slash.gesture",
+            "action": "slash",
+            "sequence": [
+              {
+                "device": "gesture",
+                "gesture": {
+                  "kind": "slash"
+                }
+              }
+            ],
+            "when": {
+              "op": "context",
+              "id": "gameplay"
+            }
+          }
+        ]
       }
     ]
   },
@@ -1459,6 +1537,239 @@
           "presses": [
             "moveRight"
           ]
+        }
+      ]
+    },
+    {
+      "name": "an auto-repeat of a fired chord prefix does not press it again",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "advance",
+          "atMs": 300
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 330
+        },
+        {
+          "op": "advance",
+          "atMs": 700
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "k"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 800
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press leader leader.default timeout"
+          ],
+          "held": [
+            "leader"
+          ],
+          "presses": [
+            "leader"
+          ]
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [
+            "leader"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [
+            "leader"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release leader leader.default keyUp"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a gesture stroke given as input down is never held",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "device": "gesture",
+            "gesture": {
+              "kind": "slash"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "device": "gesture",
+            "gesture": {
+              "kind": "slash"
+            }
+          },
+          "atMs": 10
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "none:unmatched"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "reset releases held bindings in code-unit order",
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyQ"
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "physical",
+              "value": "KeyZ"
+            }
+          },
+          "repeat": false,
+          "atMs": 10
+        },
+        {
+          "op": "reset",
+          "reason": "focusLost"
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press mark äpfel.key direct"
+          ],
+          "held": [
+            "mark"
+          ],
+          "presses": [
+            "mark"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "press zoom zed.key direct"
+          ],
+          "held": [
+            "mark",
+            "zoom"
+          ],
+          "presses": [
+            "zoom"
+          ]
+        },
+        {
+          "decisions": [
+            "reset:reset"
+          ],
+          "dispatches": [
+            "release zoom zed.key reset",
+            "release mark äpfel.key reset"
+          ],
+          "held": [],
+          "presses": []
         }
       ]
     }
