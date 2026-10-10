@@ -312,3 +312,27 @@ fn held_state_samples_axes_and_presses_between_ticks() {
     assert_eq!(state.axis("left", "right"), 0);
     assert!(state.snapshot().held.is_empty());
 }
+
+/// Observable orderings follow UTF-16 code units, as in the browser runtime
+/// (`runtime-order.test.ts`): a supplementary character sorts before a later BMP one.
+#[test]
+fn contexts_and_held_actions_order_by_utf16_code_units() {
+    let mut runtime = InputRuntime::new(
+        registry(&[
+            ("\u{e000}", "KeyA", RepeatPolicy::Never),
+            ("😀", "KeyB", RepeatPolicy::Never),
+            ("go", "KeyC", RepeatPolicy::Never),
+        ]),
+        None,
+        InputRuntimeOptions::default(),
+    );
+    runtime.set_active_contexts(vec!["\u{e000}".to_owned(), "😀".to_owned(), "g".to_owned()]);
+    let mut state = SemanticControlState::new();
+    let mut last = Vec::new();
+    for code in ["KeyA", "KeyB", "KeyC"] {
+        last = runtime.input_down(key(code), false, 0);
+        state.apply_decisions(&last);
+    }
+    assert_eq!(last[0].active_contexts, ["g", "😀", "\u{e000}"]);
+    assert_eq!(state.snapshot().held, ["go", "😀", "\u{e000}"]);
+}

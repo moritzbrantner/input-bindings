@@ -474,9 +474,29 @@ impl InputRuntime {
         sequence.push(stroke.clone());
         let resolution = self.resolve(&sequence, &contexts, None);
 
-        // An auto-repeat never starts a chord: the prefix it repeats already fired or is
-        // still pending, and scheduling another timeout would press it a second time.
-        if repeat && matches!(resolution, Resolution::Pending { .. }) {
+        // An auto-repeat never starts a chord: scheduling another timeout would press the
+        // prefix a second time. A prefix that already fired and is still held repeats like
+        // any resolved binding, as its repeat policy decides.
+        if repeat
+            && let Resolution::Pending {
+                exact_binding_ids, ..
+            } = &resolution
+        {
+            let trigger = TriggerKey::of(&stroke);
+            let fired = self
+                .active
+                .iter()
+                .filter(|(key, _)| key == &trigger)
+                .flat_map(|(_, activations)| activations)
+                .find(|activation| exact_binding_ids.contains(&activation.binding_id))
+                .map(|activation| Resolution::Resolved {
+                    binding_id: activation.binding_id.clone(),
+                    action: activation.action.clone(),
+                });
+            if let Some(fired) = fired {
+                return self
+                    .finish_input_down(sequence, &stroke, repeat, contexts, fired, None, now_ms);
+            }
             let consumed = self.should_consume(true, false);
             return decision(
                 RuntimeDecisionKind::RepeatSuppressed,
@@ -822,7 +842,9 @@ impl InputRuntime {
         for layer in self.context_stack.iter().flatten() {
             contexts.insert(layer.id.clone());
         }
-        contexts.into_iter().collect()
+        let mut contexts = contexts.into_iter().collect::<Vec<_>>();
+        contexts.sort_by(|left, right| code_unit_order(left, right));
+        contexts
     }
 
     fn clear_pending(&mut self) {
@@ -970,12 +992,19 @@ impl SemanticControlState {
     }
 
     pub fn snapshot(&self) -> SemanticControlSnapshot {
+        let sorted = |ids: Vec<String>| {
+            let mut ids = ids;
+            ids.sort_by(|left, right| code_unit_order(left, right));
+            ids
+        };
         SemanticControlSnapshot {
-            held: self.holders.keys().cloned().collect(),
+            held: sorted(self.holders.keys().cloned().collect()),
             holders: self
                 .holders
                 .iter()
-                .map(|(action, bindings)| (action.clone(), bindings.keys().cloned().collect()))
+                .map(|(action, bindings)| {
+                    (action.clone(), sorted(bindings.keys().cloned().collect()))
+                })
                 .collect(),
         }
     }
@@ -987,8 +1016,8 @@ impl SemanticControlState {
     }
 }
 
-/// Orders binding ids by UTF-16 code units, the order the browser runtime's `<` comparison
-/// uses, so dispatch order matches across languages for every valid id.
+/// Orders ids by UTF-16 code units, the order of the browser runtime's `<` comparison and
+/// default `sort()`, so observable orderings match across languages for every valid id.
 fn code_unit_order(left: &str, right: &str) -> std::cmp::Ordering {
     left.encode_utf16().cmp(right.encode_utf16())
 }

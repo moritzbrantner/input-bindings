@@ -263,9 +263,20 @@ export class InputRuntimeController {
     const sequence = [...this.pending, structuredClone(stroke)];
     const resolution = this.resolve(sequence, contexts, contextStack);
 
-    // An auto-repeat never starts a chord: the prefix it repeats already fired or is still
-    // pending, and scheduling another timeout would press it a second time.
+    // An auto-repeat never starts a chord: scheduling another timeout would press the prefix
+    // a second time. A prefix that already fired and is still held repeats like any resolved
+    // binding, as its repeat policy decides.
     if (repeat && resolution.kind === "pending") {
+      const fired = (this.active.get(triggerKey) ?? []).find((activation) =>
+        resolution.exactBindingIds.includes(activation.bindingId),
+      );
+      if (fired) {
+        return this.finishInputDown(sequence, stroke, repeat, contexts, {
+          kind: "resolved",
+          bindingId: fired.bindingId,
+          action: fired.action,
+        });
+      }
       return this.emit(
         this.decision("repeatSuppressed", sequence, contexts, [], this.shouldConsume(true, false), {
           reason: "repeatSuppressed",

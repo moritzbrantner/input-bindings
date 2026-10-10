@@ -323,6 +323,65 @@
             }
           }
         ]
+      },
+      {
+        "id": "zoomIn",
+        "title": "zoomIn",
+        "repeatPolicy": "allow",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "zoomIn.default",
+            "action": "zoomIn",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "j"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "zoomReset",
+        "title": "zoomReset",
+        "repeatPolicy": "never",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "zoomReset.default",
+            "action": "zoomReset",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "j"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              },
+              {
+                "key": {
+                  "kind": "logical",
+                  "value": "r"
+                },
+                "modifiers": {
+                  "ctrl": true
+                }
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -1767,6 +1826,140 @@
           "dispatches": [
             "release zoom zed.key reset",
             "release mark äpfel.key reset"
+          ],
+          "held": [],
+          "presses": []
+        }
+      ]
+    },
+    {
+      "name": "a fired prefix whose action allows repeats repeats while held",
+      "chordTimeoutMs": 300,
+      "steps": [
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": false,
+          "atMs": 0
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 100
+        },
+        {
+          "op": "advance",
+          "atMs": 300
+        },
+        {
+          "op": "down",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "repeat": true,
+          "atMs": 330
+        },
+        {
+          "op": "advance",
+          "atMs": 700
+        },
+        {
+          "op": "up",
+          "stroke": {
+            "key": {
+              "kind": "logical",
+              "value": "j"
+            },
+            "modifiers": {
+              "ctrl": true
+            }
+          },
+          "atMs": 800
+        }
+      ],
+      "activeContexts": [
+        "gameplay"
+      ],
+      "expected": [
+        {
+          "decisions": [
+            "pending:pendingChord:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "repeatSuppressed:repeatSuppressed:consumed"
+          ],
+          "dispatches": [],
+          "held": [],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "dispatched:timeoutResolved"
+          ],
+          "dispatches": [
+            "press zoomIn zoomIn.default timeout"
+          ],
+          "held": [
+            "zoomIn"
+          ],
+          "presses": [
+            "zoomIn"
+          ]
+        },
+        {
+          "decisions": [
+            "dispatched:resolved:consumed"
+          ],
+          "dispatches": [
+            "repeat zoomIn zoomIn.default direct"
+          ],
+          "held": [
+            "zoomIn"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [],
+          "dispatches": [],
+          "held": [
+            "zoomIn"
+          ],
+          "presses": []
+        },
+        {
+          "decisions": [
+            "released:keyReleased:consumed"
+          ],
+          "dispatches": [
+            "release zoomIn zoomIn.default keyUp"
           ],
           "held": [],
           "presses": []
