@@ -104,6 +104,12 @@ export declare class InputRuntimeController {
     updateProfile(profile?: Profile): RuntimeDecision;
     handleKeyDown(stroke: KeyStroke, options?: KeyDownOptions): RuntimeDecision;
     handleInputDown(stroke: InputStroke, options?: InputDownOptions): RuntimeDecision;
+    /**
+     * Each activation held on the repeated input repeats as its action's policy allows,
+     * including a fired chord prefix and while an unrelated chord is pending. A repeat of an
+     * input that holds nothing dispatches nothing; it is consumed when the input is bound.
+     */
+    private repeatHeld;
     handleKeyUp(stroke: KeyStroke): RuntimeDecision;
     handleInputUp(stroke: InputStroke): RuntimeDecision;
     /**

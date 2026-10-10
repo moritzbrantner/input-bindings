@@ -23,6 +23,6 @@
     }
   },
   "dependencies": {
-    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#51fa7db46d066554fc0eff4c487a713220f6326b"
+    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#e8996d383d47dfaa05b684a68cc97f2bb9ed0170"
   }
 }
