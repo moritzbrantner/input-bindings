@@ -80,7 +80,15 @@ jobs:
   merge-ready:
     name: merge-ready
     if: always()
-    needs: ["rust", "typescript", "storybook", "browser-quality", "release-artifacts", "package-distribution"]
+    needs:
+      [
+        "rust",
+        "typescript",
+        "storybook",
+        "browser-quality",
+        "release-artifacts",
+        "package-distribution",
+      ]
     runs-on: ubuntu-latest
     steps:
       - uses: moritzbrantner/reusable-workflows/.github/actions/merge-ready@b0f25f241d76af2584dfc9e375084ff5c5cb97da
