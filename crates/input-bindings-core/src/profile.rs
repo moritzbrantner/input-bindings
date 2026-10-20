@@ -109,3 +109,54 @@ pub fn apply_profile(base: &[Binding], profile: &Profile) -> ProfileApplication 
         diagnostics,
     }
 }
+
+/// Derive the minimal profile delta represented by an editor's effective bindings.
+///
+/// The registry remains the source of defaults. This does not validate edits or
+/// choose conflict repairs: callers retain the existing explicit validation and
+/// repair APIs. Last occurrences of duplicate IDs match profile application.
+pub fn profile_from_bindings(
+    registry: &crate::ActionRegistry,
+    effective_bindings: &[Binding],
+    profile_id: impl Into<String>,
+) -> Profile {
+    let defaults = registry
+        .actions
+        .iter()
+        .flat_map(|action| &action.defaults)
+        .map(|binding| (binding.id.clone(), binding))
+        .collect::<BTreeMap<_, _>>();
+    let effective = effective_bindings
+        .iter()
+        .map(|binding| (binding.id.clone(), binding))
+        .collect::<BTreeMap<_, _>>();
+    let mut default_ids = defaults.keys().collect::<Vec<_>>();
+    default_ids.sort_by(|left, right| left.encode_utf16().cmp(right.encode_utf16()));
+    let mut patches = Vec::new();
+    for id in default_ids {
+        match effective.get(id) {
+            None => patches.push(BindingPatch::Remove {
+                binding_id: id.clone(),
+            }),
+            Some(binding) if **binding != *defaults[id] => patches.push(BindingPatch::Replace {
+                binding_id: id.clone(),
+                binding: (*binding).clone(),
+            }),
+            Some(_) => {}
+        }
+    }
+    let mut added_ids = effective
+        .keys()
+        .filter(|id| !defaults.contains_key(*id))
+        .collect::<Vec<_>>();
+    added_ids.sort_by(|left, right| left.encode_utf16().cmp(right.encode_utf16()));
+    for id in added_ids {
+        patches.push(BindingPatch::Add {
+            binding: effective[id].clone(),
+        });
+    }
+    Profile {
+        id: profile_id.into(),
+        patches,
+    }
+}

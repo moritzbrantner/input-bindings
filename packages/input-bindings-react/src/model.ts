@@ -1,62 +1,24 @@
 import {
   inputStrokeEquals,
+  bindingEquals,
   isKeyStroke,
   type ActionDefinition,
   type ActionRegistry,
   type Binding,
-  type BindingPatch,
   type Conflict,
   type ConflictKind,
   type GestureMatch,
   type InputStroke,
   type Modifiers,
-  type Profile,
   type WhenExpr,
 } from "@moritzbrantner/input-bindings";
 
-export function flattenDefaults(registry: ActionRegistry): Binding[] {
-  return registry.actions
-    .flatMap((action) => action.defaults ?? [])
-    .map((binding) => structuredClone(binding))
-    .sort((left, right) => left.id.localeCompare(right.id));
-}
-
-export function profileFromBindings(
-  registry: ActionRegistry,
-  effectiveBindings: readonly Binding[],
-  profileId: string,
-): Profile {
-  const defaults = new Map(flattenDefaults(registry).map((binding) => [binding.id, binding]));
-  const effective = new Map(
-    effectiveBindings.map((binding) => [binding.id, structuredClone(binding)]),
-  );
-  const patches: BindingPatch[] = [];
-
-  for (const [bindingId, defaultBinding] of [...defaults.entries()].sort(([a], [b]) =>
-    a.localeCompare(b),
-  )) {
-    const current = effective.get(bindingId);
-    if (!current) {
-      patches.push({ op: "remove", bindingId });
-    } else if (!bindingEquals(defaultBinding, current)) {
-      patches.push({ op: "replace", bindingId, binding: current });
-    }
-  }
-
-  for (const [bindingId, binding] of [...effective.entries()].sort(([a], [b]) =>
-    a.localeCompare(b),
-  )) {
-    if (!defaults.has(bindingId)) {
-      patches.push({ op: "add", binding });
-    }
-  }
-
-  return { id: profileId, patches };
-}
-
-export function bindingEquals(left: Binding, right: Binding): boolean {
-  return JSON.stringify(canonicalBinding(left)) === JSON.stringify(canonicalBinding(right));
-}
+// Editing semantics belong to the core package; retain these exports for consumers.
+export {
+  flattenDefaults,
+  profileFromBindings,
+  bindingEquals,
+} from "@moritzbrantner/input-bindings";
 
 export function actionIsChanged(
   action: ActionDefinition,
@@ -263,30 +225,6 @@ export function sequenceStartsWith(
         sequence[index] !== undefined && inputStrokeEquals(stroke, sequence[index]),
     )
   );
-}
-
-function canonicalBinding(binding: Binding) {
-  return {
-    id: binding.id,
-    action: binding.action,
-    sequence: binding.sequence.map((stroke) => {
-      if (!isKeyStroke(stroke)) {
-        return structuredClone(stroke);
-      }
-      return {
-        key: stroke.key,
-        modifiers: {
-          ctrl: Boolean(stroke.modifiers?.ctrl),
-          alt: Boolean(stroke.modifiers?.alt),
-          shift: Boolean(stroke.modifiers?.shift),
-          meta: Boolean(stroke.modifiers?.meta),
-          altGraph: Boolean(stroke.modifiers?.altGraph),
-        },
-      };
-    }),
-    when: binding.when ?? { op: "always" },
-    priority: binding.priority ?? 0,
-  };
 }
 
 function formatModifiers(modifiers: Modifiers | undefined): string {

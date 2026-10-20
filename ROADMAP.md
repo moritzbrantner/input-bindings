@@ -21,6 +21,12 @@ Acceptance: the same fixture produces the same semantic answer in Rust and TypeS
 
 Acceptance: consumers can validate a complete catalog/profile before accepting it, with Rust and TypeScript agreeing on shared fixtures.
 
+Native consumer seam: Rust `profile_from_bindings` and TypeScript
+`profileFromBindings` share editor-delta conformance fixtures, including reset,
+remove/replace/add and UTF-16 ordering. The React workbench uses that core
+operation; native consumers can compose it with existing validation and explicit
+conflict repairs without implementing profile-diff semantics.
+
 ## 3. Reusable React editor + GitHub Pages — implemented
 
 - Search/filterable React configuration editor with multiple bindings, add/edit/disable/reset, import/export preview, provenance, and conflict explanations.

@@ -36,7 +36,7 @@ pub use platform::{
 };
 pub use profile::{
     BindingPatch, Profile, ProfileApplication, ProfileDiagnostic, ProfileDiagnosticKind,
-    apply_profile,
+    apply_profile, profile_from_bindings,
 };
 pub use registry::{
     ActionDefinition, ActionRegistry, CompiledActionRegistry, DeviceClass, Provenance,

@@ -124,3 +124,10 @@ Shared foundation:
 - for the native client (mmorpg#41, mmorpg#72), the Rust `input_bindings_core::InputRuntime` and `SemanticControlState` with the same lifecycle: the client feeds normalized key/button down/up strokes with its clock, calls `reset` on focus loss, and changes contexts through the runtime, which retires held actions on each transition.
 
 `packages/input-bindings-web/test/mmorpg-consumer.test.ts` proves the pattern through the public adapters: keyboard and gamepad produce the same movement intent, several devices hold one action, chat/menu transitions cannot leak gameplay input, non-blocking overlays fall through, and context or profile changes while a key is held cannot strand the action. The binding editor reaches MMORPG settings through the settings repository's composition seam rather than mirrored setting values.
+
+Native editors can now use Rust `profile_from_bindings` to derive a minimal
+portable delta after a binding edit or an explicit `apply_conflict_repair`.
+The TypeScript core exposes the same `profileFromBindings` operation, reused by
+the React workbench. MMORPG #41 consumes this seam; capture, rendering and
+character-scoped storage remain consumer responsibilities. Validation and
+conflict repair selection remain explicit and unchanged.
