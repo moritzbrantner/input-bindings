@@ -5,3 +5,4 @@ export * from "./registry.js";
 export * from "./persistence.js";
 export * from "./platform.js";
 export * from "./repair.js";
+export * from "./editor.js";
