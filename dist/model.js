@@ -1,33 +1,6 @@
-import { inputStrokeEquals, isKeyStroke, } from "@moritzbrantner/input-bindings";
-export function flattenDefaults(registry) {
-    return registry.actions
-        .flatMap((action) => action.defaults ?? [])
-        .map((binding) => structuredClone(binding))
-        .sort((left, right) => left.id.localeCompare(right.id));
-}
-export function profileFromBindings(registry, effectiveBindings, profileId) {
-    const defaults = new Map(flattenDefaults(registry).map((binding) => [binding.id, binding]));
-    const effective = new Map(effectiveBindings.map((binding) => [binding.id, structuredClone(binding)]));
-    const patches = [];
-    for (const [bindingId, defaultBinding] of [...defaults.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        const current = effective.get(bindingId);
-        if (!current) {
-            patches.push({ op: "remove", bindingId });
-        }
-        else if (!bindingEquals(defaultBinding, current)) {
-            patches.push({ op: "replace", bindingId, binding: current });
-        }
-    }
-    for (const [bindingId, binding] of [...effective.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        if (!defaults.has(bindingId)) {
-            patches.push({ op: "add", binding });
-        }
-    }
-    return { id: profileId, patches };
-}
-export function bindingEquals(left, right) {
-    return JSON.stringify(canonicalBinding(left)) === JSON.stringify(canonicalBinding(right));
-}
+import { inputStrokeEquals, bindingEquals, isKeyStroke, } from "@moritzbrantner/input-bindings";
+// Editing semantics belong to the core package; retain these exports for consumers.
+export { flattenDefaults, profileFromBindings, bindingEquals, } from "@moritzbrantner/input-bindings";
 export function actionIsChanged(action, effectiveBindings) {
     const defaults = [...(action.defaults ?? [])].sort((a, b) => a.id.localeCompare(b.id));
     const effective = effectiveBindings
@@ -195,29 +168,6 @@ export function contextsForWhen(expression) {
 export function sequenceStartsWith(sequence, prefix) {
     return (prefix.length <= sequence.length &&
         prefix.every((stroke, index) => sequence[index] !== undefined && inputStrokeEquals(stroke, sequence[index])));
-}
-function canonicalBinding(binding) {
-    return {
-        id: binding.id,
-        action: binding.action,
-        sequence: binding.sequence.map((stroke) => {
-            if (!isKeyStroke(stroke)) {
-                return structuredClone(stroke);
-            }
-            return {
-                key: stroke.key,
-                modifiers: {
-                    ctrl: Boolean(stroke.modifiers?.ctrl),
-                    alt: Boolean(stroke.modifiers?.alt),
-                    shift: Boolean(stroke.modifiers?.shift),
-                    meta: Boolean(stroke.modifiers?.meta),
-                    altGraph: Boolean(stroke.modifiers?.altGraph),
-                },
-            };
-        }),
-        when: binding.when ?? { op: "always" },
-        priority: binding.priority ?? 0,
-    };
 }
 function formatModifiers(modifiers) {
     const value = modifiers ?? {};

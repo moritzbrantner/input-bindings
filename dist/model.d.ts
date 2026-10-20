@@ -1,7 +1,5 @@
-import { type ActionDefinition, type ActionRegistry, type Binding, type Conflict, type ConflictKind, type GestureMatch, type InputStroke, type Profile, type WhenExpr } from "@moritzbrantner/input-bindings";
-export declare function flattenDefaults(registry: ActionRegistry): Binding[];
-export declare function profileFromBindings(registry: ActionRegistry, effectiveBindings: readonly Binding[], profileId: string): Profile;
-export declare function bindingEquals(left: Binding, right: Binding): boolean;
+import { type ActionDefinition, type ActionRegistry, type Binding, type Conflict, type ConflictKind, type GestureMatch, type InputStroke, type WhenExpr } from "@moritzbrantner/input-bindings";
+export { flattenDefaults, profileFromBindings, bindingEquals, } from "@moritzbrantner/input-bindings";
 export declare function actionIsChanged(action: ActionDefinition, effectiveBindings: readonly Binding[]): boolean;
 export type ActionEditorIndexEntry = {
     bindings: readonly Binding[];
