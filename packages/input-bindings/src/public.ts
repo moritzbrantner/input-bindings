@@ -5,3 +5,4 @@ export * from "./registry.ts";
 export * from "./persistence.ts";
 export * from "./platform.ts";
 export * from "./repair.ts";
+export * from "./editor.ts";

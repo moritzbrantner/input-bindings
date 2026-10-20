@@ -1,0 +1,316 @@
+{
+  "registry": {
+    "actions": [
+      {
+        "id": "game.jump",
+        "title": "Jump",
+        "allowedDevices": [
+          "keyboard"
+        ],
+        "defaults": [
+          {
+            "id": "a.keep",
+            "action": "game.jump",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "Space"
+                }
+              }
+            ]
+          },
+          {
+            "id": "z.remove",
+            "action": "game.jump",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "Space"
+                }
+              }
+            ]
+          },
+          {
+            "id": ".changed",
+            "action": "game.jump",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "Space"
+                }
+              }
+            ]
+          },
+          {
+            "id": "𐀀.changed",
+            "action": "game.jump",
+            "sequence": [
+              {
+                "key": {
+                  "kind": "physical",
+                  "value": "Space"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "unchanged defaults are inherited",
+      "bindings": [
+        {
+          "id": "a.keep",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "Space"
+              }
+            }
+          ]
+        },
+        {
+          "id": "z.remove",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "Space"
+              }
+            }
+          ]
+        },
+        {
+          "id": ".changed",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "Space"
+              }
+            }
+          ]
+        },
+        {
+          "id": "𐀀.changed",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "Space"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "id": "character:a",
+        "patches": []
+      }
+    },
+    {
+      "name": "remove replace and add keep deterministic UTF16 ordering",
+      "bindings": [
+        {
+          "id": "a.keep",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "Space"
+              }
+            }
+          ]
+        },
+        {
+          "id": "𐀀.changed",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "KeyJ"
+              }
+            }
+          ]
+        },
+        {
+          "id": ".changed",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "KeyK"
+              }
+            }
+          ]
+        },
+        {
+          "id": "new.a",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "kind": "physical",
+                "value": "KeyN"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "id": "character:a",
+        "patches": [
+          {
+            "op": "remove",
+            "bindingId": "z.remove"
+          },
+          {
+            "op": "replace",
+            "bindingId": "𐀀.changed",
+            "binding": {
+              "id": "𐀀.changed",
+              "action": "game.jump",
+              "sequence": [
+                {
+                  "key": {
+                    "kind": "physical",
+                    "value": "KeyJ"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "op": "replace",
+            "bindingId": ".changed",
+            "binding": {
+              "id": ".changed",
+              "action": "game.jump",
+              "sequence": [
+                {
+                  "key": {
+                    "kind": "physical",
+                    "value": "KeyK"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "op": "add",
+            "binding": {
+              "id": "new.a",
+              "action": "game.jump",
+              "sequence": [
+                {
+                  "key": {
+                    "kind": "physical",
+                    "value": "KeyN"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "explicit defaults and property order do not create overrides",
+      "bindings": [
+        {
+          "id": "a.keep",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "value": "Space",
+                "kind": "physical"
+              },
+              "modifiers": {
+                "ctrl": false
+              }
+            }
+          ],
+          "when": {
+            "op": "always"
+          },
+          "priority": 0
+        },
+        {
+          "id": "z.remove",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "value": "Space",
+                "kind": "physical"
+              },
+              "modifiers": {
+                "ctrl": false
+              }
+            }
+          ],
+          "when": {
+            "op": "always"
+          },
+          "priority": 0
+        },
+        {
+          "id": ".changed",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "value": "Space",
+                "kind": "physical"
+              },
+              "modifiers": {
+                "ctrl": false
+              }
+            }
+          ],
+          "when": {
+            "op": "always"
+          },
+          "priority": 0
+        },
+        {
+          "id": "𐀀.changed",
+          "action": "game.jump",
+          "sequence": [
+            {
+              "key": {
+                "value": "Space",
+                "kind": "physical"
+              },
+              "modifiers": {
+                "ctrl": false
+              }
+            }
+          ],
+          "when": {
+            "op": "always"
+          },
+          "priority": 0
+        }
+      ],
+      "expected": {
+        "id": "character:a",
+        "patches": []
+      }
+    }
+  ]
+}
