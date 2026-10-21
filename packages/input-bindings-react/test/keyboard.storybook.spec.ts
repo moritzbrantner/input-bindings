@@ -46,7 +46,7 @@ test("keyboard inspection is operable without a pointer", async ({ page }) => {
   const logicalZ = interactiveKey(page, "KeyY");
   await logicalZ.focus();
   await expect(logicalZ).toBeFocused();
-  await expect(logicalZ).toHaveAccessibleName("Z, 1 binding");
+  await expect(logicalZ).toHaveAccessibleName("Z 1 binding");
 
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("inspection")).toHaveText("KeyY · undo.logical");
