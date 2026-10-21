@@ -39,7 +39,7 @@
   "dependencies": {
     "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#5e4f5fcb3e5aa70ad6131a2e9d2f902462092347",
     "@moritzbrantner/input-bindings-runtime": "github:moritzbrantner/input-bindings#fc4d700a19cf8ca7a7c3a3a2cbc68247f710fec0",
-    "@moritzbrantner/input-bindings-web": "github:moritzbrantner/input-bindings#a61e0c4278733c76a4c2ff86021b746aff19ab49"
+    "@moritzbrantner/input-bindings-web": "github:moritzbrantner/input-bindings#753aa60b54314597363e9ab2ee3429fdfae37097"
   },
   "peerDependencies": {
     "react": ">=19"
