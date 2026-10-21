@@ -3,15 +3,19 @@ import { test } from "node:test";
 
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
 import {
+  AnalogInputController,
   InputRuntimeController,
+  type AnalogDispatch,
   type RuntimeDispatch,
 } from "@moritzbrantner/input-bindings-runtime";
 
 import {
   attachGamepadRuntime,
   attachMouseRuntime,
+  createActiveDeviceTracker,
   type FrameScheduler,
   type GamepadLike,
+  type InputDeviceClass,
 } from "../src/index.ts";
 
 class FakeTarget {
@@ -199,4 +203,153 @@ test("gamepad polling emits button and axis threshold transitions with hysteresi
     ],
   );
   detach();
+});
+
+function pad(index: number, overrides: Partial<GamepadLike> = {}): GamepadLike {
+  return {
+    index,
+    connected: true,
+    buttons: [{ value: 0, pressed: false }],
+    axes: [0, 0],
+    ...overrides,
+  };
+}
+
+test("gamepad disconnect mid-hold releases digital and analog input, reconnect resumes once", () => {
+  const frames = new FakeFrames();
+  const window = new FakeTarget();
+  const dispatches: RuntimeDispatch[] = [];
+  const analogDispatches: AnalogDispatch[] = [];
+  const controller = new InputRuntimeController({
+    registry: gamepadRegistry,
+    getActiveContexts: () => new Set(),
+    onDispatch: (dispatch) => dispatches.push(dispatch),
+  });
+  const analog = new AnalogInputController({
+    actions: [{ id: "game.move", kind: "axis2D" }],
+    onDispatch: (dispatch) => analogDispatches.push(dispatch),
+  });
+  let pads: (GamepadLike | null)[] = [
+    pad(0, { buttons: [{ value: 1, pressed: true }], axes: [0.5, 0] }),
+  ];
+  const detach = attachGamepadRuntime(controller, {
+    getGamepads: () => pads,
+    scheduler: frames,
+    eventTarget: window,
+    analog: { controller: analog, bindings: [{ action: "game.move", xAxis: 0, yAxis: 1 }] },
+    resetOnDetach: false,
+  });
+
+  frames.runNext();
+  assert.deepEqual(
+    dispatches.map((dispatch) => [dispatch.action, dispatch.phase]),
+    [["game.jump", "press"]],
+  );
+  const held = analog.value("game.move") as { x: number; y: number };
+  assert.ok(Math.abs(held.x - (0.5 - 0.15) / 0.85) < 1e-9);
+
+  // The browser still lists the pad when the event fires.
+  window.emit("gamepaddisconnected", { gamepad: { index: 0 } });
+  assert.deepEqual(
+    dispatches.map((dispatch) => [dispatch.action, dispatch.phase]),
+    [
+      ["game.jump", "press"],
+      ["game.jump", "release"],
+    ],
+  );
+  assert.deepEqual(analog.value("game.move"), { x: 0, y: 0 });
+  assert.equal(analogDispatches.at(-1)?.reason, "release");
+
+  pads = [];
+  frames.runNext();
+  assert.throws(() => frames.runNext(), /expected a scheduled gamepad frame/);
+
+  pads = [pad(0, { buttons: [{ value: 1, pressed: true }] })];
+  window.emit("gamepadconnected", { gamepad: { index: 0 } });
+  window.emit("gamepadconnected", { gamepad: { index: 0 } });
+  frames.runNext();
+  assert.deepEqual(dispatches.map((dispatch) => [dispatch.action, dispatch.phase]).at(-1), [
+    "game.jump",
+    "press",
+  ]);
+
+  detach();
+  assert.throws(() => frames.runNext(), /expected a scheduled gamepad frame/, "one poll loop");
+  assert.deepEqual(dispatches.map((dispatch) => [dispatch.action, dispatch.phase]).at(-1), [
+    "game.jump",
+    "release",
+  ]);
+  window.emit("gamepadconnected", { gamepad: { index: 0 } });
+  assert.throws(() => frames.runNext(), /expected a scheduled gamepad frame/, "listeners removed");
+});
+
+test("gamepad analog bindings apply dead zones per axis and combine pads as separate sources", () => {
+  const frames = new FakeFrames();
+  const analog = new AnalogInputController({
+    actions: [
+      { id: "camera.look", kind: "axis2D" },
+      { id: "camera.zoom", kind: "axis1D" },
+    ],
+  });
+  let pads: GamepadLike[] = [pad(0, { axes: [0.1, -0.1, 0.1] })];
+  const detach = attachGamepadRuntime(
+    new InputRuntimeController({ registry: { actions: [] }, getActiveContexts: () => new Set() }),
+    {
+      getGamepads: () => pads,
+      scheduler: frames,
+      eventTarget: new FakeTarget(),
+      analog: {
+        controller: analog,
+        bindings: [
+          { action: "camera.look", xAxis: 0, yAxis: 1, invertY: true, deadzone: 0.2 },
+          { action: "camera.zoom", axis: 2, deadzone: 0.2 },
+        ],
+      },
+    },
+  );
+
+  frames.runNext();
+  assert.deepEqual(analog.value("camera.look"), { x: 0, y: 0 });
+  assert.equal(analog.value("camera.zoom"), 0);
+
+  pads = [pad(0, { axes: [0, -0.6, -0.6] }), pad(1, { axes: [0, 0, -0.6] })];
+  frames.runNext();
+  const look = analog.value("camera.look") as { x: number; y: number };
+  assert.equal(look.x, 0);
+  assert.ok(Math.abs(look.y - 0.5) < 1e-9);
+  assert.ok(Math.abs((analog.value("camera.zoom") as number) + 1) < 1e-9);
+
+  detach();
+  assert.equal(analog.value("camera.zoom"), 0);
+});
+
+test("active device tracker switches between keyboard/mouse, touch and gamepad", () => {
+  const frames = new FakeFrames();
+  const window = new FakeTarget();
+  const tracker = createActiveDeviceTracker({ target: window });
+  const changes: InputDeviceClass[] = [];
+  tracker.subscribe((device) => changes.push(device));
+  let pads: GamepadLike[] = [pad(0)];
+  const detach = attachGamepadRuntime(
+    new InputRuntimeController({ registry: { actions: [] }, getActiveContexts: () => new Set() }),
+    { getGamepads: () => pads, scheduler: frames, eventTarget: window, deviceTracker: tracker },
+  );
+
+  assert.equal(tracker.current, null);
+  window.emit("keydown", { key: "w" });
+  frames.runNext();
+  window.emit("pointerdown", { pointerType: "touch" });
+  pads = [pad(0, { axes: [0.9, 0] })];
+  frames.runNext();
+  frames.runNext();
+  window.emit("pointerdown", { pointerType: "mouse" });
+  window.emit("wheel", {});
+
+  assert.deepEqual(changes, ["keyboardMouse", "touch", "gamepad", "keyboardMouse"]);
+  assert.equal(tracker.current, "keyboardMouse");
+
+  detach();
+  tracker.detach();
+  window.emit("pointerdown", { pointerType: "touch" });
+  assert.equal(tracker.current, "keyboardMouse");
 });

@@ -1,4 +1,5 @@
 export * from "./analog.ts";
+export * from "./device-tracker.ts";
 export * from "./gesture-runtime.ts";
 export * from "./multi-pointer.ts";
 export * from "./pointer-stroke.ts";
@@ -13,10 +14,15 @@ import {
   type MouseButtonStroke,
   type WheelStroke,
 } from "@moritzbrantner/input-bindings";
-import type {
-  InputRuntimeController,
-  RuntimeDecision,
+import {
+  applyAxis1DDeadzone,
+  applyAxis2DDeadzone,
+  type AnalogInputController,
+  type InputRuntimeController,
+  type RuntimeDecision,
 } from "@moritzbrantner/input-bindings-runtime";
+
+import type { ActiveDeviceTracker } from "./device-tracker.ts";
 
 export type KeyboardEventLike = {
   key: string;
@@ -120,11 +126,32 @@ export type FrameScheduler = {
   cancelFrame(handle: unknown): void;
 };
 
+export type GamepadAnalogBinding = {
+  /** Analog action id registered on the `AnalogInputController`. */
+  action: string;
+  /** Restrict to one pad index; any connected pad contributes when omitted. */
+  gamepad?: number;
+  /** Radial (axis2D) or axial (axis1D) dead zone in the normalized 0..1 range. Defaults to 0.15. */
+  deadzone?: number;
+} & ({ axis: number } | { xAxis: number; yAxis: number; invertY?: boolean });
+
 export type GamepadRuntimeAdapterOptions = {
   getGamepads?: () => readonly (GamepadLike | null)[];
   scheduler?: FrameScheduler;
+  /** Receives `gamepadconnected`/`gamepaddisconnected`. Defaults to `window`. */
+  eventTarget?: RuntimeEventTargetLike;
+  /** Continuous stick/trigger axes routed to analog actions, one source per pad. */
+  analog?: {
+    controller: AnalogInputController;
+    bindings: readonly GamepadAnalogBinding[];
+  };
+  /** Marked `gamepad` whenever a pad button or axis moves past the activity threshold. */
+  deviceTracker?: Pick<ActiveDeviceTracker, "markActive">;
   resetOnDetach?: boolean;
 };
+
+const GAMEPAD_ACTIVITY_THRESHOLD = 0.5;
+const DEFAULT_GAMEPAD_DEADZONE = 0.15;
 
 const MODIFIER_ONLY_KEYS = new Set(["Alt", "AltGraph", "Control", "Meta", "Shift"]);
 const MODIFIER_ONLY_CODES = new Set([
@@ -484,17 +511,23 @@ export function attachGamepadRuntime(
   };
   const getGamepads = options.getGamepads ?? (() => globals.navigator?.getGamepads?.() ?? []);
   const scheduler = options.scheduler ?? defaultFrameScheduler(globals);
+  const eventTarget =
+    options.eventTarget ?? (globals as { window?: RuntimeEventTargetLike }).window;
   const resetOnDetach = options.resetOnDetach ?? true;
   const triggers = gamepadTriggers(controller.effectiveBindings);
   const active = new Map<string, GamepadButtonStroke | GamepadAxisStroke>();
+  const analogSources = new Map<string, string>();
   let stopped = false;
+  // Defined only while a poll is scheduled; polling idles when no pad is connected.
   let frame: unknown;
 
-  const poll = () => {
-    if (stopped) {
-      return;
-    }
-    const gamepads = getGamepads();
+  const connectedPads = (excludeIndex?: number) =>
+    getGamepads().filter(
+      (gamepad): gamepad is GamepadLike =>
+        gamepad !== null && gamepad.connected !== false && gamepad.index !== excludeIndex,
+    );
+
+  const sample = (gamepads: readonly GamepadLike[]) => {
     for (const trigger of triggers) {
       const identity = inputStrokeIdentity(trigger);
       const isActive = active.has(identity);
@@ -510,24 +543,115 @@ export function attachGamepadRuntime(
         }
       }
     }
-    frame = scheduler.requestFrame(poll);
+    sampleAnalog(gamepads);
+    if (options.deviceTracker && gamepads.some(gamepadHasActivity)) {
+      options.deviceTracker.markActive("gamepad");
+    }
   };
 
-  frame = scheduler.requestFrame(poll);
+  const sampleAnalog = (gamepads: readonly GamepadLike[]) => {
+    if (!options.analog) {
+      return;
+    }
+    const analog = options.analog.controller;
+    const seen = new Set<string>();
+    options.analog.bindings.forEach((binding, bindingIndex) => {
+      for (const gamepad of gamepads) {
+        if (binding.gamepad !== undefined && gamepad.index !== binding.gamepad) {
+          continue;
+        }
+        const sourceId = `gamepad:${gamepad.index}:${bindingIndex}`;
+        seen.add(sourceId);
+        analogSources.set(sourceId, binding.action);
+        const deadzone = binding.deadzone ?? DEFAULT_GAMEPAD_DEADZONE;
+        if ("axis" in binding) {
+          analog.setAxis1D(
+            sourceId,
+            binding.action,
+            applyAxis1DDeadzone(finiteAxis(gamepad.axes[binding.axis]), deadzone),
+          );
+        } else {
+          const y = finiteAxis(gamepad.axes[binding.yAxis]);
+          analog.setAxis2D(
+            sourceId,
+            binding.action,
+            applyAxis2DDeadzone(
+              { x: finiteAxis(gamepad.axes[binding.xAxis]), y: binding.invertY ? -y : y },
+              deadzone,
+            ),
+          );
+        }
+      }
+    });
+    for (const [sourceId, action] of [...analogSources]) {
+      if (!seen.has(sourceId)) {
+        analogSources.delete(sourceId);
+        analog.clearSource(sourceId, action);
+      }
+    }
+  };
+
+  const poll = () => {
+    frame = undefined;
+    if (stopped) {
+      return;
+    }
+    const gamepads = connectedPads();
+    sample(gamepads);
+    if (gamepads.length > 0) {
+      schedule();
+    }
+  };
+
+  const schedule = () => {
+    if (!stopped && frame === undefined) {
+      frame = scheduler.requestFrame(poll);
+    }
+  };
+
+  const onConnected = () => schedule();
+  const onDisconnected = (event: { gamepad?: { index: number } }) => {
+    // Release what the departed pad held now rather than on the next frame;
+    // the browser may still list it until then.
+    sample(connectedPads(event.gamepad?.index));
+  };
+
+  eventTarget?.addEventListener("gamepadconnected", onConnected);
+  eventTarget?.addEventListener("gamepaddisconnected", onDisconnected);
+  schedule();
 
   return () => {
     stopped = true;
+    eventTarget?.removeEventListener("gamepadconnected", onConnected);
+    eventTarget?.removeEventListener("gamepaddisconnected", onDisconnected);
     if (frame !== undefined) {
       scheduler.cancelFrame(frame);
+      frame = undefined;
     }
     for (const stroke of active.values()) {
       controller.handleInputUp(stroke);
     }
     active.clear();
+    for (const [sourceId, action] of analogSources) {
+      options.analog?.controller.clearSource(sourceId, action);
+    }
+    analogSources.clear();
     if (resetOnDetach) {
       controller.reset("gamepadDetached");
     }
   };
+}
+
+function finiteAxis(value: number | undefined): number {
+  return value !== undefined && Number.isFinite(value) ? value : 0;
+}
+
+function gamepadHasActivity(gamepad: GamepadLike): boolean {
+  return (
+    gamepad.buttons.some(
+      (button) => button.pressed === true || button.value >= GAMEPAD_ACTIVITY_THRESHOLD,
+    ) || gamepad.axes.some((value) => Math.abs(value) >= GAMEPAD_ACTIVITY_THRESHOLD)
+  );
 }
 
 export function gamepadStrokeActive(

@@ -74,6 +74,18 @@ Shared foundation:
 
 The direct browser `keydown` switch is removed; dispatched action ids call back into Medieval-owned functions. No battle-domain or simulation authority moves into `input-bindings`.
 
+## ARPG — gamepad device runtime
+
+Repository: `moritzbrantner/arpg`
+
+ARPG owns its action catalog, movement rules and prompt artwork. It consumes `attachGamepadRuntime` from `input-bindings-web` with:
+
+- digital gamepad bindings resolved through the normal `InputRuntimeController`;
+- `analog: { controller, bindings }` for stick/trigger axes, e.g. `{ action: "move", xAxis: 0, yAxis: 1, invertY: true }`; each pad is a separate `AnalogInputController` source, and the dead zone defaults to 0.15;
+- `deviceTracker: createActiveDeviceTracker()`, whose `current`/`subscribe` report `keyboardMouse`, `gamepad` or `touch` for device-matched prompts.
+
+A `gamepaddisconnected` event releases everything that pad held before the next frame; polling idles with no pad connected and a reconnect resumes the single loop.
+
 ## Angular — localized application shell
 
 Repository: `moritzbrantner/angular`

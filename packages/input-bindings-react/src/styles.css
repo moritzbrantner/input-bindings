@@ -9,7 +9,13 @@
   --ib-danger-soft: #ffebe9;
   --ib-warning: #8a5a00;
   color: #1f2328;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 .ib-editor *,
@@ -849,7 +855,13 @@
   --ib-warning: #8a5a00;
   color: #1f2328;
   color-scheme: light;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 .ib-workbench *,
