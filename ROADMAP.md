@@ -218,6 +218,7 @@ Implemented first slice:
 - A deterministic analog controller aggregates multiple normalized sources for the same action and provides deadzone, sensitivity, smoothing, rotation, source-release, and reset primitives.
 - Browser adapters execute virtual sticks and touch-look regions as continuous Axis2D producers.
 - Browser gyroscope input uses motion rotation-rate data, explicit permission requests, screen-orientation normalization, configurable sensitivity/deadzone/smoothing, and the same semantic look axis as touch.
+- The browser gamepad runtime polls only while a pad is connected, handles `gamepadconnected`/`gamepaddisconnected` (a disconnect releases that pad's digital and analog input immediately), feeds stick/trigger axes to analog actions as one dead-zoned source per pad, and reports gamepad activity to an active-device tracker that also observes keyboard/mouse and touch for device-matched prompts.
 - The mobile overlay model can map sticks/gesture zones to analog actions and provides a reusable runtime/test surface for sticks, action buttons, and look regions.
 - The Pages dogfood shows live move/look values and never asks for motion permission until the user explicitly enables gyroscope look.
 
@@ -225,7 +226,6 @@ Remaining:
 
 - Add swipe, pinch, tap/hold, and richer gesture recognition where deterministic semantics are useful.
 - Add user-facing gyro calibration/recenter and persisted per-profile motion settings.
-- Add gamepad continuous-axis producers to the same analog action path rather than only threshold-to-discrete bindings.
 - Add Rust-side analog helpers when a Rust-native consumer needs the continuous path; do not move the web sensor adapters into core.
 - Add richer live device diagnostics without turning the settings surface into a profiler.
 
