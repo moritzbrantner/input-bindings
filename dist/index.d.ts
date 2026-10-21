@@ -1,9 +1,11 @@
 export * from "./analog.js";
+export * from "./device-tracker.js";
 export * from "./gesture-runtime.js";
 export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
 import { type GamepadAxisStroke, type GamepadButtonStroke, type KeyStroke, type MouseButtonStroke, type WheelStroke } from "@moritzbrantner/input-bindings";
-import type { InputRuntimeController } from "@moritzbrantner/input-bindings-runtime";
+import { type AnalogInputController, type InputRuntimeController } from "@moritzbrantner/input-bindings-runtime";
+import type { ActiveDeviceTracker } from "./device-tracker.js";
 export type KeyboardEventLike = {
     key: string;
     code: string;
@@ -94,9 +96,32 @@ export type FrameScheduler = {
     requestFrame(callback: () => void): unknown;
     cancelFrame(handle: unknown): void;
 };
+export type GamepadAnalogBinding = {
+    /** Analog action id registered on the `AnalogInputController`. */
+    action: string;
+    /** Restrict to one pad index; any connected pad contributes when omitted. */
+    gamepad?: number;
+    /** Radial (axis2D) or axial (axis1D) dead zone in the normalized 0..1 range. Defaults to 0.15. */
+    deadzone?: number;
+} & ({
+    axis: number;
+} | {
+    xAxis: number;
+    yAxis: number;
+    invertY?: boolean;
+});
 export type GamepadRuntimeAdapterOptions = {
     getGamepads?: () => readonly (GamepadLike | null)[];
     scheduler?: FrameScheduler;
+    /** Receives `gamepadconnected`/`gamepaddisconnected`. Defaults to `window`. */
+    eventTarget?: RuntimeEventTargetLike;
+    /** Continuous stick/trigger axes routed to analog actions, one source per pad. */
+    analog?: {
+        controller: AnalogInputController;
+        bindings: readonly GamepadAnalogBinding[];
+    };
+    /** Marked `gamepad` whenever a pad button or axis moves past the activity threshold. */
+    deviceTracker?: Pick<ActiveDeviceTracker, "markActive">;
     resetOnDetach?: boolean;
 };
 export declare function isModifierOnlyKeyboardValue(value: string, mode?: "logical" | "physical"): boolean;
