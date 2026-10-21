@@ -289,9 +289,9 @@ function KeyboardKey({ definition, scopedBindingIds, allBindingIds, conflictIds,
     const detail = allBindingIds.length === 0
         ? "unused"
         : `${allBindingIds.length} binding${allBindingIds.length === 1 ? "" : "s"}`;
-    const content = (_jsxs(_Fragment, { children: [_jsx("span", { className: "ib-key-label", children: label }), allBindingIds.length > 0 && _jsx("span", { className: "ib-key-count", children: allBindingIds.length })] }));
+    const content = (_jsxs(_Fragment, { children: [_jsx("span", { className: "ib-key-label", children: label }), allBindingIds.length > 0 && (_jsxs(_Fragment, { children: [" ", _jsx("span", { className: "ib-key-count", children: allBindingIds.length })] }))] }));
     if (onInspect) {
-        return (_jsx("button", { type: "button", className: classes, "data-key-code": definition.code, style: { flex: definition.width ?? 1 }, title: `${definition.code}: ${detail}`, "aria-label": `${label}, ${detail}${conflicting ? ", conflict" : ""}`, onClick: () => onInspect(definition.code, [...allBindingIds]), children: content }));
+        return (_jsx("button", { type: "button", className: classes, "data-key-code": definition.code, style: { flex: definition.width ?? 1 }, title: `${definition.code}: ${detail}`, "aria-label": `${label} ${detail}${conflicting ? " conflict" : ""}`, onClick: () => onInspect(definition.code, [...allBindingIds]), children: content }));
     }
     return (_jsx("div", { className: classes, "data-key-code": definition.code, style: { flex: definition.width ?? 1 }, title: `${definition.code}: ${detail}`, "aria-hidden": "true", children: content }));
 }
