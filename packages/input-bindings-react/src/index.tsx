@@ -853,7 +853,12 @@ function KeyboardKey({
   const content = (
     <>
       <span className="ib-key-label">{label}</span>
-      {allBindingIds.length > 0 && <span className="ib-key-count">{allBindingIds.length}</span>}
+      {allBindingIds.length > 0 && (
+        <>
+          {" "}
+          <span className="ib-key-count">{allBindingIds.length}</span>
+        </>
+      )}
     </>
   );
 
@@ -865,7 +870,9 @@ function KeyboardKey({
         data-key-code={definition.code}
         style={{ flex: definition.width ?? 1 }}
         title={`${definition.code}: ${detail}`}
-        aria-label={`${label}, ${detail}${conflicting ? ", conflict" : ""}`}
+        // Starts with the visible text ("Ctrl 3"), so it contains it word for word (axe
+        // label-content-name-mismatch): "Ctrl 3 bindings conflict", "W unused".
+        aria-label={`${label} ${detail}${conflicting ? " conflict" : ""}`}
         onClick={() => onInspect(definition.code, [...allBindingIds])}
       >
         {content}

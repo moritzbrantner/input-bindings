@@ -47,7 +47,7 @@ test("keyboard presentation keeps ordinary shortcut editing available", async ({
   await expect(page.getByRole("heading", { name: "Keyboard overview" })).toBeVisible();
 
   const escape = page.locator('button[data-key-code="Escape"]');
-  await expect(escape).toHaveAccessibleName(/2 bindings, conflict/);
+  await expect(escape).toHaveAccessibleName(/2 bindings conflict/);
   await escape.click();
 
   await expect(page.getByText("Pause game", { exact: true })).toBeVisible();
