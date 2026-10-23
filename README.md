@@ -64,7 +64,7 @@ fixtures/                    cross-language conformance cases
 
 ## Development
 
-Install Bun 1.4.2 (declared in `package.json`), Node 24 for browser tooling, and
+Install the latest stable Bun, Node LTS for browser tooling, and
 stable Rust with rustfmt and Clippy.
 
 ```sh
