@@ -132,7 +132,9 @@ export function BindingRecorder({
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.code) {
-      setPressedCodes((current) => new Set([...current, event.code]));
+      setPressedCodes((current) =>
+        current.has(event.code) ? current : new Set([...current, event.code]),
+      );
     }
     event.preventDefault();
     event.stopPropagation();

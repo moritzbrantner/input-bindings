@@ -12,6 +12,13 @@ import { contextsForWhen } from "./model.ts";
 
 export type KeyboardScope = "selectedAction" | "context" | "visible" | "conflicts";
 
+// Shared so omitted props keep their identity across renders and the memoized derivations below
+// are not rebuilt on every key event.
+const NO_CONFLICTS: readonly Conflict[] = [];
+const NO_ACTION_IDS: readonly string[] = [];
+const NO_PRESSED_CODES: ReadonlySet<string> = new Set();
+const NO_STROKES: readonly KeyStroke[] = [];
+
 export type KeyboardViewProps = {
   bindings: readonly Binding[];
   conflicts?: readonly Conflict[];
@@ -28,14 +35,14 @@ export type KeyboardViewProps = {
 
 export function KeyboardView({
   bindings,
-  conflicts = [],
+  conflicts = NO_CONFLICTS,
   selectedActionId,
   selectedBindingId,
   scope = "visible",
   context,
-  visibleActionIds = [],
-  pressedCodes = new Set<string>(),
-  highlightedSequence = [],
+  visibleActionIds = NO_ACTION_IDS,
+  pressedCodes = NO_PRESSED_CODES,
+  highlightedSequence = NO_STROKES,
   layoutLabels,
   onKeyInspect,
 }: KeyboardViewProps) {
