@@ -1,5 +1,5 @@
 import type { Binding, Conflict, KeyStroke } from "@moritzbrantner/input-bindings";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 
 import {
   KEYBOARD_ROWS,
@@ -15,7 +15,7 @@ export type KeyboardScope = "selectedAction" | "context" | "visible" | "conflict
 // Shared so omitted props keep their identity across renders and the memoized derivations below
 // are not rebuilt on every key event.
 const NO_CONFLICTS: readonly Conflict[] = [];
-const NO_ACTION_IDS: readonly string[] = [];
+const NO_IDS: readonly string[] = [];
 const NO_PRESSED_CODES: ReadonlySet<string> = new Set();
 const NO_STROKES: readonly KeyStroke[] = [];
 
@@ -40,7 +40,7 @@ export function KeyboardView({
   selectedBindingId,
   scope = "visible",
   context,
-  visibleActionIds = NO_ACTION_IDS,
+  visibleActionIds = NO_IDS,
   pressedCodes = NO_PRESSED_CODES,
   highlightedSequence = NO_STROKES,
   layoutLabels,
@@ -101,8 +101,8 @@ export function KeyboardView({
             <KeyboardKey
               key={key.code}
               definition={key}
-              scopedBindingIds={scopedBindingIdsByCode.get(key.code) ?? []}
-              allBindingIds={allBindingIdsByCode.get(key.code) ?? []}
+              scopedBindingIds={scopedBindingIdsByCode.get(key.code) ?? NO_IDS}
+              allBindingIds={allBindingIdsByCode.get(key.code) ?? NO_IDS}
               conflictIds={conflictIds}
               selected={selectedCodes.has(key.code)}
               pressed={pressedCodes.has(key.code)}
@@ -117,7 +117,8 @@ export function KeyboardView({
   );
 }
 
-function KeyboardKey({
+// Memoized because a key event changes the props of only the few keys it affects.
+const KeyboardKey = memo(function KeyboardKey({
   definition,
   scopedBindingIds,
   allBindingIds,
@@ -196,7 +197,7 @@ function KeyboardKey({
       {content}
     </div>
   );
-}
+});
 
 export function KeyboardLegend() {
   return (
