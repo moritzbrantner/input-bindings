@@ -84,6 +84,16 @@ const registry: ActionRegistry = {
       provenance: { source: "demo-shell", version: "1" },
     },
     {
+      id: "global.search",
+      title: "Open search",
+      description: "Application-wide search; focused layers may give Ctrl+F their own meaning.",
+      categoryPath: ["Global"],
+      repeatPolicy: "never",
+      allowedDevices: ["keyboard"],
+      defaults: [logical("global.search.default", "global.search", "f", { ctrl: true })],
+      provenance: { source: "demo-shell", version: "1" },
+    },
+    {
       id: "global.quickOpen",
       title: "Quick open",
       description: "Open an item by name.",
@@ -289,23 +299,40 @@ const registry: ActionRegistry = {
       provenance: { source: "gameplay", version: "1" },
     },
     {
-      id: "game.targetNearest",
-      title: "Target nearest object",
+      id: "game.strongAttack",
+      title: "Strong attack",
       description:
-        "Shares Ctrl+F with editor search in another context to demonstrate context overlap diagnostics.",
+        "Overrides the global Ctrl+F search while gameplay is the active layer, to demonstrate context-dependent actions.",
       categoryPath: ["Game", "Actions"],
       repeatPolicy: "never",
       allowedDevices: ["keyboard", "gamepad"],
       defaults: [
         logical(
-          "game.targetNearest.default",
-          "game.targetNearest",
+          "game.strongAttack.default",
+          "game.strongAttack",
           "f",
           { ctrl: true },
           context("gameplay"),
         ),
       ],
       provenance: { source: "gameplay", version: "1" },
+    },
+    {
+      id: "settings.focusSearch",
+      title: "Focus settings search",
+      categoryPath: ["Settings", "Navigation"],
+      repeatPolicy: "never",
+      allowedDevices: ["keyboard"],
+      defaults: [
+        logical(
+          "settings.focusSearch.default",
+          "settings.focusSearch",
+          "f",
+          { ctrl: true },
+          context("settingsOpen"),
+        ),
+      ],
+      provenance: { source: "demo-shell", version: "1" },
     },
     {
       id: "menu.close",
@@ -405,6 +432,14 @@ const contextScenarios: InputBindingsContextScenario[] = [
     description: "The menu sits above gameplay and blocks lower input layers until it closes.",
     activeContexts: ["gameplay", "menuOpen"],
     stack: [{ id: "gameplay" }, { id: "menuOpen", blocksLower: true }],
+    defaultKeyboardMode: "logical",
+  },
+  {
+    id: "settings",
+    label: "Settings menu",
+    description: "A modal settings screen with its own search field.",
+    activeContexts: ["settingsOpen"],
+    stack: [{ id: "settingsOpen", blocksLower: true }],
     defaultKeyboardMode: "logical",
   },
 ];

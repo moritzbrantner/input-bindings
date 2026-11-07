@@ -1,5 +1,5 @@
 // A small expected-behavior model independent of the workbench implementation.
-// ROADMAP.md phases 3/12/13: edit/cancel/save/reset, conflict review and live preview.
+// ROADMAP.md phases 3/12/13: edit/cancel/save/reset, conflict review, key map and live preview.
 import { expect, test, type Page } from "@playwright/test";
 import { createMachine, type AnyMachineSnapshot } from "xstate";
 import { getAdjacencyMap, getShortestPaths } from "xstate/graph";
@@ -10,12 +10,13 @@ const events = [
   "SAVE",
   "RESET",
   "CONFLICTS",
+  "KEYMAP",
   "PREVIEW",
   "BACK",
   "START",
   "STOP",
 ] as const;
-type State = "bindings" | "editing" | "changed" | "conflicts" | "preview" | "previewing";
+type State = "bindings" | "editing" | "changed" | "conflicts" | "keymap" | "preview" | "previewing";
 type Step = { event: { type: string }; state: { value: State } };
 type RawPath = { steps: Step[]; state: unknown };
 
@@ -23,10 +24,13 @@ const model = createMachine({
   id: "input-settings-workbench",
   initial: "bindings",
   states: {
-    bindings: { on: { EDIT: "editing", CONFLICTS: "conflicts", PREVIEW: "preview" } },
+    bindings: {
+      on: { EDIT: "editing", CONFLICTS: "conflicts", KEYMAP: "keymap", PREVIEW: "preview" },
+    },
     editing: { on: { CANCEL: "bindings", SAVE: "changed" } },
     changed: { on: { RESET: "bindings" } },
     conflicts: { on: { BACK: "bindings" } },
+    keymap: { on: { BACK: "bindings" } },
     preview: { on: { BACK: "bindings", START: "previewing" } },
     previewing: { on: { STOP: "preview" } },
   },
@@ -71,7 +75,7 @@ const paths = [...unique]
   .sort(([left], [right]) => left.localeCompare(right));
 
 test("input-settings model covers every declared transition within its budget", () => {
-  expect(transitions.size).toBe(10);
+  expect(transitions.size).toBe(12);
   expect(paths.length).toBeGreaterThan(0);
   expect(paths.length).toBeLessThanOrEqual(16);
 });
@@ -84,6 +88,8 @@ async function assertState(page: Page, state: State): Promise<void> {
   let tab = "Bindings";
   if (state === "conflicts") {
     tab = "Conflicts";
+  } else if (state === "keymap") {
+    tab = "Key map";
   } else if (state === "preview" || state === "previewing") {
     tab = "Try shortcuts";
   }
@@ -111,6 +117,11 @@ async function assertState(page: Page, state: State): Promise<void> {
       break;
     case "conflicts":
       await expect(page.getByRole("heading", { name: "Conflict review" })).toBeVisible();
+      break;
+    case "keymap":
+      await expect(
+        page.getByRole("heading", { name: "What each input does in each context" }),
+      ).toBeVisible();
       break;
     case "preview":
       await expect(page.getByRole("button", { name: "Start preview" })).toBeVisible();
@@ -144,6 +155,9 @@ async function runEvent(page: Page, event: string): Promise<void> {
       break;
     case "CONFLICTS":
       await tabs(page).getByRole("tab", { name: "Conflicts", exact: true }).click();
+      break;
+    case "KEYMAP":
+      await tabs(page).getByRole("tab", { name: "Key map", exact: true }).click();
       break;
     case "PREVIEW":
       await tabs(page).getByRole("tab", { name: "Try shortcuts", exact: true }).click();

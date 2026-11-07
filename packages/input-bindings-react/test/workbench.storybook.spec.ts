@@ -8,7 +8,7 @@ test("shortcut task exposes list and keyboard as presentations, not peer tasks",
   await openStory(page, "list");
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
-  await expect(taskTabs.getByRole("tab")).toHaveCount(3);
+  await expect(taskTabs.getByRole("tab")).toHaveCount(4);
   await expect(taskTabs.getByRole("tab", { name: "Shortcuts", exact: true })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -125,7 +125,7 @@ test("narrow desktop keeps keyboard surfaces while using the compact layout", as
   await openStory(page, "keyboard");
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
-  await expect(taskTabs.getByRole("tab")).toHaveCount(3);
+  await expect(taskTabs.getByRole("tab")).toHaveCount(4);
   await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
   await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toBeVisible();
   await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toBeVisible();
@@ -162,9 +162,9 @@ test("mobile settings support exact binding edits and an editable touch overlay"
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
   const tabs = taskTabs.getByRole("tab");
-  await expect(tabs).toHaveCount(3);
+  await expect(tabs).toHaveCount(4);
   const firstBox = await tabs.nth(0).boundingBox();
-  const lastBox = await tabs.nth(2).boundingBox();
+  const lastBox = await tabs.nth(3).boundingBox();
   expect(firstBox).not.toBeNull();
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
