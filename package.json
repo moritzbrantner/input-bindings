@@ -27,7 +27,7 @@
     }
   },
   "dependencies": {
-    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#f4e697e025ac86e729f004c584663be27c469b23",
-    "@moritzbrantner/input-bindings-runtime": "github:moritzbrantner/input-bindings#ab7b648309b9929d6a6d2e882f39007f333bd9e9"
+    "@moritzbrantner/input-bindings": "github:moritzbrantner/input-bindings#8f7c54bfa261aacf45c1a8b4b6c2730b9426f0e1",
+    "@moritzbrantner/input-bindings-runtime": "github:moritzbrantner/input-bindings#9383a01f0b28153efdb856124d22600db6f4c618"
   }
 }

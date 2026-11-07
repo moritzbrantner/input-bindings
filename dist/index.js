@@ -3,6 +3,7 @@ export * from "./device-tracker.js";
 export * from "./gesture-runtime.js";
 export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
+export * from "./press-gesture.js";
 import { inputStrokeIdentity, } from "@moritzbrantner/input-bindings";
 import { applyAxis1DDeadzone, applyAxis2DDeadzone, } from "@moritzbrantner/input-bindings-runtime";
 const GAMEPAD_ACTIVITY_THRESHOLD = 0.5;

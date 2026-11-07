@@ -3,6 +3,7 @@ export * from "./device-tracker.js";
 export * from "./gesture-runtime.js";
 export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
+export * from "./press-gesture.js";
 import { type GamepadAxisStroke, type GamepadButtonStroke, type KeyStroke, type MouseButtonStroke, type WheelStroke } from "@moritzbrantner/input-bindings";
 import { type AnalogInputController, type InputRuntimeController } from "@moritzbrantner/input-bindings-runtime";
 import type { ActiveDeviceTracker } from "./device-tracker.js";
