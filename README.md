@@ -65,7 +65,7 @@ fixtures/                    cross-language conformance cases
 
 ## Development
 
-Install Bun 1.4.2 (declared in `package.json`), Node 24 for browser tooling, and
+Install the latest stable Bun, Node LTS for browser tooling, and
 stable Rust with rustfmt and Clippy.
 
 ```sh
@@ -81,6 +81,8 @@ bun run check:full
 unit tests, Rust checks, and the production build. `check:full` also builds and
 tests Storybook and Pages, including an accessibility audit of every story.
 Use `bun run format` or `bun run lint:fix` for explicit source fixes.
+
+The Pages suite includes a small independent XState workbench model that generates bounded browser paths for binding edit/cancel/save/reset, conflict review, and live shortcut preview. Every modeled transition checks the visible state. Run the targeted mobile/touch journeys with `bun run build:pages` followed by `bunx playwright test -c playwright.pages.config.ts --grep '@state:input-settings'`; the existing Pages CI gate runs them automatically.
 
 The pre-commit hook runs formatting, lint, and staged-secret checks; pre-push runs
 types and unit/Rust tests. Hooks and CI reuse repository commands. Shared policy
