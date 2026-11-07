@@ -4,10 +4,13 @@ import { keyboardEventToStroke } from "@moritzbrantner/input-bindings-web";
 import { useEffect, useMemo, useRef, useState, } from "react";
 import { ConflictRepairPanel } from "./ConflictRepairPanel.js";
 import { KeyboardView, KeybindingEditor } from "./index.js";
+import { KeyContextMap } from "./KeyContextMap.js";
 import { createStarterMobileControlsOverlay, MobileControlsView, } from "./MobileControlsView.js";
 import { formatSequence, profileFromBindings } from "./model.js";
 import { ResolutionInspector } from "./ResolutionInspector.js";
 import { bindingsForScenario, deriveContextScenarios, scenarioContextFacts, } from "./workbench-model.js";
+export { buildKeyContextMap, filterKeyContextMap, keyContextActions, keyContextVaries, } from "./workbench-model.js";
+export { KeyContextMap } from "./KeyContextMap.js";
 export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.js";
 export { MobileControlsRuntimeSurface } from "./MobileControlsRuntimeSurface.js";
 const DEFAULT_SCENARIO = {
@@ -51,7 +54,7 @@ export function InputBindingsWorkbench({ registry, profile, onProfileChange, con
         const repaired = applyConflictRepair(effectiveBindings, repair);
         onProfileChange(profileFromBindings(registry, repaired, profile.id));
     };
-    return (_jsxs("section", { className: ["ib-workbench", className].filter(Boolean).join(" "), children: [_jsxs("header", { className: "ib-workbench-header", children: [_jsxs("div", { children: [_jsx("p", { className: "ib-workbench-eyebrow", children: "Input settings" }), _jsx("h1", { children: title }), _jsx("p", { children: description }), _jsxs("p", { className: "ib-workbench-summary", children: [registry.actions.length, " actions \u00B7 ", effectiveBindings.length, " bindings \u00B7", " ", report.conflicts.length, " conflict", report.conflicts.length === 1 ? "" : "s"] })] }), _jsx(WorkbenchTabs, { mode: visibleMode, compact: compactLayout, onChange: setMode })] }), visibleMode === "shortcuts" && (_jsxs("div", { id: "ib-workbench-panel-shortcuts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-shortcuts", className: "ib-workbench-panel", children: [_jsx(PresentationToolbar, { presentation: visiblePresentation, touchControlsAvailable: touchControlsAvailable, onChange: setPresentation }), visiblePresentation === "mobile" ? (_jsx(MobileControlsView, { registry: registry, overlay: mobileOverlay, analogActions: mobileAnalogActions, onOverlayChange: onMobileOverlayChange, onActionInput: onMobileActionInput, onAnalogInput: onMobileAnalogInput, gestureRuntime: mobileGestureRuntime })) : (_jsx(KeybindingEditor, { registry: registry, profile: profile, onProfileChange: onProfileChange, compiledRegistry: compiledRegistry, presentation: visiblePresentation }))] })), visibleMode === "conflicts" && (_jsx("div", { id: "ib-workbench-panel-conflicts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-conflicts", className: "ib-workbench-panel", children: _jsx(ConflictRepairPanel, { bindings: effectiveBindings, conflicts: report.conflicts, actions: actionById, scenarios: scenarios, onApplyRepair: applyRepair }) })), visibleMode === "preview" && (_jsxs("div", { id: "ib-workbench-panel-preview", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-preview", className: "ib-workbench-panel", children: [_jsx(ScenarioToolbar, { scenarios: scenarios, scenario: scenario, onScenarioChange: setScenarioId, keyboardMode: keyboardMode, onKeyboardModeChange: setKeyboardMode }), _jsx(PreviewMode, { bindings: effectiveBindings, activeBindings: activeBindings, actions: actionById, bindingById: bindingById, conflicts: report.conflicts, activeContexts: activeContexts, scenario: scenario, keyboardMode: keyboardMode })] }))] }));
+    return (_jsxs("section", { className: ["ib-workbench", className].filter(Boolean).join(" "), children: [_jsxs("header", { className: "ib-workbench-header", children: [_jsxs("div", { children: [_jsx("p", { className: "ib-workbench-eyebrow", children: "Input settings" }), _jsx("h1", { children: title }), _jsx("p", { children: description }), _jsxs("p", { className: "ib-workbench-summary", children: [registry.actions.length, " actions \u00B7 ", effectiveBindings.length, " bindings \u00B7", " ", report.conflicts.length, " conflict", report.conflicts.length === 1 ? "" : "s"] })] }), _jsx(WorkbenchTabs, { mode: visibleMode, compact: compactLayout, onChange: setMode })] }), visibleMode === "shortcuts" && (_jsxs("div", { id: "ib-workbench-panel-shortcuts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-shortcuts", className: "ib-workbench-panel", children: [_jsx(PresentationToolbar, { presentation: visiblePresentation, touchControlsAvailable: touchControlsAvailable, onChange: setPresentation }), visiblePresentation === "mobile" ? (_jsx(MobileControlsView, { registry: registry, overlay: mobileOverlay, analogActions: mobileAnalogActions, onOverlayChange: onMobileOverlayChange, onActionInput: onMobileActionInput, onAnalogInput: onMobileAnalogInput, gestureRuntime: mobileGestureRuntime })) : (_jsx(KeybindingEditor, { registry: registry, profile: profile, onProfileChange: onProfileChange, compiledRegistry: compiledRegistry, presentation: visiblePresentation }))] })), visibleMode === "conflicts" && (_jsx("div", { id: "ib-workbench-panel-conflicts", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-conflicts", className: "ib-workbench-panel", children: _jsx(ConflictRepairPanel, { bindings: effectiveBindings, conflicts: report.conflicts, actions: actionById, scenarios: scenarios, onApplyRepair: applyRepair }) })), visibleMode === "keymap" && (_jsx("div", { id: "ib-workbench-panel-keymap", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-keymap", className: "ib-workbench-panel", children: _jsx(KeyContextMap, { bindings: effectiveBindings, scenarios: scenarios, actions: actionById }) })), visibleMode === "preview" && (_jsxs("div", { id: "ib-workbench-panel-preview", role: "tabpanel", "aria-labelledby": "ib-workbench-tab-preview", className: "ib-workbench-panel", children: [_jsx(ScenarioToolbar, { scenarios: scenarios, scenario: scenario, onScenarioChange: setScenarioId, keyboardMode: keyboardMode, onKeyboardModeChange: setKeyboardMode }), _jsx(PreviewMode, { bindings: effectiveBindings, activeBindings: activeBindings, actions: actionById, bindingById: bindingById, conflicts: report.conflicts, activeContexts: activeContexts, scenario: scenario, keyboardMode: keyboardMode })] }))] }));
 }
 function WorkbenchTabs({ mode, compact, onChange, }) {
     const tabs = [
@@ -64,6 +67,11 @@ function WorkbenchTabs({ mode, compact, onChange, }) {
             id: "conflicts",
             label: "Conflicts",
             description: "Understand overlaps and apply explicit deterministic repairs.",
+        },
+        {
+            id: "keymap",
+            label: "Key map",
+            description: "See what every bound input does in each context.",
         },
         {
             id: "preview",
@@ -296,7 +304,7 @@ function cloneScenario(scenario) {
     };
 }
 function modeForView(view) {
-    if (view === "conflicts" || view === "preview") {
+    if (view === "conflicts" || view === "keymap" || view === "preview") {
         return view;
     }
     return "shortcuts";

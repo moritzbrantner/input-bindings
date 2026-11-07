@@ -2,13 +2,15 @@ import { type ActionRegistry, type Profile } from "@moritzbrantner/input-binding
 import type { MobileActionInputEvent, MobileAnalogInputEvent, MobileGestureRuntime } from "./MobileControlsRuntimeSurface.js";
 import { type MobileAnalogActionOption, type MobileControlsOverlay } from "./MobileControlsView.js";
 import { type InputBindingsContextScenario } from "./workbench-model.js";
-export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.js";
+export type { InputBindingsContextScenario, InputBindingsKeyboardMode, KeyContextBranch, KeyContextFilter, KeyContextNode, KeyContextOutcome, KeyContextShadowReason, } from "./workbench-model.js";
+export { buildKeyContextMap, filterKeyContextMap, keyContextActions, keyContextVaries, } from "./workbench-model.js";
+export { KeyContextMap, type KeyContextMapProps } from "./KeyContextMap.js";
 export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.js";
 export { MobileControlsRuntimeSurface } from "./MobileControlsRuntimeSurface.js";
 export type { MobileAnalogActionOption, MobileControlKind, MobileControlsOrientation, MobileControlsOverlay, MobileControlsViewProps, MobileOverlayControl, } from "./MobileControlsView.js";
 export type { MobileActionInputEvent, MobileAnalogInputEvent, MobileAxis2D, MobileControlsRuntimeSurfaceProps, MobileGestureInputEvent, MobileGestureRuntime, MobileGestureStrokeEvent, } from "./MobileControlsRuntimeSurface.js";
-export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
-export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
+export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "keymap" | "preview";
+export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "keymap" | "preview";
 export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
 export type InputBindingsWorkbenchProps = {
     registry: ActionRegistry;
