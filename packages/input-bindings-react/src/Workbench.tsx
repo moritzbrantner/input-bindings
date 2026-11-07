@@ -22,6 +22,7 @@ import {
 
 import { ConflictRepairPanel } from "./ConflictRepairPanel.tsx";
 import { KeyboardView, KeybindingEditor } from "./index.tsx";
+import { KeyContextMap } from "./KeyContextMap.tsx";
 import type {
   MobileActionInputEvent,
   MobileAnalogInputEvent,
@@ -43,7 +44,22 @@ import {
   type InputBindingsKeyboardMode,
 } from "./workbench-model.ts";
 
-export type { InputBindingsContextScenario, InputBindingsKeyboardMode } from "./workbench-model.ts";
+export type {
+  InputBindingsContextScenario,
+  InputBindingsKeyboardMode,
+  KeyContextBranch,
+  KeyContextFilter,
+  KeyContextNode,
+  KeyContextOutcome,
+  KeyContextShadowReason,
+} from "./workbench-model.ts";
+export {
+  buildKeyContextMap,
+  filterKeyContextMap,
+  keyContextActions,
+  keyContextVaries,
+} from "./workbench-model.ts";
+export { KeyContextMap, type KeyContextMapProps } from "./KeyContextMap.tsx";
 export { createStarterMobileControlsOverlay, MobileControlsView } from "./MobileControlsView.tsx";
 export { MobileControlsRuntimeSurface } from "./MobileControlsRuntimeSurface.tsx";
 export type {
@@ -64,8 +80,13 @@ export type {
   MobileGestureStrokeEvent,
 } from "./MobileControlsRuntimeSurface.tsx";
 
-export type InputBindingsWorkbenchView = "bindings" | "conflicts" | "keyboard" | "preview";
-export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "preview";
+export type InputBindingsWorkbenchView =
+  | "bindings"
+  | "conflicts"
+  | "keyboard"
+  | "keymap"
+  | "preview";
+export type InputBindingsWorkbenchMode = "shortcuts" | "conflicts" | "keymap" | "preview";
 export type InputBindingsWorkbenchPresentation = "list" | "keyboard" | "mobile";
 
 export type InputBindingsWorkbenchProps = {
@@ -242,6 +263,17 @@ export function InputBindingsWorkbench({
         </div>
       )}
 
+      {visibleMode === "keymap" && (
+        <div
+          id="ib-workbench-panel-keymap"
+          role="tabpanel"
+          aria-labelledby="ib-workbench-tab-keymap"
+          className="ib-workbench-panel"
+        >
+          <KeyContextMap bindings={effectiveBindings} scenarios={scenarios} actions={actionById} />
+        </div>
+      )}
+
       {visibleMode === "preview" && (
         <div
           id="ib-workbench-panel-preview"
@@ -291,6 +323,11 @@ function WorkbenchTabs({
       id: "conflicts",
       label: "Conflicts",
       description: "Understand overlaps and apply explicit deterministic repairs.",
+    },
+    {
+      id: "keymap",
+      label: "Key map",
+      description: "See what every bound input does in each context.",
     },
     {
       id: "preview",
@@ -800,7 +837,7 @@ function cloneScenario(scenario: InputBindingsContextScenario): InputBindingsCon
 }
 
 function modeForView(view: InputBindingsWorkbenchView | undefined): InputBindingsWorkbenchMode {
-  if (view === "conflicts" || view === "preview") {
+  if (view === "conflicts" || view === "keymap" || view === "preview") {
     return view;
   }
   return "shortcuts";
