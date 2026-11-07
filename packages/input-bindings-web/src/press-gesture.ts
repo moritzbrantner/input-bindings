@@ -21,6 +21,8 @@ export type PressGestureCaptureOptions = {
   button?: number | undefined;
   /** Defaults to the `drag` gesture primitive's stationary travel threshold. */
   dragThresholdPx?: number | undefined;
+  /** Opt-in: stationary releases at or after this duration end in `hold` instead of `click`. */
+  holdMinDurationMs?: number | undefined;
   pointerTypes?: readonly PointerKind[] | undefined;
   capturePointer?: boolean | undefined;
   /**
@@ -70,6 +72,7 @@ export function attachPressGesture(options: PressGestureCaptureOptions): PressGe
     sourceId: options.sourceId ?? "press",
     button,
     dragThresholdPx: options.dragThresholdPx,
+    holdMinDurationMs: options.holdMinDurationMs,
     onGesture: options.onGesture,
   });
 

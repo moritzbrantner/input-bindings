@@ -26,7 +26,7 @@ export type PressGestureSnapshot = {
 
 /**
  * Lifecycle events for one press. Every gesture starts with `pending` and ends with exactly one
- * outcome: `click`, `dragEnd`, or `cancel`. A drag never ends in a click.
+ * outcome: `click`, `hold`, `dragEnd`, or `cancel`. A drag never ends in a click or hold.
  */
 export type PressGestureEvent =
   | { type: "pending"; gesture: PressGestureSnapshot }
@@ -54,6 +54,15 @@ export type PressGestureEvent =
       stroke: PointerStroke;
     }
   | {
+      /** A stationary press released after `holdMinDurationMs`; only when that option is set. */
+      type: "hold";
+      gesture: PressGestureSnapshot;
+      /** The press position, not the release position. */
+      position: PressGesturePoint;
+      durationMs: number;
+      stroke: PointerStroke;
+    }
+  | {
       type: "cancel";
       gesture: PressGestureSnapshot;
       reason: PointerStrokeCancelReason;
@@ -69,6 +78,11 @@ export type PressGestureTrackerOptions = {
    * Defaults to the `drag` primitive's `stationaryMaxTravelPx`.
    */
   dragThresholdPx?: number | undefined;
+  /**
+   * Opt-in: a stationary press released at or after this many milliseconds ends in `hold` instead
+   * of `click`. Unset, a stationary release always clicks, however long the press lasted.
+   */
+  holdMinDurationMs?: number | undefined;
   onGesture?: ((event: PressGestureEvent) => void) | undefined;
 };
 
@@ -86,6 +100,7 @@ type ActiveGesture = {
 export class PressGestureTracker {
   readonly button: number;
   readonly dragThresholdPx: number;
+  readonly holdMinDurationMs: number | undefined;
   private readonly strokes: PointerStrokeTracker;
   private readonly onGesture: ((event: PressGestureEvent) => void) | undefined;
   private active: ActiveGesture | undefined;
@@ -96,6 +111,13 @@ export class PressGestureTracker {
       options.dragThresholdPx ?? DEFAULT_GESTURE_PRIMITIVE_THRESHOLDS.stationaryMaxTravelPx;
     if (!Number.isFinite(this.dragThresholdPx) || this.dragThresholdPx < 0) {
       throw new Error("Press gesture drag thresholds must be finite and non-negative");
+    }
+    this.holdMinDurationMs = options.holdMinDurationMs;
+    if (
+      this.holdMinDurationMs !== undefined &&
+      (!Number.isFinite(this.holdMinDurationMs) || this.holdMinDurationMs < 0)
+    ) {
+      throw new Error("Press gesture hold durations must be finite and non-negative");
     }
     this.strokes = new PointerStrokeTracker({ sourceId: options.sourceId, maxActiveStrokes: 1 });
     this.onGesture = options.onGesture;
@@ -157,6 +179,8 @@ export class PressGestureTracker {
     const events = this.advance(active, completed.stroke.samples.slice(-1));
     this.active = undefined;
     const gesture = { ...active.gesture };
+    // Stroke time never runs backwards, so out-of-order timestamps cannot shorten a hold.
+    const durationMs = completed.stroke.samples.at(-1)?.t ?? 0;
     if (gesture.phase === "drag") {
       events.push(
         this.emit({
@@ -164,6 +188,16 @@ export class PressGestureTracker {
           gesture,
           position: { ...active.last },
           total: offset(active.last, gesture.origin),
+          stroke: completed.stroke,
+        }),
+      );
+    } else if (this.holdMinDurationMs !== undefined && durationMs >= this.holdMinDurationMs) {
+      events.push(
+        this.emit({
+          type: "hold",
+          gesture,
+          position: { ...gesture.origin },
+          durationMs,
           stroke: completed.stroke,
         }),
       );

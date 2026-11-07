@@ -180,6 +180,10 @@ function reduceRightButton(state: RightButtonState, event: PressGestureEvent): R
         outcome: "select",
       };
     }
+    case "hold": {
+      // The lab leaves holdMinDurationMs unset, so every stationary release is a click.
+      return { ...state, phase: "idle", outcome: "hold" };
+    }
     case "cancel": {
       return { ...state, phase: "idle", outcome: `cancel (${event.reason})` };
     }
