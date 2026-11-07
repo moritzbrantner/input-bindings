@@ -258,3 +258,17 @@ test("explicit prefer repair flows through profile deltas and removes flat runti
     },
   );
 });
+
+test("the key map task shows each input branching into per-context actions", () => {
+  const html = renderWorkbench("keymap");
+
+  assert.match(html, /role="tab"[^>]*aria-selected="true"[^>]*>Key map</);
+  assert.match(html, /What each input does in each context/);
+  assert.match(html, /<kbd>Escape<\/kbd>/);
+  // Pause menu: the modal layer wins and blocks gameplay.
+  assert.match(html, /Pause menu<\/span>.*?<strong>Close menu<\/strong>/s);
+  assert.match(html, /Shadowed: Pause game \(blocked by modal layer\)/);
+  // Flat overlap: both contexts are equally active, so Escape is ambiguous.
+  assert.match(html, /Flat overlap<\/span>.*?Ambiguous: Pause game, Close menu/s);
+  assert.match(html, /<kbd>Ctrl\+s<\/kbd>/);
+});

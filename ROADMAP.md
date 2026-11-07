@@ -182,11 +182,12 @@ Implemented first slice:
 - Evidence includes active contexts, ordered stack, modal barrier, candidate input-prefix matches, owner depth, explicit priority, context specificity, and the final candidate status.
 - Candidate status distinguishes inactive/mismatched input, modal blocking, lower stack layer, chord waiting, lower rank, winner, equivalent same-action winner, and ambiguous top-rank winner.
 - The workbench Try Shortcuts view keeps a short normalized keyboard-event history and shows candidate/shadow/barrier/winner evidence alongside the physical keyboard visualization.
+- The workbench Key map view inverts the bindings into a per-input tree: each bound key, button, or gesture branches into every declared context scenario and the action the stack resolver selects there (for example Ctrl+F searches globally, launches a strong attack in gameplay, and focuses the settings search in a modal settings menu), with shadowed bindings, modal blocking, ambiguity, and chord continuations reachable only where their leader waits. It filters by input, action id, or title, and by inputs whose action depends on context.
 - Context switching in Pages exercises global, editor, timeline, table, gameplay, and a modal menu state using the same semantics as runtime resolution.
 
 Remaining:
 
-- Add command-oriented inspection such as “show everything bound to Space” and filtering by device/context/action.
+- Add device and context filters to the key map.
 - Add controller/gamepad diagrams and event evidence where useful, without requiring every consumer to ship a debugging profiler.
 - Extend the live inspector to richer device/gesture input as those semantics land.
 

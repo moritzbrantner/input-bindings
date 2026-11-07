@@ -6,13 +6,13 @@ test("mobile Pages keeps keyboard configuration with touch controls", async ({ p
   await expect(page.getByRole("heading", { name: "Controls" })).toBeVisible();
 
   const taskTabs = page.getByRole("tablist", { name: "Input settings tasks" });
-  await expect(taskTabs.getByRole("tab")).toHaveCount(3);
+  await expect(taskTabs.getByRole("tab")).toHaveCount(4);
   await expect(taskTabs.getByRole("tab", { name: "Bindings", exact: true })).toBeVisible();
   await expect(taskTabs.getByRole("tab", { name: "Conflicts", exact: true })).toBeVisible();
   await expect(taskTabs.getByRole("tab", { name: "Try shortcuts", exact: true })).toBeVisible();
 
   const firstBox = await taskTabs.getByRole("tab").nth(0).boundingBox();
-  const lastBox = await taskTabs.getByRole("tab").nth(2).boundingBox();
+  const lastBox = await taskTabs.getByRole("tab").nth(3).boundingBox();
   expect(firstBox).not.toBeNull();
   expect(lastBox).not.toBeNull();
   expect(Math.abs((firstBox?.y ?? 0) - (lastBox?.y ?? 0))).toBeLessThan(3);
