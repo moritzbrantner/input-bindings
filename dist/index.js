@@ -6,6 +6,7 @@ export * from "./gesture-templates.js";
 export * from "./gesture-trace.js";
 export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
+export * from "./press-gesture.js";
 import { compileActionRegistry, inputStrokeIdentity, resolve, resolveGestureWith, resolveWithContextStack, validateCompiledRegistry, } from "@moritzbrantner/input-bindings";
 const defaultScheduler = {
     setTimeout(callback, delayMs) {

@@ -6,6 +6,7 @@ export * from "./gesture-templates.js";
 export * from "./gesture-trace.js";
 export * from "./multi-pointer.js";
 export * from "./pointer-stroke.js";
+export * from "./press-gesture.js";
 import { type ActionRegistry, type Binding, type ContextLayer, type GestureMatch, type InputStroke, type KeyStroke, type Profile, type RegistryValidationReport, type Resolution } from "@moritzbrantner/input-bindings";
 export type RuntimeActionPhase = "press" | "repeat" | "release";
 export type RuntimeConsumePolicy = "never" | "matched" | "dispatched";
