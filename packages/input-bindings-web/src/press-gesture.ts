@@ -75,6 +75,14 @@ export function attachPressGesture(options: PressGestureCaptureOptions): PressGe
     holdMinDurationMs: options.holdMinDurationMs,
     onGesture: options.onGesture,
   });
+  // Capture acquired by this adapter, tracked apart from the gesture: a cancelled or finished
+  // gesture can still hold capture while another button of the same pointer is down.
+  const captured = new Set<number>();
+  const releaseCapture = (pointerId: number) => {
+    if (captured.delete(pointerId)) {
+      target.releasePointerCapture?.(pointerId);
+    }
+  };
 
   const consume = (event: PointerStrokeEventLike) => {
     if (preventDefault) {
@@ -98,6 +106,7 @@ export function attachPressGesture(options: PressGestureCaptureOptions): PressGe
     }
     if (capturePointer) {
       target.setPointerCapture?.(event.pointerId);
+      captured.add(event.pointerId);
     }
     consume(event);
   };
@@ -106,8 +115,8 @@ export function attachPressGesture(options: PressGestureCaptureOptions): PressGe
     // Finish before releasing capture: release may synchronously fire lostpointercapture.
     tracker.release(pointerEventToSampleInput(event));
     // Capture belongs to the pointer, so keep it while another of its buttons is still held.
-    if (capturePointer && !event.buttons) {
-      target.releasePointerCapture?.(event.pointerId);
+    if (!event.buttons) {
+      releaseCapture(event.pointerId);
     }
     consume(event);
   };
@@ -144,13 +153,21 @@ export function attachPressGesture(options: PressGestureCaptureOptions): PressGe
     if (tracker.owns(event.pointerId)) {
       release(event);
     }
+    // The browser releases capture implicitly once every button is up.
+    captured.delete(event.pointerId);
   };
 
   // Browsers release capture implicitly on pointercancel and after lostpointercapture.
-  const onPointerCancel = (rawEvent: any) =>
-    tracker.cancelPointer((rawEvent as PointerStrokeEventLike).pointerId, "pointerCancel");
-  const onLostPointerCapture = (rawEvent: any) =>
-    tracker.cancelPointer((rawEvent as PointerStrokeEventLike).pointerId, "lostPointerCapture");
+  const onPointerCancel = (rawEvent: any) => {
+    const { pointerId } = rawEvent as PointerStrokeEventLike;
+    captured.delete(pointerId);
+    tracker.cancelPointer(pointerId, "pointerCancel");
+  };
+  const onLostPointerCapture = (rawEvent: any) => {
+    const { pointerId } = rawEvent as PointerStrokeEventLike;
+    captured.delete(pointerId);
+    tracker.cancelPointer(pointerId, "lostPointerCapture");
+  };
   const onBlur = () => tracker.cancel("blur");
   const onVisibilityChange = () => {
     if (visibilityTarget?.hidden === true || visibilityTarget?.visibilityState === "hidden") {
@@ -183,10 +200,9 @@ export function attachPressGesture(options: PressGestureCaptureOptions): PressGe
       target.removeEventListener("contextmenu", onContextMenu);
       focusTarget?.removeEventListener("blur", onBlur);
       visibilityTarget?.removeEventListener("visibilitychange", onVisibilityChange);
-      const owner = tracker.current();
       tracker.cancel("detach");
-      if (owner && capturePointer) {
-        target.releasePointerCapture?.(owner.pointerId);
+      for (const pointerId of [...captured]) {
+        releaseCapture(pointerId);
       }
     },
   };

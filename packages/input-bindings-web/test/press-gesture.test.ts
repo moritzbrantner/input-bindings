@@ -321,3 +321,31 @@ test("owned pointer events are only prevented when the surface opts in", () => {
   assert.equal(ownedDown.prevented(), true);
   assert.equal(otherDown.prevented(), false);
 });
+
+test("detach releases capture even after the gesture was already cancelled", () => {
+  const { target, events, handle } = attach();
+  target.emit("pointerdown", pointer(100, 100, 0, { button: 2, buttons: 2 }));
+  handle.cancel();
+  handle.detach();
+  assert.deepEqual(types(events), ["pending", "cancel"]);
+  assert.deepEqual(target.released, [1]);
+});
+
+test("detach releases capture kept for another held button after the owned release", () => {
+  const { target, events, handle } = attach();
+  target.emit("pointerdown", pointer(100, 100, 0, { button: 2, buttons: 2 }));
+  target.emit("pointermove", pointer(100, 100, 10, { button: 0, buttons: 3 }));
+  target.emit("pointermove", pointer(100, 100, 20, { button: 2, buttons: 1 }));
+  assert.deepEqual(types(events), ["pending", "click"]);
+  assert.deepEqual(target.released, [], "capture stays while the left button is held");
+  handle.detach();
+  assert.deepEqual(target.released, [1]);
+});
+
+test("capture the browser already dropped is not released again on detach", () => {
+  const { target, handle } = attach();
+  target.emit("pointerdown", pointer(100, 100, 0, { button: 2, buttons: 2 }));
+  target.emit("pointercancel", { pointerId: 1 });
+  handle.detach();
+  assert.deepEqual(target.released, []);
+});
