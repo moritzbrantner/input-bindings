@@ -6,6 +6,7 @@ export * from "./gesture-templates.ts";
 export * from "./gesture-trace.ts";
 export * from "./multi-pointer.ts";
 export * from "./pointer-stroke.ts";
+export * from "./press-gesture.ts";
 
 import {
   compileActionRegistry,

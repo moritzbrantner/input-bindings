@@ -4,6 +4,7 @@ mod gesture;
 mod model;
 mod persistence;
 mod platform;
+mod press_gesture;
 mod profile;
 mod registry;
 mod repair;
@@ -33,6 +34,11 @@ pub use platform::{
     BrowserFamily, PlatformConflictDiagnostic, PlatformConflictEnvironment, PlatformConflictKind,
     PlatformConflictRule, PlatformConflictSeverity, PlatformConflictSource, PlatformFamily,
     analyze_platform_conflicts,
+};
+pub use press_gesture::{
+    DEFAULT_PRESS_DRAG_THRESHOLD_PX, PressGestureCancelReason, PressGestureEvent,
+    PressGestureOptions, PressGestureOptionsError, PressGesturePhase, PressGestureSnapshot,
+    PressGestureTracker, PressPoint, PressSample,
 };
 pub use profile::{
     BindingPatch, Profile, ProfileApplication, ProfileDiagnostic, ProfileDiagnosticKind,

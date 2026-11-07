@@ -1,6 +1,7 @@
 import type { ActionRegistry } from "@moritzbrantner/input-bindings";
 import {
   InputRuntimeController,
+  type PressGestureEvent,
   type RuntimeDecision,
   type RuntimeDispatch,
 } from "@moritzbrantner/input-bindings-runtime";
@@ -8,6 +9,7 @@ import {
   attachGamepadRuntime,
   attachKeyboardRuntime,
   attachMouseRuntime,
+  attachPressGesture,
 } from "@moritzbrantner/input-bindings-web";
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -137,11 +139,63 @@ type LogEntry = {
   dispatch: RuntimeDispatch;
 };
 
+// Consumer-owned meaning of the right button, modelled on the MMORPG camera: a drag orbits, a
+// click selects a target at the press position.
+type RightButtonState = {
+  phase: "idle" | "pending" | "drag";
+  orbit: { x: number; y: number };
+  target: string;
+  outcome: string;
+};
+
+const IDLE_RIGHT_BUTTON: RightButtonState = {
+  phase: "idle",
+  orbit: { x: 0, y: 0 },
+  target: "none",
+  outcome: "none",
+};
+
+function reduceRightButton(state: RightButtonState, event: PressGestureEvent): RightButtonState {
+  switch (event.type) {
+    case "pending": {
+      return { ...state, phase: "pending" };
+    }
+    case "dragStart":
+    case "dragMove": {
+      return {
+        ...state,
+        phase: "drag",
+        orbit: { x: state.orbit.x + event.delta.x, y: state.orbit.y + event.delta.y },
+      };
+    }
+    case "dragEnd": {
+      return { ...state, phase: "idle", outcome: "orbit" };
+    }
+    case "click": {
+      const { x, y } = event.position;
+      return {
+        ...state,
+        phase: "idle",
+        target: `${Math.round(x)}, ${Math.round(y)}`,
+        outcome: "select",
+      };
+    }
+    case "hold": {
+      // The lab leaves holdMinDurationMs unset, so every stationary release is a click.
+      return { ...state, phase: "idle", outcome: "hold" };
+    }
+    case "cancel": {
+      return { ...state, phase: "idle", outcome: `cancel (${event.reason})` };
+    }
+  }
+}
+
 function App() {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [decision, setDecision] = useState<RuntimeDecision | null>(null);
   const [connectedPads, setConnectedPads] = useState(0);
+  const [rightButton, setRightButton] = useState<RightButtonState>(IDLE_RIGHT_BUTTON);
 
   useEffect(() => {
     const controller = new InputRuntimeController({
@@ -166,6 +220,16 @@ function App() {
           ignoreTextEntry: true,
         })
       : () => {};
+    const rightButtonGesture = surfaceRef.current
+      ? attachPressGesture({
+          target: surfaceRef.current,
+          sourceId: "device-lab-rmb",
+          button: 2,
+          pointerTypes: ["mouse"],
+          suppressContextMenu: true,
+          onGesture: (event) => setRightButton((current) => reduceRightButton(current, event)),
+        })
+      : undefined;
     const detachGamepad = attachGamepadRuntime(controller);
 
     const interval = window.setInterval(() => {
@@ -177,6 +241,7 @@ function App() {
       window.clearInterval(interval);
       detachKeyboard();
       detachMouse();
+      rightButtonGesture?.detach();
       detachGamepad();
     };
   }, []);
@@ -237,9 +302,38 @@ function App() {
       >
         <strong>Mouse test surface</strong>
         <span>
-          Left-click or scroll here. Keyboard and gamepad input work anywhere on the page.
+          Left-click or scroll here. Right-click selects a target; right-drag orbits the camera.
+          Keyboard and gamepad input work anywhere on the page.
         </span>
       </div>
+
+      <section className="runtime-panel" aria-labelledby="right-button-heading">
+        <h2 id="right-button-heading">Right-button press gesture</h2>
+        <p>
+          Press is pending until travel exceeds the drag primitive threshold. A drag never selects
+          on release, and blur or cancellation ends the press without a command.
+        </p>
+        <dl className="runtime-shortcuts">
+          <div>
+            <dt>Phase</dt>
+            <dd aria-label="Right button phase">{rightButton.phase}</dd>
+          </div>
+          <div>
+            <dt>Camera orbit</dt>
+            <dd aria-label="Camera orbit">
+              {rightButton.orbit.x}, {rightButton.orbit.y}
+            </dd>
+          </div>
+          <div>
+            <dt>Selected target</dt>
+            <dd aria-label="Selected target">{rightButton.target}</dd>
+          </div>
+          <div>
+            <dt>Last outcome</dt>
+            <dd aria-label="Last outcome">{rightButton.outcome}</dd>
+          </div>
+        </dl>
+      </section>
 
       <div className="runtime-columns">
         <section className="runtime-panel">

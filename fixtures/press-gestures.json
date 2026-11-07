@@ -1,0 +1,190 @@
+{
+  "description": "Press-gesture lifecycle shared by the TypeScript PressGestureTracker and the Rust PressGestureTracker. Coordinates are surface-local; times are milliseconds.",
+  "cases": [
+    {
+      "name": "a stationary release clicks at the press position",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 106, "y": 104, "t": 16 }] },
+        { "op": "release", "pointerId": 1, "x": 107, "y": 106, "t": 400 }
+      ],
+      "expected": ["pending p1 at(100,100)", "click p1 at(100,100)"]
+    },
+    {
+      "name": "travel exactly on the default threshold stays pending; beyond it drags",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 0, "y": 0, "t": 0 },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 10, "y": 0, "t": 16 }] },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 10.5, "y": 0, "t": 32 }] },
+        { "op": "release", "pointerId": 1, "x": 10.5, "y": 0, "t": 48 }
+      ],
+      "expected": [
+        "pending p1 at(0,0)",
+        "dragStart p1 at(10.5,0) delta(10.5,0) total(10.5,0)",
+        "dragEnd p1 at(10.5,0) total(10.5,0)"
+      ]
+    },
+    {
+      "name": "threshold jitter cannot turn a latched drag back into a click",
+      "dragThresholdPx": 10,
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 109, "y": 100, "t": 10 }] },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 111, "y": 100, "t": 20 }] },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 109, "y": 100, "t": 30 }] },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 109, "y": 100, "t": 35 }] },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 100, "y": 100, "t": 40 }] },
+        { "op": "release", "pointerId": 1, "x": 100, "y": 100, "t": 50 }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "dragStart p1 at(111,100) delta(11,0) total(11,0)",
+        "dragMove p1 at(109,100) delta(-2,0) total(9,0)",
+        "dragMove p1 at(100,100) delta(-9,0) total(0,0)",
+        "dragEnd p1 at(100,100) total(0,0)"
+      ]
+    },
+    {
+      "name": "any coalesced sample past the threshold latches the drag at the latest sample",
+      "dragThresholdPx": 10,
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        {
+          "op": "move",
+          "pointerId": 1,
+          "samples": [
+            { "x": 115, "y": 100, "t": 8 },
+            { "x": 103, "y": 100, "t": 16 }
+          ]
+        },
+        { "op": "release", "pointerId": 1, "x": 103, "y": 100, "t": 24 }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "dragStart p1 at(103,100) delta(3,0) total(3,0)",
+        "dragEnd p1 at(103,100) total(3,0)"
+      ]
+    },
+    {
+      "name": "a release sample past the threshold is a drag, never a click",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "release", "pointerId": 1, "x": 160, "y": 75, "t": 20 }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "dragStart p1 at(160,75) delta(60,-25) total(60,-25)",
+        "dragEnd p1 at(160,75) total(60,-25)"
+      ]
+    },
+    {
+      "name": "cancellation in each phase produces no command and ignores later input",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "cancel", "reason": "blur" },
+        { "op": "release", "pointerId": 1, "x": 100, "y": 100, "t": 10 },
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 20 },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 150, "y": 100, "t": 30 }] },
+        { "op": "cancel", "reason": "contextChange" },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 200, "y": 100, "t": 40 }] },
+        { "op": "release", "pointerId": 1, "x": 200, "y": 100, "t": 50 },
+        { "op": "cancel", "reason": "detach" }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "cancel p1 pending blur",
+        "pending p1 at(100,100)",
+        "dragStart p1 at(150,100) delta(50,0) total(50,0)",
+        "cancel p1 drag contextChange"
+      ]
+    },
+    {
+      "name": "cancelling another pointer leaves the owned gesture untouched",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "cancelPointer", "pointerId": 7, "reason": "pointerCancel" },
+        { "op": "release", "pointerId": 1, "x": 100, "y": 100, "t": 30 },
+        { "op": "press", "pointerId": 2, "x": 50, "y": 50, "t": 40 },
+        { "op": "cancelPointer", "pointerId": 2, "reason": "lostPointerCapture" }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "click p1 at(100,100)",
+        "pending p2 at(50,50)",
+        "cancel p2 pending lostPointerCapture"
+      ]
+    },
+    {
+      "name": "a single owner ignores other pointers until its gesture ends",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "press", "pointerId": 2, "x": 300, "y": 200, "t": 4 },
+        { "op": "move", "pointerId": 2, "samples": [{ "x": 400, "y": 200, "t": 8 }] },
+        { "op": "release", "pointerId": 2, "x": 400, "y": 200, "t": 12 },
+        { "op": "release", "pointerId": 1, "x": 100, "y": 100, "t": 20 },
+        { "op": "press", "pointerId": 2, "x": 300, "y": 200, "t": 30 },
+        { "op": "release", "pointerId": 2, "x": 300, "y": 200, "t": 40 }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "click p1 at(100,100)",
+        "pending p2 at(300,200)",
+        "click p2 at(300,200)"
+      ]
+    },
+    {
+      "name": "a repeated press by the owner supersedes the stale gesture",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "press", "pointerId": 1, "x": 120, "y": 110, "t": 10 },
+        { "op": "release", "pointerId": 1, "x": 120, "y": 110, "t": 20 }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "cancel p1 pending superseded",
+        "pending p1 at(120,110)",
+        "click p1 at(120,110)"
+      ]
+    },
+    {
+      "name": "without a hold duration a long stationary press still clicks",
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "release", "pointerId": 1, "x": 100, "y": 100, "t": 5000 }
+      ],
+      "expected": ["pending p1 at(100,100)", "click p1 at(100,100)"]
+    },
+    {
+      "name": "an opt-in hold duration separates click, hold, and drag",
+      "holdMinDurationMs": 500,
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 0 },
+        { "op": "release", "pointerId": 1, "x": 102, "y": 100, "t": 499 },
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 1000 },
+        { "op": "release", "pointerId": 1, "x": 102, "y": 100, "t": 1500 },
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 2000 },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 130, "y": 100, "t": 2100 }] },
+        { "op": "release", "pointerId": 1, "x": 130, "y": 100, "t": 4000 }
+      ],
+      "expected": [
+        "pending p1 at(100,100)",
+        "click p1 at(100,100)",
+        "pending p1 at(100,100)",
+        "hold p1 at(100,100) 500ms",
+        "pending p1 at(100,100)",
+        "dragStart p1 at(130,100) delta(30,0) total(30,0)",
+        "dragEnd p1 at(130,100) total(30,0)"
+      ]
+    },
+    {
+      "name": "out-of-order timestamps never shorten a hold",
+      "holdMinDurationMs": 500,
+      "steps": [
+        { "op": "press", "pointerId": 1, "x": 100, "y": 100, "t": 1000 },
+        { "op": "move", "pointerId": 1, "samples": [{ "x": 101, "y": 100, "t": 1600 }] },
+        { "op": "release", "pointerId": 1, "x": 101, "y": 100, "t": 900 }
+      ],
+      "expected": ["pending p1 at(100,100)", "hold p1 at(100,100) 600ms"]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ export * from "./device-tracker.ts";
 export * from "./gesture-runtime.ts";
 export * from "./multi-pointer.ts";
 export * from "./pointer-stroke.ts";
+export * from "./press-gesture.ts";
 
 import {
   inputStrokeIdentity,

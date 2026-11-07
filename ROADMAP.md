@@ -143,6 +143,7 @@ Pointer gestures (#55) are implemented:
 - Mobile gesture zones as geometry around the shared gesture runtime, with zone-scoped contexts and explicit drag-out/cancellation policies (#61).
 - Pages dogfood of slash, encircle, and rune bindings with contexts, a modal menu, profiles, speed-dependent parameters, consumer-owned hit-testing, and replay (#63).
 - Two-pointer pinch, rotate, and two-finger swipe gestures with hysteresis, explicit cancellation, and the same binding path (#62).
+- Press-gesture lifecycle (pending → drag with deltas or click at the press position, cancellation without a command) for one owned button with a single capture owner, reusing the stroke tracker and `drag` primitive threshold, with an opt-in hold outcome and a Rust `PressGestureTracker` sharing a parity fixture; demonstrated on the right mouse button in the device lab (#93).
 
 Remaining:
 
