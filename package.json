@@ -54,7 +54,7 @@
     "secretlint": "13.1.0",
     "storybook": "10.6.6",
     "typescript": "7.0.2",
-    "xstate": "5.33.3"
+    "xstate": "5.33.4"
   },
   "engines": {
     "node": ">=22.12"
