@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@secretlint/secretlint-rule-preset-recommend": "13.1.0",
     "@storybook/react-vite": "10.6.7",
     "@testing-library/dom": "10.4.2",
