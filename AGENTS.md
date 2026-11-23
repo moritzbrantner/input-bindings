@@ -15,6 +15,7 @@ Read every file in `data.files`. Repository-local instructions take precedence w
 - Rust owns binding semantics; TypeScript mirrors them through the shared fixtures. Preserve parity when changing either implementation.
 - Consumers own action identifiers and mobile overlay geometry. Browser adapters and React controls consume the core semantics.
 - Use Bun and the committed `bun.lock` for dependency installation and scripts. Install with `bun install --frozen-lockfile`.
+- **BUN-001 owner exception (2026-11-23):** use the latest stable Bun; `package.json` declares no `packageManager` and CI installs `bun-version: latest`. This supersedes the exact `packageManager` pin until the shared BUN-001 (moritzbrantner/coding-agent-conventions#154) says the same.
 - `bun run check:fast` runs format, lint, and type checks. `bun run check` adds unit tests, Rust tests/Clippy, and the production build. `bun run check:full` adds built Storybook and Pages browser tests.
 - Formatting and lint fixes are explicit mutations: `bun run format` and `bun run lint:fix`. Verification commands must not rewrite tracked files.
 - Keep browser captures and generated artifacts in the ignored output directories.
